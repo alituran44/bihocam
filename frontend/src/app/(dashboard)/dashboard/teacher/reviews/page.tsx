@@ -32,7 +32,7 @@ const StarRating = ({ rating }: { rating: number }) => (
     {[1, 2, 3, 4, 5].map((star) => (
       <svg
         key={star}
-        className={`w-4 h-4 ${star <= rating ? "text-yellow-400" : "text-gray-300"}`}
+        className={`w-4 h-4 ${star <= rating ? "text-amber-400 fill-current" : "text-gray-300"}`}
         fill="currentColor"
         viewBox="0 0 20 20"
       >
@@ -55,7 +55,7 @@ export default function TeacherReviewsPage() {
 
   const replyMutation = useMutation({
     mutationFn: ({ courseId, reviewId, reply }: { courseId: string; reviewId: string; reply: string }) =>
-      reviewsApi.reply(courseId, reviewId, { reply }),
+      reviewsApi.reply(courseId, reviewId, { reply_text: reply }),
     onSuccess: () => {
       setMessage("Yanıtınız başarıyla gönderildi!");
       setReplyingTo(null);
@@ -72,6 +72,7 @@ export default function TeacherReviewsPage() {
   const averageRating = reviews?.length
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : "0.0";
+  const repliedCount = reviews?.filter((r) => r.teacher_reply)?.length || 0;
 
   if (error) {
     return (
@@ -84,9 +85,9 @@ export default function TeacherReviewsPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 space-y-8">
+    <div className="space-y-8">
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-3xl mb-8 shadow-2xl">
+      <div className="relative overflow-hidden bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-500 rounded-3xl mb-8 shadow-2xl">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIxLjUiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
         <div className="relative px-8 py-12">
           <div className="flex items-center justify-between">
@@ -94,48 +95,86 @@ export default function TeacherReviewsPage() {
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">
                 Kurs Yorumları
               </h1>
-              <p className="text-amber-100 text-lg">
+              <p className="text-teal-100 text-lg">
                 Öğrencilerinizin kurslarınız hakkındaki geri bildirimlerini görüntüleyin ve yanıtlayın
               </p>
             </div>
             <div className="hidden md:block">
-              <svg className="w-32 h-32 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
+              <div className="w-32 h-32 rounded-full bg-white/10 backdrop-blur-sm border-2 border-white/20 flex items-center justify-center">
+                <svg className="w-16 h-16 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {message && (
-        <div className="p-3 rounded-lg bg-emerald-50 text-emerald-700 text-sm border border-emerald-200">
+        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-4 border border-emerald-200 text-emerald-700 text-sm font-medium">
           ✅ {message}
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200">
-          <span className="text-sm font-medium text-gray-600">Toplam Yorum</span>
-          <div className="text-3xl font-bold text-gray-900 mt-1">{isLoading ? "..." : reviews?.length || 0}</div>
-        </div>
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200">
-          <span className="text-sm font-medium text-gray-600">Ortalama Puan</span>
-          <div className="text-3xl font-bold text-yellow-600 mt-1 flex items-center gap-2">
-            {isLoading ? "..." : averageRating}
-            <svg className="w-7 h-7 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          {
+            label: "Toplam Yorum",
+            value: isLoading ? "..." : reviews?.length || 0,
+            icon: (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            ),
+            color: "from-teal-500 to-teal-600",
+          },
+          {
+            label: "Ortalama Puan",
+            value: isLoading ? "..." : averageRating,
+            icon: (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              </svg>
+            ),
+            color: "from-amber-500 to-amber-600",
+          },
+          {
+            label: "Onaylanmış",
+            value: isLoading ? "..." : approvedReviews.length,
+            icon: (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ),
+            color: "from-emerald-500 to-emerald-600",
+          },
+          {
+            label: "Yanıtlanan",
+            value: isLoading ? "..." : repliedCount,
+            icon: (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+              </svg>
+            ),
+            color: "from-blue-500 to-blue-600",
+          },
+        ].map((stat, index) => (
+          <div
+            key={index}
+            className="relative bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl group"
+            style={{ animation: `fadeInUp 0.5s ease-out ${index * 50}ms forwards` }}
+          >
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-teal-500 via-emerald-500 to-green-500 rounded-t-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="flex items-center justify-between mb-4">
+              <div className={`w-14 h-14 bg-gradient-to-br ${stat.color} rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                {stat.icon}
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</div>
+            <div className="text-sm font-semibold text-gray-600 uppercase tracking-wide">{stat.label}</div>
           </div>
-        </div>
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200">
-          <span className="text-sm font-medium text-gray-600">Onaylanmış</span>
-          <div className="text-3xl font-bold text-emerald-600 mt-1">{isLoading ? "..." : approvedReviews.length}</div>
-        </div>
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200">
-          <span className="text-sm font-medium text-gray-600">Onay Bekleyen</span>
-          <div className="text-3xl font-bold text-orange-600 mt-1">{isLoading ? "..." : pendingReviews.length}</div>
-        </div>
+        ))}
       </div>
 
       {/* Reviews List */}
@@ -154,8 +193,12 @@ export default function TeacherReviewsPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {reviews.map((review) => (
-              <div key={review.id} className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
+            {reviews.map((review, idx) => (
+              <div
+                key={review.id}
+                className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-all duration-200"
+                style={{ animation: `fadeInUp 0.5s ease-out ${idx * 30}ms forwards` }}
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
@@ -189,7 +232,7 @@ export default function TeacherReviewsPage() {
 
                 {/* Teacher Reply */}
                 {review.teacher_reply && (
-                  <div className="mt-4 bg-teal-50 rounded-lg p-4 border-l-4 border-teal-500">
+                  <div className="mt-4 bg-teal-50 rounded-xl p-4 border-l-4 border-teal-500">
                     <div className="text-xs text-teal-700 font-medium mb-1">
                       Yanıtınız {review.teacher_reply_at ? `• ${formatDate(review.teacher_reply_at)}` : ""}
                     </div>
@@ -207,7 +250,7 @@ export default function TeacherReviewsPage() {
                           onChange={(e) => setReplyText(e.target.value)}
                           rows={3}
                           placeholder="Yanıtınızı yazın..."
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                         />
                         <div className="flex gap-2">
                           <button
@@ -220,14 +263,14 @@ export default function TeacherReviewsPage() {
                                 });
                               }
                             }}
-                            disabled={!replyText.trim() || replyMutation.isLoading}
-                            className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 disabled:opacity-50"
+                            disabled={!replyText.trim() || replyMutation.isPending}
+                            className="px-5 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 text-white text-sm font-semibold rounded-xl hover:from-teal-700 hover:to-emerald-700 disabled:opacity-50 transition-all shadow-lg"
                           >
-                            {replyMutation.isLoading ? "Gönderiliyor..." : "Yanıtla"}
+                            {replyMutation.isPending ? "Gönderiliyor..." : "Yanıtla"}
                           </button>
                           <button
                             onClick={() => { setReplyingTo(null); setReplyText(""); }}
-                            className="px-4 py-2 text-gray-600 text-sm font-medium bg-gray-100 rounded-lg hover:bg-gray-200"
+                            className="px-5 py-2 text-gray-600 text-sm font-medium bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
                           >
                             İptal
                           </button>
@@ -236,7 +279,7 @@ export default function TeacherReviewsPage() {
                     ) : (
                       <button
                         onClick={() => setReplyingTo(review.id)}
-                        className="mt-3 text-sm text-teal-600 hover:text-teal-700 font-medium"
+                        className="mt-3 text-sm text-teal-600 hover:text-teal-700 font-semibold"
                       >
                         💬 Yanıtla
                       </button>
