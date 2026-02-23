@@ -1,0 +1,15 @@
+{% extends "_base.html" %}
+{% block content %}
+<h2>Yorumunuz Hakkında Bilgilendirme</h2>
+<p>Merhaba {{ user_name }},</p>
+<p><strong>"{{ course_title }}"</strong> kursu için yazdığınız yorum, topluluk kurallarımıza uygunluk açısından değerlendirildi ve maalesef onaylanamadı.</p>
+{% if reason %}
+<div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 0 8px 8px 0; margin: 16px 0;">
+  <p style="color: #991b1b; margin: 0;"><strong>Ret Sebebi:</strong> {{ reason }}</p>
+</div>
+{% endif %}
+<p>Yorumunuzu düzenleyip tekrar gönderebilirsiniz. Herhangi bir sorunuz varsa bizimle iletişime geçebilirsiniz.</p>
+<p style="text-align: center;">
+  <a href="{{ site.site_url | default('#') }}" class="btn">Yorumumu Düzenle</a>
+</p>
+{% endblock %}

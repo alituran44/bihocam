@@ -1,0 +1,90 @@
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    PROJECT_NAME: str = "BiHocam API"
+    VERSION: str = "0.1.0"
+    API_V1_STR: str = "/api/v1"
+
+    # Database
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/bihocam"
+
+    # Security
+    SECRET_KEY: str = "dev-secret-key-change-in-production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # CORS
+    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+
+    # Redis (for future use)
+    REDIS_URL: str = "redis://localhost:6379/0"
+
+    # SMTP / Email (NOTIF-V2 – geçici env tabanlı config)
+    # NOT: KANBAN'da uzun vadede SiteSettings tablosundan okunması planlanıyor.
+    # Şimdilik env üzerinden yönetip, EmailService'i daha sonra SiteSettings ile
+    # entegre edilebilir olacak şekilde tasarlıyoruz.
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 1025
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_USE_TLS: bool = True
+    SMTP_USE_SSL: bool = False
+    SMTP_DEFAULT_FROM: str = "no-reply@bihocam.local"
+
+    # Platform settings
+    PLATFORM_COMMISSION_RATE: float = 0.35  # %35 komisyon
+
+    # Media storage (local for now, will migrate to S3/Google Cloud later)
+    STORAGE_BACKEND: str = "local"  # "local", "s3", "gcs"
+    MEDIA_ROOT: str = "media"
+    VIDEOS_DIR: str = "videos"
+    THUMBNAILS_DIR: str = "thumbnails"
+    AVATARS_DIR: str = "avatars"
+    DOCUMENTS_DIR: str = "documents"  # PDF/DOCX/PPTX dosyaları
+    LIVE_RECORDINGS_DIR: str = "live_recordings"  # Canlı ders kayıtları
+    MAX_VIDEO_SIZE_MB: int = 500  # 500MB max video size
+    MAX_AVATAR_SIZE_MB: int = 5  # 5MB max avatar size
+    MAX_DOCUMENT_SIZE_MB: int = 50  # 50MB max doküman boyutu
+    
+    # Allowed file extensions
+    ALLOWED_DOCUMENT_EXTENSIONS: list[str] = [".pdf", ".doc", ".docx", ".ppt", ".pptx"]
+    ALLOWED_VIDEO_EXTENSIONS: list[str] = [".mp4", ".webm", ".ogg", ".mov", ".avi"]
+    ALLOWED_ALL_CONTENT_EXTENSIONS: list[str] = [
+        ".mp4", ".webm", ".ogg", ".mov", ".avi",
+        ".pdf", ".doc", ".docx", ".ppt", ".pptx"
+    ]
+
+    # S3 Settings (ileride kullanılacak)
+    S3_BUCKET_NAME: str = ""
+    S3_REGION: str = "eu-central-1"
+    S3_ACCESS_KEY: str = ""
+    S3_SECRET_KEY: str = ""
+    S3_ENDPOINT_URL: str | None = None  # MinIO gibi S3-compatible servisler için
+
+    # GCS Settings (ileride kullanılacak)
+    GCS_BUCKET_NAME: str = ""
+    GCS_PROJECT_ID: str = ""
+    GCS_CREDENTIALS_PATH: str = ""
+
+    # Frontend URL (for password reset links, etc.)
+    FRONTEND_URL: str = "http://localhost:3000"
+    PASSWORD_RESET_TOKEN_EXPIRE_HOURS: int = 24
+
+    # Email worker settings
+    EMAIL_QUEUE_KEY: str = "queue:email"
+    EMAIL_RETRY_MAX_ATTEMPTS: int = 3
+    EMAIL_RATE_LIMIT_PER_MINUTE: int = 60
+
+    # Storage Quota Settings (EP10-BE-14)
+    DEFAULT_STORAGE_QUOTA_MB: int = 1024  # 1GB default quota
+    MAX_STORAGE_QUOTA_MB: int = 10240  # 10GB max quota
+    QUOTA_RESET_PERIOD_DAYS: int = 30  # Aylık reset
+
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+
+
+settings = Settings()

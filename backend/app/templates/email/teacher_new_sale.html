@@ -1,0 +1,26 @@
+{% extends "_base.html" %}
+{% block content %}
+<h2>Yeni Satış Bildirimi 💰</h2>
+<p>Merhaba {{ teacher_name }},</p>
+<p>Tebrikler! Kursunuz için yeni bir satış gerçekleşti.</p>
+<div style="background: #f0fdf4; border-radius: 12px; padding: 20px; margin: 20px 0;">
+  <table style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td style="padding: 8px 0; color: #6b7280;">Kurs:</td>
+      <td style="padding: 8px 0; text-align: right; font-weight: 600;">{{ course_title }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 0; color: #6b7280;">Öğrenci:</td>
+      <td style="padding: 8px 0; text-align: right; font-weight: 600;">{{ student_name }}</td>
+    </tr>
+    <tr style="border-top: 1px solid #dcfce7;">
+      <td style="padding: 12px 0 8px; color: #6b7280; font-weight: 600;">Tutar:</td>
+      <td style="padding: 12px 0 8px; text-align: right; font-weight: 700; font-size: 18px; color: #16a34a;">{{ amount }} ₺</td>
+    </tr>
+  </table>
+</div>
+<p style="text-align: center;">
+  <a href="{{ site.site_url | default('#') }}/dashboard/teacher/sales" class="btn">Satışlarımı Görüntüle</a>
+</p>
+<p>Başarılı çalışmalarınız için teşekkür ederiz! 🚀</p>
+{% endblock %}

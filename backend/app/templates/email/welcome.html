@@ -1,0 +1,13 @@
+{% extends "_base.html" %}
+{% block content %}
+<h2>Hoş Geldin, {{ user_name }}! 🎉</h2>
+<p>{{ site.site_title | default('BiHocam') }} ailesine katıldığın için çok mutluyuz!</p>
+<p>Platformumuzda yüzlerce kaliteli eğitim içeriğine erişebilir, alanında uzman eğitmenlerden ders alabilirsin.</p>
+<div class="divider"></div>
+<p><strong>Hemen başlamak için:</strong></p>
+<p style="text-align: center;">
+  <a href="{{ cta_url | default(site.site_url) }}" class="btn">Kursları Keşfet</a>
+</p>
+<p>Herhangi bir sorun yaşarsan bize ulaşmaktan çekinme.</p>
+<p>İyi öğrenmeler! 📚</p>
+{% endblock %}

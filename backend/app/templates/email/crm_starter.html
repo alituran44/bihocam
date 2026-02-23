@@ -1,0 +1,19 @@
+{% extends "_base.html" %}
+{% block content %}
+<h2>{{ offer_title | default('Sana Özel Fırsatlar') }} 🎁</h2>
+<p>Merhaba {{ full_name }},</p>
+<p>Senin için özel bir fırsat hazırladık!</p>
+{% if coupon_code %}
+<div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 12px; padding: 24px; margin: 20px 0; text-align: center;">
+  <p style="color: #92400e; font-size: 14px; margin: 0 0 8px 0;">Kupon Kodun:</p>
+  <p style="color: #78350f; font-size: 28px; font-weight: 800; letter-spacing: 4px; margin: 0; font-family: monospace;">{{ coupon_code }}</p>
+</div>
+{% endif %}
+{% if offer_deadline %}
+<p style="color: #dc2626; font-weight: 600;">⏰ Son geçerlilik: {{ offer_deadline }}</p>
+{% endif %}
+<p style="text-align: center;">
+  <a href="{{ cta_url | default(site.site_url) }}" class="btn">Fırsatı Yakala</a>
+</p>
+<p style="color: #9ca3af; font-size: 13px;">Bu mesajı almak istemiyorsanız tercihlerinizi hesap ayarlarınızdan güncelleyebilirsiniz.</p>
+{% endblock %}

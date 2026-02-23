@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ subject }}</title>
+  <style>
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6; color: #1f2937; }
+    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .card { background: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow: hidden; }
+    .header { background: linear-gradient(135deg, {{ site.primary_color | default('#0f766e') }}, {{ site.secondary_color | default('#f97316') }}); padding: 32px; text-align: center; }
+    .header h1 { color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; }
+    .header .logo { margin-bottom: 16px; }
+    .body { padding: 32px; line-height: 1.6; }
+    .body h2 { color: #111827; font-size: 20px; margin-top: 0; }
+    .body p { color: #4b5563; margin: 12px 0; }
+    .btn { display: inline-block; background: {{ site.primary_color | default('#0f766e') }}; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 16px 0; }
+    .btn:hover { opacity: 0.9; }
+    .footer { padding: 24px 32px; text-align: center; border-top: 1px solid #e5e7eb; }
+    .footer p { color: #9ca3af; font-size: 13px; margin: 4px 0; }
+    .footer a { color: {{ site.primary_color | default('#0f766e') }}; text-decoration: none; }
+    .divider { height: 1px; background: #e5e7eb; margin: 24px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        {% if site.logo_url %}
+        <div class="logo"><img src="{{ site.logo_url }}" alt="{{ site.site_title }}" height="40"></div>
+        {% endif %}
+        <h1>{{ site.site_title | default('BiHocam') }}</h1>
+      </div>
+      <div class="body">
+        {% block content %}{% endblock %}
+      </div>
+      <div class="footer">
+        <p>{{ site.footer_text | default('© BiHocam') }}</p>
+        {% if site.contact_email %}
+        <p>İletişim: <a href="mailto:{{ site.contact_email }}">{{ site.contact_email }}</a></p>
+        {% endif %}
+        <p><a href="{{ site.site_url | default('#') }}">{{ site.site_title | default('BiHocam') }}</a></p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

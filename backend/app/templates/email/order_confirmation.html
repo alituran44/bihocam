@@ -1,0 +1,28 @@
+{% extends "_base.html" %}
+{% block content %}
+<h2>Siparişiniz Onaylandı ✅</h2>
+<p>Merhaba {{ user_name }},</p>
+<p>Siparişiniz başarıyla oluşturuldu!</p>
+<div style="background: #f9fafb; border-radius: 12px; padding: 20px; margin: 20px 0;">
+  <table style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td style="padding: 8px 0; color: #6b7280;">Sipariş No:</td>
+      <td style="padding: 8px 0; text-align: right; font-weight: 600;">{{ order_number }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 0; color: #6b7280;">Kurs:</td>
+      <td style="padding: 8px 0; text-align: right; font-weight: 600;">{{ course_title }}</td>
+    </tr>
+    <tr style="border-top: 1px solid #e5e7eb;">
+      <td style="padding: 12px 0 8px; color: #6b7280; font-weight: 600;">Toplam:</td>
+      <td style="padding: 12px 0 8px; text-align: right; font-weight: 700; font-size: 18px; color: {{ site.primary_color | default('#0f766e') }};">{{ amount }} ₺</td>
+    </tr>
+  </table>
+</div>
+{% if invoice_url %}
+<p style="text-align: center;">
+  <a href="{{ invoice_url }}" class="btn">Faturayı Görüntüle</a>
+</p>
+{% endif %}
+<p>Kursunuza hemen erişmeye başlayabilirsiniz. İyi öğrenmeler!</p>
+{% endblock %}

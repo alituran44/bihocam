@@ -1,0 +1,10 @@
+{% extends "_base.html" %}
+{% block content %}
+<h2>Yorumunuz Onaylandı 🎉</h2>
+<p>Merhaba {{ user_name }},</p>
+<p><strong>"{{ course_title }}"</strong> kursu için yazdığınız yorum onaylandı ve artık herkes tarafından görüntülenebilir.</p>
+<p>Değerlendirmeniz için teşekkür ederiz! Yorumlarınız diğer öğrencilere doğru kursu seçmelerinde yardımcı oluyor.</p>
+<p style="text-align: center;">
+  <a href="{{ site.site_url | default('#') }}" class="btn">Platformu Ziyaret Et</a>
+</p>
+{% endblock %}
