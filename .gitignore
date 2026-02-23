@@ -1,0 +1,366 @@
+# ============================================
+# BiHocam Project - Comprehensive .gitignore
+# ============================================
+
+# ============================================
+# Python / Backend
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+backend/venv/
+backend/.venv/
+
+# Python Distribution / Packaging
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.env.*
+!.env.example
+.envrc
+
+# ============================================
+# Node.js / Frontend
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Next.js
+.next/
+out/
+build/
+dist/
+.vercel/
+.vercel
+
+# Nuxt.js
+.nuxt
+.output
+
+# Vite
+.vite
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Testing
+coverage/
+.nyc_output/
+.jest/
+.jest-cache/
+
+# Package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ============================================
+# Environment Variables
+# ============================================
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+!.env.template
+
+# ============================================
+# IDE / Editors
+# ============================================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains IDEs (PyCharm, IntelliJ, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.vim/
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ============================================
+# Operating System Files
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+nul
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ============================================
+# Database
+# ============================================
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+*.sql
+!migrations_manual.sql
+
+# ============================================
+# Logs
+# ============================================
+*.log
+logs/
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# ============================================
+# Media / Uploads (Keep structure, ignore content)
+# ============================================
+# Backend media files - ignore uploaded content but keep directory structure
+backend/media/videos/*
+!backend/media/videos/.gitkeep
+backend/media/thumbnails/*
+!backend/media/thumbnails/.gitkeep
+backend/media/avatars/*
+!backend/media/avatars/.gitkeep
+backend/media/documents/*
+!backend/media/documents/.gitkeep
+backend/media/live_recordings/*
+!backend/media/live_recordings/.gitkeep
+
+# Frontend public uploads (if any)
+frontend/public/uploads/*
+!frontend/public/uploads/.gitkeep
+
+# ============================================
+# Temporary Files
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+*~
+.cache/
+temp/
+tmp/
+
+# ============================================
+# Build Artifacts
+# ============================================
+*.o
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+
+# ============================================
+# Alembic (Keep migrations, ignore cache)
+# ============================================
+# Alembic migration files should be committed
+# But ignore any cache or temporary files
+backend/alembic/__pycache__/
+*.pyc
+
+# ============================================
+# Docker
+# ============================================
+.dockerignore
+docker-compose.override.yml
+*.dockerignore
+
+# ============================================
+# Misc
+# ============================================
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.cert
+
+# Secrets
+secrets/
+*.secret
+*.key
+!*.example.key
+
+# Reports
+*.report
+reports/
+test-results/
+
+# Coverage
+.nyc_output/
+coverage/
+
+# Storybook
+storybook-static/
+
+# Turbo
+.turbo/
+
+# ============================================
+# Project Specific
+# ============================================
+# Keep these files/directories
+!backend/media/.gitkeep
+!backend/media/videos/.gitkeep
+!backend/media/thumbnails/.gitkeep
+!backend/media/avatars/.gitkeep
+!backend/media/documents/.gitkeep
+!backend/media/live_recordings/.gitkeep
+
+# Ignore nested node_modules in backend (if any)
+backend/node_modules/
+backend/frontend/
+backend/backend/
+
+# Ignore any test databases
+*.test.db
+*.test.sqlite
+
+# Ignore local development scripts
+local_*.sh
+local_*.py
+!scripts/
+
+# Ignore personal notes
+NOTES.md
+TODO_PERSONAL.md
+*.personal.*
