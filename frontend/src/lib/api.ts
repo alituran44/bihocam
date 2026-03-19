@@ -12,11 +12,6 @@ export const api = axios.create({
 
 // Request interceptor
 api.interceptors.request.use((config) => {
-  // Trailing slash normalize — FastAPI router'ları "/" bekliyor
-  if (config.url && !config.url.includes("?") && !config.url.endsWith("/")) {
-    config.url = config.url + "/";
-  }
-
   // Cookie varsa axios withCredentials ile otomatik gönderir.
   // Fallback: localStorage'da token varsa header'a ekle (eski client uyumu)
   if (typeof window !== "undefined") {

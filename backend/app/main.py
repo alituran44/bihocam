@@ -139,7 +139,21 @@ app = FastAPI(
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
+    redirect_slashes=False,
 )
+
+
+@app.middleware("http")
+async def ensure_trailing_slash(request: Request, call_next):
+    """
+    API path'lerine trailing slash ekle — redirect olmadan.
+    Router'lar "/" ile tanımlı, gelen istek slash'sız olabilir.
+    """
+    path = request.scope["path"]
+    if path.startswith("/api/") and not path.endswith("/"):
+        # Query string'li URL'lerde sadece path kısmına slash ekle
+        request.scope["path"] = path + "/"
+    return await call_next(request)
 
 # P1-03: Rate limiting
 app.state.limiter = limiter
