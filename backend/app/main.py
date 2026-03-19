@@ -139,17 +139,7 @@ app = FastAPI(
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
-    redirect_slashes=False,
 )
-
-
-@app.middleware("http")
-async def normalize_path_middleware(request: Request, call_next):
-    """Trailing slash'ı normalize et — /path/ → /path olarak çözümle."""
-    path = request.scope["path"]
-    if path != "/" and path.endswith("/"):
-        request.scope["path"] = path.rstrip("/")
-    return await call_next(request)
 
 # P1-03: Rate limiting
 app.state.limiter = limiter
