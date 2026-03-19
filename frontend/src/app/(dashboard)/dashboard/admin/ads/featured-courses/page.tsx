@@ -59,7 +59,7 @@ export default function AdminFeaturedCoursesPage() {
     ) || [];
 
   const activeCampaigns = featuredCampaigns.filter((c) => c.status === "active");
-  const pendingCampaigns = featuredCampaigns.filter((c) => c.status === "pending");
+  const pendingCampaigns = featuredCampaigns.filter((c) => c.status === "pending_approval");
   const totalSpent = featuredCampaigns.reduce((sum, c) => sum + Number(c.spent_amount || 0), 0);
 
   return (
