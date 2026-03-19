@@ -139,8 +139,17 @@ app = FastAPI(
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
-    redirect_slashes=False,
 )
+
+
+@app.middleware("http")
+async def trailing_slash_middleware(request: Request, call_next):
+    """POST/PUT/PATCH/DELETE isteklerinde trailing slash redirect'i engelle."""
+    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        path = request.scope["path"]
+        if not path.endswith("/"):
+            request.scope["path"] = path + "/"
+    return await call_next(request)
 
 # P1-03: Rate limiting
 app.state.limiter = limiter
