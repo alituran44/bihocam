@@ -29,11 +29,12 @@ import Link from "next/link";
 
 const CAMPAIGN_STATUS_LABELS: Record<CampaignStatus, string> = {
   draft: "Taslak",
-  pending: "Beklemede",
+  pending_approval: "Onay Bekliyor",
   active: "Aktif",
   paused: "Duraklatıldı",
   completed: "Tamamlandı",
   rejected: "Reddedildi",
+  cancelled: "İptal Edildi",
 };
 
 const APPROVAL_STATUS_LABELS: Record<ApprovalStatus, string> = {
