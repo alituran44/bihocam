@@ -186,7 +186,7 @@ export default function AdminPlacementsPage() {
                   </div>
                   {placement.pricing && (
                     <div className="text-sm text-teal-600 font-medium">
-                      {placement.pricing.price_per_day ? Number(placement.pricing.price_per_day).toFixed(2) : "N/A"} TRY/gün
+                      {(placement.pricing as any)?.price_per_day ? Number((placement.pricing as any).price_per_day).toFixed(2) : (placement.pricing?.fixed_daily ? Number(placement.pricing.fixed_daily).toFixed(2) : "N/A")} TRY/gün
                     </div>
                   )}
                 </div>
