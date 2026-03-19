@@ -151,6 +151,7 @@ async def _create_teacher_earnings_for_order(db: AsyncSession, order: Order) -> 
         )
 
 
+@router.post("", response_model=OrderResponse)
 @router.post("/", response_model=OrderResponse)
 async def create_order(
     order_in: OrderCreate,
@@ -327,6 +328,7 @@ async def create_order(
     return refreshed
 
 
+@router.get("", response_model=list[OrderResponse])
 @router.get("/", response_model=list[OrderResponse])
 async def list_orders(
     skip: int = 0,

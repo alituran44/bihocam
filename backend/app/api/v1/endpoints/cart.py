@@ -17,6 +17,7 @@ from app.services.coupon_service import apply_site_wide_campaign_to_cart
 router = APIRouter()
 
 
+@router.get("", response_model=list[CartItemResponse] | CartWithCampaignResponse)
 @router.get("/", response_model=list[CartItemResponse] | CartWithCampaignResponse)
 async def get_cart(
     db: AsyncSession = Depends(get_db),
@@ -66,6 +67,7 @@ async def get_cart(
     )
 
 
+@router.post("", response_model=CartItemResponse)
 @router.post("/", response_model=CartItemResponse)
 async def add_to_cart(
     item: CartItemCreate,
@@ -153,6 +155,7 @@ async def remove_from_cart(
     return {"message": "Kurs sepetten çıkarıldı"}
 
 
+@router.delete("")
 @router.delete("/")
 async def clear_cart(
     db: AsyncSession = Depends(get_db),

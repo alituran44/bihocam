@@ -34,6 +34,7 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
+@router.get("", response_model=NotificationListResponse)
 @router.get("/", response_model=NotificationListResponse)
 async def list_notifications(
     skip: int = 0,
@@ -169,6 +170,7 @@ async def update_preferences(
     )
 
 
+@router.post("", response_model=list[NotificationResponse])
 @router.post("/", response_model=list[NotificationResponse])
 async def create_notifications(
     body: NotificationCreate,

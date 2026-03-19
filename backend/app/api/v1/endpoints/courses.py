@@ -144,6 +144,7 @@ async def _enrich_lesson_response(
     )
 
 
+@router.get("", response_model=list[CourseResponse])
 @router.get("/", response_model=list[CourseResponse])
 async def list_courses(
     skip: int = 0,
@@ -252,6 +253,7 @@ async def get_course(
     return course
 
 
+@router.post("", response_model=CourseResponse)
 @router.post("/", response_model=CourseResponse)
 async def create_course(
     course_in: CourseCreate,

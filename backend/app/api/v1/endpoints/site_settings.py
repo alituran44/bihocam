@@ -53,6 +53,7 @@ def _mask_smtp(smtp: dict | None) -> dict:
     return data
 
 
+@router.get("", response_model=SiteSettingsResponse)
 @router.get("/", response_model=SiteSettingsResponse)
 async def get_site_settings(
     db: AsyncSession = Depends(get_db),
@@ -70,6 +71,7 @@ async def get_site_settings(
     )
 
 
+@router.put("", response_model=SiteSettingsResponse)
 @router.put("/", response_model=SiteSettingsResponse)
 async def update_site_settings(
     payload: SiteSettingsUpdate,

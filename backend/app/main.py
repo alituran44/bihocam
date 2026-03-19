@@ -144,15 +144,11 @@ app = FastAPI(
 
 
 @app.middleware("http")
-async def ensure_trailing_slash(request: Request, call_next):
-    """
-    API path'lerine trailing slash ekle — redirect olmadan.
-    Router'lar "/" ile tanımlı, gelen istek slash'sız olabilir.
-    """
+async def strip_trailing_slash(request: Request, call_next):
+    """Trailing slash kaldır — /api/v1/cart/ → /api/v1/cart. 307 redirect önlenir."""
     path = request.scope["path"]
-    if path.startswith("/api/") and not path.endswith("/"):
-        # Query string'li URL'lerde sadece path kısmına slash ekle
-        request.scope["path"] = path + "/"
+    if len(path) > 1 and path.endswith("/"):
+        request.scope["path"] = path.rstrip("/")
     return await call_next(request)
 
 # P1-03: Rate limiting

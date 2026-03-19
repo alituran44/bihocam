@@ -26,6 +26,7 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
+@router.get("", response_model=list[TeacherListItem])
 @router.get("/", response_model=list[TeacherListItem])
 async def list_teachers(
     skip: int = 0,

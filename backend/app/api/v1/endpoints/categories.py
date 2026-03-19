@@ -41,6 +41,7 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
+@router.get("", response_model=list[CategoryResponse])
 @router.get("/", response_model=list[CategoryResponse])
 async def list_categories(
     skip: int = Query(0, ge=0),
@@ -188,6 +189,7 @@ async def get_category(
     )
 
 
+@router.post("", response_model=CategoryResponse)
 @router.post("/", response_model=CategoryResponse)
 async def create_category(
     category_in: CategoryCreate,
