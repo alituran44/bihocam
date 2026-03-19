@@ -91,7 +91,17 @@ def generate_iframe_token_hash(
         f"{payment_amount}{user_basket}{no_installment}{max_installment}"
         f"{currency}{test_mode}"
     )
-    return _hmac_sha256_base64(hash_str + settings.PAYTR_MERCHANT_SALT, settings.PAYTR_MERCHANT_KEY)
+
+    logger.debug(
+        f"PayTR hash input: merchant_id={settings.PAYTR_MERCHANT_ID}, "
+        f"user_ip={user_ip}, merchant_oid={merchant_oid}, email={email}, "
+        f"payment_amount={payment_amount}, no_installment={no_installment}, "
+        f"max_installment={max_installment}, currency={currency}, test_mode={test_mode}"
+    )
+
+    token = _hmac_sha256_base64(hash_str + settings.PAYTR_MERCHANT_SALT, settings.PAYTR_MERCHANT_KEY)
+    logger.debug(f"PayTR hash_str length={len(hash_str)}, token={token[:20]}...")
+    return token
 
 
 async def get_iframe_token(
@@ -159,9 +169,11 @@ async def get_iframe_token(
         payload["user_phone"] = user_phone
 
     logger.info(f"PayTR token request for order {merchant_oid}, amount={payment_amount}")
+    logger.info(f"PayTR payload keys: {list(payload.keys())}")
 
     async with httpx.AsyncClient(timeout=30) as client:
         response = await client.post(PAYTR_TOKEN_URL, data=payload)
+        logger.info(f"PayTR raw response: {response.text[:500]}")
         result = response.json()
 
     if result.get("status") == "success":
