@@ -38,8 +38,8 @@ class Order(Base):
     total: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)  # Final amount
     
     # Status
-    status: Mapped[OrderStatus] = mapped_column(Enum(OrderStatus), default=OrderStatus.PENDING)
-    payment_method: Mapped[PaymentMethod | None] = mapped_column(Enum(PaymentMethod), nullable=True)
+    status: Mapped[OrderStatus] = mapped_column(Enum(OrderStatus, values_callable=lambda e: [x.value for x in e]), default=OrderStatus.PENDING)
+    payment_method: Mapped[PaymentMethod | None] = mapped_column(Enum(PaymentMethod, values_callable=lambda e: [x.value for x in e]), nullable=True)
     
     # Payment gateway info
     payment_gateway_transaction_id: Mapped[str | None] = mapped_column(String(255), nullable=True)

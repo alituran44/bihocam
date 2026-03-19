@@ -40,7 +40,7 @@ class CertificateTemplate(Base):
 
     # Template design
     template_type: Mapped[TemplateType] = mapped_column(
-        Enum(TemplateType), default=TemplateType.DEFAULT, nullable=False
+        Enum(TemplateType, values_callable=lambda e: [x.value for x in e]), default=TemplateType.DEFAULT, nullable=False
     )
     background_image: Mapped[str | None] = mapped_column(String(500), nullable=True)
     logo_image: Mapped[str | None] = mapped_column(String(500), nullable=True)

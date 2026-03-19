@@ -35,7 +35,7 @@ class SiteAnnouncement(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     type: Mapped[AnnouncementType] = mapped_column(
-        Enum(AnnouncementType), nullable=False, default=AnnouncementType.INFO
+        Enum(AnnouncementType, values_callable=lambda e: [x.value for x in e]), nullable=False, default=AnnouncementType.INFO
     )
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

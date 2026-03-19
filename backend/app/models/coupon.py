@@ -32,12 +32,16 @@ class Coupon(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     
     # Discount details
-    coupon_type: Mapped[CouponType] = mapped_column(Enum(CouponType), nullable=False)
+    coupon_type: Mapped[CouponType] = mapped_column(
+        Enum(CouponType, values_callable=lambda e: [x.value for x in e]), nullable=False
+    )
     discount_value: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)  # Percentage or fixed amount
     max_discount: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)  # Max discount for percentage
-    
+
     # Trigger conditions
-    trigger_type: Mapped[CouponTriggerType] = mapped_column(Enum(CouponTriggerType), default=CouponTriggerType.MANUAL)
+    trigger_type: Mapped[CouponTriggerType] = mapped_column(
+        Enum(CouponTriggerType, values_callable=lambda e: [x.value for x in e]), default=CouponTriggerType.MANUAL
+    )
     min_cart_value: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)  # For cart_value trigger
     category_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True)  # For category trigger
     

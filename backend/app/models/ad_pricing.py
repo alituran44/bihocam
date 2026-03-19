@@ -42,7 +42,7 @@ class AdPricing(Base):
     )
 
     pricing_model: Mapped[PricingModel] = mapped_column(
-        Enum(PricingModel), nullable=False, index=True
+        Enum(PricingModel, values_callable=lambda e: [x.value for x in e]), nullable=False, index=True
     )
 
     # Pricing amounts (model'e göre hangisi kullanılacaksa)

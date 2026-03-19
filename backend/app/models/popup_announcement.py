@@ -49,7 +49,7 @@ class PopupAnnouncement(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     popup_type: Mapped[PopupType] = mapped_column(
-        Enum(PopupType), nullable=False, default=PopupType.INFO
+        Enum(PopupType, values_callable=lambda e: [x.value for x in e]), nullable=False, default=PopupType.INFO
     )
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)

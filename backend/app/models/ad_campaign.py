@@ -90,10 +90,10 @@ class AdCampaign(Base):
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[CampaignStatus] = mapped_column(
-        Enum(CampaignStatus), nullable=False, default=CampaignStatus.DRAFT, index=True
+        Enum(CampaignStatus, values_callable=lambda e: [x.value for x in e]), nullable=False, default=CampaignStatus.DRAFT, index=True
     )
     campaign_type: Mapped[CampaignType] = mapped_column(
-        Enum(CampaignType), nullable=False
+        Enum(CampaignType, values_callable=lambda e: [x.value for x in e]), nullable=False
     )
 
     # Banner ad fields
@@ -127,7 +127,7 @@ class AdCampaign(Base):
         Numeric(10, 2), nullable=True
     )  # Tıklama başına fiyat (opsiyonel)
     pricing_model: Mapped[PricingModel] = mapped_column(
-        Enum(PricingModel), nullable=False, default=PricingModel.FIXED_DAILY
+        Enum(PricingModel, values_callable=lambda e: [x.value for x in e]), nullable=False, default=PricingModel.FIXED_DAILY
     )
 
     # Targeting
@@ -143,7 +143,7 @@ class AdCampaign(Base):
 
     # Approval
     approval_status: Mapped[ApprovalStatus] = mapped_column(
-        Enum(ApprovalStatus),
+        Enum(ApprovalStatus, values_callable=lambda e: [x.value for x in e]),
         nullable=False,
         default=ApprovalStatus.PENDING,
         index=True,
@@ -156,7 +156,7 @@ class AdCampaign(Base):
 
     # Payment
     payment_status: Mapped[PaymentStatus] = mapped_column(
-        Enum(PaymentStatus),
+        Enum(PaymentStatus, values_callable=lambda e: [x.value for x in e]),
         nullable=False,
         default=PaymentStatus.PENDING,
         index=True,

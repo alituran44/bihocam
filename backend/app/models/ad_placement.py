@@ -51,7 +51,7 @@ class AdPlacement(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     placement_type: Mapped[PlacementType] = mapped_column(
-        Enum(PlacementType), nullable=False
+        Enum(PlacementType, values_callable=lambda e: [x.value for x in e]), nullable=False
     )
     location: Mapped[str] = mapped_column(
         String(100), nullable=False, index=True
