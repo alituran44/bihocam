@@ -238,8 +238,8 @@ async def checkout(
         email=current_user.email,
         payment_amount=_amount_to_int(total),
         user_basket=user_basket,
-        user_name=current_user.full_name or "",
-        user_phone=current_user.phone or "" if hasattr(current_user, "phone") else "",
+        user_name=current_user.full_name or "Müşteri",
+        user_phone=getattr(current_user, "phone", None) or "05000000000",
     )
 
     if paytr_result.get("status") != "success":

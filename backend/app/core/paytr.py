@@ -100,9 +100,9 @@ async def get_iframe_token(
     email: str,
     payment_amount: int,
     user_basket: str,
-    user_name: str = "",
-    user_address: str = "BiHocam Platform",
-    user_phone: str = "",
+    user_name: str = "Müşteri",
+    user_address: str = "Türkiye",
+    user_phone: str = "05000000000",
     merchant_ok_url: str | None = None,
     merchant_fail_url: str | None = None,
 ) -> dict[str, Any]:
