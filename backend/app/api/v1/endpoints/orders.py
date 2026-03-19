@@ -41,7 +41,7 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
 def generate_order_number() -> str:
     timestamp = datetime.now().strftime("%Y%m%d")
     random_part = secrets.token_hex(4).upper()
-    return f"ORD-{timestamp}-{random_part}"
+    return f"ORD{timestamp}{random_part}"
 
 
 async def _load_order(db: AsyncSession, order_id: str) -> Order | None:
