@@ -168,10 +168,7 @@ CREATE TYPE public.lessontype AS ENUM (
     'document',
     'presentation',
     'live_lesson',
-    'text',
-    'video',
-    'pdf',
-    'quiz'
+    'text'
 );
 
 
