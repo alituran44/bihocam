@@ -723,9 +723,12 @@ export const couponsApi = {
 
 // Payments API (PayTR iFrame entegrasyonu)
 export const paymentsApi = {
-  checkout: async (couponCode?: string | null) => {
+  checkout: async (couponCode?: string | null, billingInfo?: { full_name: string; phone: string; address: string }) => {
     const params: Record<string, string> = {};
     if (couponCode) params.coupon_code = couponCode;
+    if (billingInfo?.full_name) params.user_name = billingInfo.full_name;
+    if (billingInfo?.phone) params.user_phone = billingInfo.phone;
+    if (billingInfo?.address) params.user_address = billingInfo.address;
     const { data } = await api.post("/payments/checkout", null, { params });
     return data as {
       order_id: string;

@@ -53,10 +53,15 @@ def _get_client_ip(request: Request) -> str:
     return request.client.host if request.client else "127.0.0.1"
 
 
+@router.post("", response_model=CheckoutResponse)
+@router.post("/", response_model=CheckoutResponse)
 @router.post("/checkout", response_model=CheckoutResponse)
 async def checkout(
     request: Request,
     coupon_code: str | None = None,
+    user_name: str | None = None,
+    user_phone: str | None = None,
+    user_address: str | None = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -238,8 +243,9 @@ async def checkout(
         email=current_user.email,
         payment_amount=_amount_to_int(total),
         user_basket=user_basket,
-        user_name=current_user.full_name or "Müşteri",
-        user_phone=getattr(current_user, "phone", None) or "05000000000",
+        user_name=user_name or current_user.full_name or "Müşteri",
+        user_phone=user_phone or getattr(current_user, "phone", None) or "05000000000",
+        user_address=user_address or "Türkiye",
     )
 
     if paytr_result.get("status") != "success":
