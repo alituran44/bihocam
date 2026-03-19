@@ -56,7 +56,8 @@ class Order(Base):
     # Relationships
     user = relationship("User", back_populates="orders")
     order_items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
-    coupon_usage = relationship("CouponUsage", back_populates="order", uselist=False)
+    # P2-08: cascade eklendi — order silinince orphan CouponUsage kalmaz
+    coupon_usage = relationship("CouponUsage", back_populates="order", uselist=False, cascade="all, delete-orphan")
 
 
 class OrderItem(Base):

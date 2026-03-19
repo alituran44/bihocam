@@ -37,8 +37,9 @@ async def test_get_my_enrollments(
     order = Order(
         user_id=test_user.id,
         order_number="ORD-123",
-        total_amount=100.0,
-        status=OrderStatus.COMPLETED,
+        subtotal=100.0,
+        total=100.0,
+        status=OrderStatus.PAID,
         payment_method=PaymentMethod.CREDIT_CARD,
     )
     db_session.add(order)

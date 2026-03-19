@@ -12,6 +12,7 @@ from app.api.v1.endpoints import (
     teachers,
     media,
     orders,
+    payments,
     categories,
     notifications,
     quizzes,
@@ -61,6 +62,7 @@ api_router.include_router(cart.router, prefix="/cart", tags=["cart"])
 api_router.include_router(coupons.router, prefix="/coupons", tags=["coupons"])
 api_router.include_router(coupons.admin_router, prefix="/admin/coupons", tags=["Admin - Coupons"])
 api_router.include_router(orders.router, prefix="/orders", tags=["orders"])
+api_router.include_router(payments.router, prefix="/payments", tags=["payments"])
 api_router.include_router(orders.admin_router, prefix="/admin/orders", tags=["Admin - Orders"])
 api_router.include_router(enrollments.router, prefix="/enrollments", tags=["enrollments"])
 api_router.include_router(lesson_progress.router, prefix="", tags=["lesson-progress"])

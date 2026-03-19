@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, model_validator
 
 from app.models.course import CourseStatus, LessonType
 
@@ -110,6 +110,28 @@ class CourseBase(BaseModel):
     meta_description: str | None = None
     is_org_only: bool = False
 
+    # P1-04: Fiyat validasyonu — negatif fiyat engellenir
+    @field_validator("price")
+    @classmethod
+    def validate_price(cls, v: Decimal) -> Decimal:
+        if v < 0:
+            raise ValueError("Fiyat negatif olamaz")
+        return v
+
+    @field_validator("discount_price")
+    @classmethod
+    def validate_discount_price(cls, v: Decimal | None) -> Decimal | None:
+        if v is not None and v < 0:
+            raise ValueError("İndirimli fiyat negatif olamaz")
+        return v
+
+    @model_validator(mode="after")
+    def validate_discount_not_exceeds_price(self) -> "CourseBase":
+        if self.discount_price is not None and self.price is not None:
+            if self.discount_price > self.price:
+                raise ValueError("İndirimli fiyat normal fiyattan büyük olamaz")
+        return self
+
 
 class CourseCreate(CourseBase):
     slug: str
@@ -128,6 +150,21 @@ class CourseUpdate(BaseModel):
     meta_title: str | None = None
     meta_description: str | None = None
     category_ids: Optional[list[UUID]] = None
+
+    # P1-04: Fiyat validasyonu — güncelleme sırasında da kontrol
+    @field_validator("price")
+    @classmethod
+    def validate_price(cls, v: Decimal | None) -> Decimal | None:
+        if v is not None and v < 0:
+            raise ValueError("Fiyat negatif olamaz")
+        return v
+
+    @field_validator("discount_price")
+    @classmethod
+    def validate_discount_price(cls, v: Decimal | None) -> Decimal | None:
+        if v is not None and v < 0:
+            raise ValueError("İndirimli fiyat negatif olamaz")
+        return v
 
 
 class TeacherInfo(BaseModel):

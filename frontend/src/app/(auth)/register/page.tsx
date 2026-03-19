@@ -47,9 +47,14 @@ function RegisterForm() {
     try {
       await authApi.register(email, password, fullName, role);
 
+      // P1-02: HttpOnly cookie + localStorage fallback
       const tokens = await authApi.login(email, password);
-      localStorage.setItem("access_token", tokens.access_token);
-      localStorage.setItem("refresh_token", tokens.refresh_token);
+      if (tokens.access_token) {
+        localStorage.setItem("access_token", tokens.access_token);
+      }
+      if (tokens.refresh_token) {
+        localStorage.setItem("refresh_token", tokens.refresh_token);
+      }
 
       const user = await authApi.getMe();
       setUser(user);

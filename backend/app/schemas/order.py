@@ -28,7 +28,6 @@ class OrderBase(BaseModel):
     notes: str | None = None
     payment_method: PaymentMethod | None = None
     coupon_code: str | None = None
-    discount_amount: Decimal | None = None
 
 
 class OrderCreate(OrderBase):

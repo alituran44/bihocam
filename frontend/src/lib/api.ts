@@ -7,10 +7,13 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // P1-02: HttpOnly cookie'ler otomatik gönderilir
 });
 
-// Request interceptor for auth token
+// Request interceptor — cookie-first, localStorage fallback (geçiş dönemi)
 api.interceptors.request.use((config) => {
+  // Cookie varsa axios withCredentials ile otomatik gönderir.
+  // Fallback: localStorage'da token varsa header'a ekle (eski client uyumu)
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("access_token");
     if (token) {
@@ -26,8 +29,14 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       if (typeof window !== "undefined") {
+        // Eski localStorage token'larını temizle
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+        // Auth store'u da temizle (P3-01 fix)
+        try {
+          const { useAuthStore } = require("./store");
+          useAuthStore.getState().logout();
+        } catch {}
         window.location.href = "/login";
       }
     }
@@ -83,6 +92,15 @@ export const authApi = {
   getMe: async () => {
     const { data } = await api.get("/auth/me");
     return data;
+  },
+  logout: async () => {
+    // P1-02: Backend cookie'leri temizler
+    await api.post("/auth/logout");
+    // Fallback: localStorage da temizle
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+    }
   },
 };
 
@@ -703,11 +721,42 @@ export const couponsApi = {
   },
 };
 
+// Payments API (PayTR iFrame entegrasyonu)
+export const paymentsApi = {
+  checkout: async (couponCode?: string | null) => {
+    const params: Record<string, string> = {};
+    if (couponCode) params.coupon_code = couponCode;
+    const { data } = await api.post("/payments/checkout", null, { params });
+    return data as {
+      order_id: string;
+      order_number: string;
+      iframe_token: string;
+      iframe_url: string;
+      total: string;
+    };
+  },
+  getStatus: async (orderId: string) => {
+    const { data } = await api.get(`/payments/status/${orderId}`);
+    return data as {
+      order_id: string;
+      order_number: string;
+      status: string;
+      payment_amount: string | null;
+      payment_date: string | null;
+    };
+  },
+  simulateCallback: async (orderNumber: string, status: "success" | "failed" = "success") => {
+    const { data } = await api.post("/payments/simulate-callback", null, {
+      params: { order_number: orderNumber, status },
+    });
+    return data;
+  },
+};
+
 // Orders API
 export const ordersApi = {
   create: async (order: {
     coupon_code?: string | null;
-    discount_amount?: number | null;
     payment_method?: string;
     notes?: string | null;
   }) => {

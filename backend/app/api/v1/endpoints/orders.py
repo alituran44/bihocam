@@ -1,11 +1,15 @@
-﻿import secrets
+﻿import logging
+import secrets
 from datetime import datetime
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import and_, func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
+logger = logging.getLogger(__name__)
 
 from app.api.v1.endpoints.auth import get_current_user
 from app.db.session import get_db
@@ -80,17 +84,24 @@ def _to_admin_response(order: Order) -> OrderAdminResponse:
 
 
 async def _create_enrollments_for_order(db: AsyncSession, order: Order) -> None:
+    """P0-05: Race condition korumalı enrollment oluşturma — batch query ile N+1 fix."""
     order_items_result = await db.execute(select(OrderItem).where(OrderItem.order_id == order.id))
     order_items = order_items_result.scalars().all()
+    if not order_items:
+        return
+
+    # Batch: mevcut enrollment'ları tek sorguda çek
+    course_ids = [item.course_id for item in order_items]
+    existing_result = await db.execute(
+        select(Enrollment.course_id).where(
+            Enrollment.user_id == order.user_id,
+            Enrollment.course_id.in_(course_ids),
+        )
+    )
+    existing_course_ids = {row[0] for row in existing_result.all()}
 
     for item in order_items:
-        existing = await db.execute(
-            select(Enrollment).where(
-                Enrollment.user_id == order.user_id,
-                Enrollment.course_id == item.course_id,
-            )
-        )
-        if not existing.scalar_one_or_none():
+        if item.course_id not in existing_course_ids:
             db.add(
                 Enrollment(
                     user_id=order.user_id,
@@ -153,32 +164,73 @@ async def create_order(
     if not cart_items:
         raise HTTPException(status_code=400, detail="Sepet boş")
 
+    subtotal = sum(item.price_at_add for item in cart_items)
     discount_amount = Decimal("0")
     coupon_usage = None
     applied_campaign = None
 
     # Check for manual coupon code first
     if order_in.coupon_code:
-        coupon_result = await db.execute(select(Coupon).where(Coupon.code == order_in.coupon_code.upper()))
+        coupon_result = await db.execute(select(Coupon).where(Coupon.code == order_in.coupon_code.strip().upper()))
         coupon = coupon_result.scalar_one_or_none()
-        if coupon:
-            coupon_usage = CouponUsage(
-                coupon_id=coupon.id,
-                user_id=current_user.id,
-                discount_amount=order_in.discount_amount or Decimal("0"),
+        if not coupon:
+            raise HTTPException(status_code=400, detail="Geçersiz kupon kodu")
+
+        # P0-04: Kupon validasyonu — aktiflik, tarih, global limit, per-user limit
+        if not coupon.is_active:
+            raise HTTPException(status_code=400, detail="Bu kupon aktif değil")
+
+        now = datetime.now()
+        if now < coupon.valid_from or now > coupon.valid_until:
+            raise HTTPException(status_code=400, detail="Bu kupon geçerlilik süresi dışında")
+
+        if coupon.usage_limit is not None and coupon.used_count >= coupon.usage_limit:
+            raise HTTPException(status_code=400, detail="Bu kuponun kullanım limiti dolmuş")
+
+        # Per-user limit kontrolü
+        if coupon.usage_limit_per_user is not None:
+            user_usage_result = await db.execute(
+                select(func.count(CouponUsage.id)).where(
+                    CouponUsage.coupon_id == coupon.id,
+                    CouponUsage.user_id == current_user.id,
+                )
             )
-            discount_amount = order_in.discount_amount or Decimal("0")
-            db.add(coupon_usage)
-            coupon.used_count += 1
+            user_usage_count = user_usage_result.scalar() or 0
+            if user_usage_count >= coupon.usage_limit_per_user:
+                raise HTTPException(status_code=400, detail="Bu kuponu daha fazla kullanamazsınız")
+
+        # Min cart value kontrolü
+        if coupon.min_cart_value and subtotal < coupon.min_cart_value:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Bu kupon için minimum sepet tutarı {coupon.min_cart_value} TL olmalıdır",
+            )
+
+        # P0-01: Discount'ı server-side hesapla — client'tan gelen değere güvenme
+        from app.models.coupon import CouponType
+        if coupon.coupon_type == CouponType.PERCENTAGE:
+            discount_amount = subtotal * (coupon.discount_value / Decimal("100"))
+            if coupon.max_discount:
+                discount_amount = min(discount_amount, coupon.max_discount)
+        elif coupon.coupon_type == CouponType.FIXED:
+            discount_amount = min(coupon.discount_value, subtotal)
+
+        coupon_usage = CouponUsage(
+            coupon_id=coupon.id,
+            user_id=current_user.id,
+            discount_amount=discount_amount,
+        )
+        db.add(coupon_usage)
+        coupon.used_count += 1
     else:
         # Check for site-wide auto-apply campaign
         from app.services.coupon_service import apply_site_wide_campaign_to_cart
         campaign_result = await apply_site_wide_campaign_to_cart(cart_items, db)
-        
+
         if campaign_result["applied_campaign"]:
             applied_campaign = campaign_result["applied_campaign"]
             discount_amount = campaign_result["total_discount"]
-            
+
             # Create CouponUsage record
             coupon_usage = CouponUsage(
                 coupon_id=applied_campaign.id,
@@ -188,9 +240,8 @@ async def create_order(
             db.add(coupon_usage)
             applied_campaign.used_count += 1
 
-    subtotal = sum(item.price_at_add for item in cart_items)
     total = subtotal - discount_amount
-    if total < 0:
+    if total < Decimal("0"):
         total = Decimal("0")
 
     order = Order(
@@ -241,10 +292,38 @@ async def create_order(
     for cart_item in cart_items:
         await db.delete(cart_item)
 
-    await db.commit()
+    # P0-06: Tüm order flow tek transaction'da — hata durumunda tam rollback
+    try:
+        await db.commit()
+    except IntegrityError as e:
+        await db.rollback()
+        logger.warning(f"Order creation IntegrityError (possible race condition): {e}")
+        raise HTTPException(status_code=409, detail="Sipariş oluşturulamadı, lütfen tekrar deneyin")
+
     refreshed = await _load_order(db, order.id)
     if not refreshed:
         raise HTTPException(status_code=500, detail="Sipariş oluşturuldu ancak yüklenemedi")
+
+    # P1-10: Sipariş bildirimi — non-blocking
+    try:
+        from app.services.notification_service import NotificationService
+        from app.models.notification import NotificationType, NotificationPriority
+        notification_service = NotificationService(db)
+        await notification_service.send_notification(
+            user_ids=[current_user.id],
+            notification_type=NotificationType.ORDER_CONFIRMED,
+            title="Siparişiniz Oluşturuldu",
+            message=f"#{refreshed.order_number} numaralı siparişiniz başarıyla oluşturuldu.",
+            priority=NotificationPriority.MEDIUM,
+            action_url=f"/orders/{refreshed.id}",
+            action_label="Siparişi Görüntüle",
+            delivery_channels=["in_app", "email"],
+            data={"order_id": refreshed.id, "order_number": refreshed.order_number},
+        )
+        await db.commit()
+    except Exception as e:
+        logger.warning(f"Order notification failed (non-critical): {e}")
+
     return refreshed
 
 
@@ -300,13 +379,41 @@ async def complete_order(
     if payment_gateway_transaction_id:
         order.payment_gateway_transaction_id = payment_gateway_transaction_id
 
+    # P0-06: Enrollment + earnings tek transaction'da
     await _create_enrollments_for_order(db, order)
     await _create_teacher_earnings_for_order(db, order)
 
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as e:
+        await db.rollback()
+        logger.warning(f"Order completion IntegrityError (possible race condition): {e}")
+        raise HTTPException(status_code=409, detail="Sipariş tamamlanamadı, lütfen tekrar deneyin")
+
     refreshed = await _load_order(db, order.id)
     if not refreshed:
         raise HTTPException(status_code=500, detail="Sipariş güncellendi ancak yüklenemedi")
+
+    # P1-10: Ödeme tamamlandı bildirimi
+    try:
+        from app.services.notification_service import NotificationService
+        from app.models.notification import NotificationType, NotificationPriority
+        notification_service = NotificationService(db)
+        await notification_service.send_notification(
+            user_ids=[current_user.id],
+            notification_type=NotificationType.PAYMENT_SUCCESS,
+            title="Ödemeniz Tamamlandı",
+            message=f"#{refreshed.order_number} numaralı siparişinizin ödemesi başarıyla tamamlandı. Kurslarınıza erişebilirsiniz.",
+            priority=NotificationPriority.MEDIUM,
+            action_url=f"/dashboard/courses",
+            action_label="Kurslarıma Git",
+            delivery_channels=["in_app", "email"],
+            data={"order_id": refreshed.id, "order_number": refreshed.order_number},
+        )
+        await db.commit()
+    except Exception as e:
+        logger.warning(f"Payment notification failed (non-critical): {e}")
+
     return refreshed
 
 
@@ -388,7 +495,13 @@ async def complete_order_admin(
     await _create_enrollments_for_order(db, order)
     await _create_teacher_earnings_for_order(db, order)
 
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as e:
+        await db.rollback()
+        logger.warning(f"Admin order completion IntegrityError: {e}")
+        raise HTTPException(status_code=409, detail="Sipariş tamamlanamadı, lütfen tekrar deneyin")
+
     refreshed = await _load_order(db, order.id)
     if not refreshed:
         raise HTTPException(status_code=500, detail="Sipariş güncellendi ancak yüklenemedi")

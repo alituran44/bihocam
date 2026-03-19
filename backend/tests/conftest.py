@@ -1,16 +1,31 @@
 """
 Pytest configuration and fixtures
+SQLite test DB ile PostgreSQL-only tiplerin uyumluluğu sağlanır.
 """
 import pytest
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import JSON
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
+
+# PostgreSQL → SQLite type uyumluluğu: compile methodlarını doğrudan inject et
+from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler
+
+if not hasattr(SQLiteTypeCompiler, "visit_JSONB"):
+    SQLiteTypeCompiler.visit_JSONB = lambda self, type_, **kw: "JSON"
+
+if not hasattr(SQLiteTypeCompiler, "visit_UUID"):
+    SQLiteTypeCompiler.visit_UUID = lambda self, type_, **kw: "VARCHAR(36)"
 
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
 from app.models.user import User, UserRole
 from app.core.security import get_password_hash
+
+# Test ortamında rate limiting devre dışı bırak
+from app.core.rate_limit import limiter
+limiter.enabled = False
 
 
 # Test database URL (in-memory SQLite for testing)
@@ -33,10 +48,10 @@ async def db_session():
     """Create a fresh database session for each test"""
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     async with TestSessionLocal() as session:
         yield session
-    
+
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
@@ -46,12 +61,12 @@ async def client(db_session: AsyncSession):
     """Create a test client"""
     async def override_get_db():
         yield db_session
-    
+
     app.dependency_overrides[get_db] = override_get_db
-    
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
-    
+
     app.dependency_overrides.clear()
 
 

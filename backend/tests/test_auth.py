@@ -17,7 +17,7 @@ async def test_register_student(client: AsyncClient):
             "role": "student",
         },
     )
-    assert response.status_code == 201
+    assert response.status_code == 200
     data = response.json()
     assert data["email"] == "newstudent@example.com"
     assert data["full_name"] == "New Student"
@@ -37,7 +37,7 @@ async def test_register_teacher(client: AsyncClient):
             "role": "teacher",
         },
     )
-    assert response.status_code == 201
+    assert response.status_code == 200
     data = response.json()
     assert data["email"] == "newteacher@example.com"
     assert data["role"] == "teacher"

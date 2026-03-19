@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Save,
@@ -324,7 +325,7 @@ export function BlogPostForm({
           )}
           <div
             className="prose prose-lg max-w-none"
-            dangerouslySetInnerHTML={{ __html: form.content || "<p>İçerik...</p>" }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(form.content || "<p>İçerik...</p>") }}
           />
         </div>
       ) : (

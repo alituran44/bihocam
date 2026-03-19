@@ -28,6 +28,10 @@ export const useAuthStore = create<AuthState>()(
         if (typeof window !== "undefined") {
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
+          // P1-02: Backend cookie'leri de temizle
+          import("./api").then(({ authApi }) => {
+            authApi.logout().catch(() => {});
+          });
         }
         set({ user: null, isAuthenticated: false });
       },

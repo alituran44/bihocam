@@ -1,6 +1,7 @@
 """
 Komisyon hesaplama servisi
-Platform her satıştan site settings'ten komisyon oranı alır
+Platform her satıştan site settings'ten komisyon oranı alır.
+P2-03: Redis cache ile SiteSettings sorguları optimize edildi.
 """
 from decimal import Decimal
 
@@ -11,28 +12,40 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.site_settings import SiteSettings
 
 
-async def get_platform_commission_rate(db: AsyncSession) -> Decimal:
-    """
-    Site settings'ten platform komisyon oranını alır
-    """
+async def _get_site_settings_platform(db: AsyncSession) -> dict | None:
+    """Site settings platform dict'ini cache'li olarak döndürür."""
+    from app.core.cache import cache_get, cache_set, CACHE_SITE_SETTINGS
+
+    # Cache'den dene
+    cached = await cache_get(CACHE_SITE_SETTINGS)
+    if cached is not None:
+        return cached
+
+    # DB'den çek
     result = await db.execute(select(SiteSettings).order_by(SiteSettings.created_at.asc()).limit(1))
     row = result.scalar_one_or_none()
-    if row and row.platform:
-        rate = row.platform.get("platform_commission_rate")
+    platform_data = row.platform if row and row.platform else {}
+
+    # Cache'e yaz (5 dk TTL)
+    await cache_set(CACHE_SITE_SETTINGS, platform_data, ttl_seconds=300)
+    return platform_data
+
+
+async def get_platform_commission_rate(db: AsyncSession) -> Decimal:
+    """Site settings'ten platform komisyon oranını alır (cache'li)."""
+    platform_data = await _get_site_settings_platform(db)
+    if platform_data:
+        rate = platform_data.get("platform_commission_rate")
         if rate is not None:
             return Decimal(str(rate))
-    # Fallback to config
     return Decimal(str(settings.PLATFORM_COMMISSION_RATE))
 
 
 async def get_platform_currency(db: AsyncSession) -> str:
-    """
-    Site settings'ten platform para birimini alır
-    """
-    result = await db.execute(select(SiteSettings).order_by(SiteSettings.created_at.asc()).limit(1))
-    row = result.scalar_one_or_none()
-    if row and row.platform:
-        currency = row.platform.get("currency")
+    """Site settings'ten platform para birimini alır (cache'li)."""
+    platform_data = await _get_site_settings_platform(db)
+    if platform_data:
+        currency = platform_data.get("currency")
         if currency:
             return str(currency)
     return "TRY"

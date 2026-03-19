@@ -414,8 +414,11 @@ async def approve_withdrawal(
     db: AsyncSession = Depends(get_db),
 ):
     """Admin çekim talebini onaylar"""
+    # P1-07: FOR UPDATE ile row lock — concurrent approval race condition önlenir
     result = await db.execute(
-        select(WithdrawalRequest).where(WithdrawalRequest.id == withdrawal_id)
+        select(WithdrawalRequest)
+        .where(WithdrawalRequest.id == withdrawal_id)
+        .with_for_update()
     )
     withdrawal = result.scalar_one_or_none()
     if not withdrawal:
@@ -480,21 +483,65 @@ async def mark_withdrawal_paid(
 ):
     """Admin çekim talebini ödendi olarak işaretler"""
     result = await db.execute(
-        select(WithdrawalRequest).where(WithdrawalRequest.id == withdrawal_id)
+        select(WithdrawalRequest)
+        .where(WithdrawalRequest.id == withdrawal_id)
+        .with_for_update()
     )
     withdrawal = result.scalar_one_or_none()
     if not withdrawal:
         raise HTTPException(status_code=404, detail="Çekim talebi bulunamadı")
-    
+
     if withdrawal.status != WithdrawalStatus.APPROVED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Bu talep {withdrawal.status.value} durumunda, sadece APPROVED talepler ödendi olarak işaretlenebilir"
         )
     
+    # PayTR Platform Transfer API ile öğretmene ödeme
+    bank_result = await db.execute(
+        select(TeacherBankAccount).where(TeacherBankAccount.id == withdrawal.bank_account_id)
+    )
+    bank_account = bank_result.scalar_one_or_none()
+    if not bank_account:
+        raise HTTPException(status_code=400, detail="Banka hesabı bulunamadı")
+
+    from app.core.paytr import create_platform_transfer, _amount_to_int
+    from app.core.config import settings
+
+    # PAYTR_MERCHANT_ID boşsa (henüz yapılandırılmamış), transfer atla
+    if settings.PAYTR_MERCHANT_ID:
+        # Her withdrawal için benzersiz transfer ID
+        trans_id = f"wd_{withdrawal.id[:20]}"
+        # Öğretmene gönderilecek tutar (kuruş cinsinden)
+        submerchant_amount = _amount_to_int(withdrawal.amount)
+        # Total amount = submerchant_amount (direkt transfer, komisyon zaten kesilmiş)
+        total_amount = submerchant_amount
+
+        # Öğretmen adı: User tablosundan
+        teacher_result = await db.execute(
+            select(User).where(User.id == withdrawal.teacher_id)
+        )
+        teacher = teacher_result.scalar_one_or_none()
+        transfer_name = teacher.full_name if teacher else "Öğretmen"
+
+        transfer_result = await create_platform_transfer(
+            merchant_oid=f"wd-{withdrawal.id[:30]}",
+            trans_id=trans_id,
+            submerchant_amount=submerchant_amount,
+            total_amount=total_amount,
+            transfer_name=transfer_name,
+            transfer_iban=bank_account.iban,
+        )
+
+        if transfer_result.get("status") != "success":
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"PayTR transfer hatası: {transfer_result.get('err_msg', 'Bilinmeyen hata')}"
+            )
+
     withdrawal.status = WithdrawalStatus.PAID
     withdrawal.paid_at = datetime.utcnow()
-    
+
     try:
         await db.commit()
         await db.refresh(withdrawal)
@@ -504,7 +551,7 @@ async def mark_withdrawal_paid(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Çekim talebi güncellenirken bir hata oluştu: {str(e)}"
         )
-    
+
     # Notification gönder
     try:
         notification_service = NotificationService(db)
@@ -544,12 +591,14 @@ async def reject_withdrawal(
 ):
     """Admin çekim talebini reddeder (admin_note zorunlu)"""
     result = await db.execute(
-        select(WithdrawalRequest).where(WithdrawalRequest.id == withdrawal_id)
+        select(WithdrawalRequest)
+        .where(WithdrawalRequest.id == withdrawal_id)
+        .with_for_update()
     )
     withdrawal = result.scalar_one_or_none()
     if not withdrawal:
         raise HTTPException(status_code=404, detail="Çekim talebi bulunamadı")
-    
+
     if withdrawal.status not in [WithdrawalStatus.PENDING, WithdrawalStatus.APPROVED]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

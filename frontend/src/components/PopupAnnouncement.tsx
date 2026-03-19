@@ -106,10 +106,26 @@ export default function PopupAnnouncement({
 
   const handleButtonClick = () => {
     if (popup.button_link_url) {
-      if (popup.button_link_target === "_blank") {
-        window.open(popup.button_link_url, "_blank", "noopener,noreferrer");
+      // P3-05: Open redirect koruması - sadece aynı origin veya relative URL'lere izin ver
+      const url = popup.button_link_url;
+      let isSafeUrl = false;
+      if (url.startsWith("/")) {
+        isSafeUrl = true;
       } else {
-        window.location.href = popup.button_link_url;
+        try {
+          const parsed = new URL(url);
+          isSafeUrl = parsed.origin === window.location.origin;
+        } catch {
+          isSafeUrl = false;
+        }
+      }
+
+      if (isSafeUrl) {
+        if (popup.button_link_target === "_blank") {
+          window.open(url, "_blank", "noopener,noreferrer");
+        } else {
+          window.location.href = url;
+        }
       }
     }
     handleDismiss();

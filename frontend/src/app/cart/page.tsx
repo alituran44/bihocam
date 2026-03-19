@@ -94,16 +94,17 @@ export default function CartPage() {
 
   const createOrderMutation = useMutation({
     mutationFn: () => {
-      return ordersApi.create({
-        coupon_code: appliedCoupon?.code || null,
-        discount_amount: appliedCoupon?.discount || null,
-        payment_method: "credit_card",
-      });
+      // PayTR iFrame checkout'a yönlendir
+      const coupon = appliedCoupon?.code || "";
+      const params = new URLSearchParams();
+      if (coupon) params.set("coupon", coupon);
+      const url = `/checkout${params.toString() ? `?${params}` : ""}`;
+      router.push(url);
+      // Mutation'ı resolve et (yönlendirme yapıldı)
+      return Promise.resolve({ id: "" });
     },
-    onSuccess: (order) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
-      queryClient.invalidateQueries({ queryKey: ["my-orders"] });
-      router.push(`/orders/${order.id}`);
     },
   });
 

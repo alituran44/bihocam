@@ -21,9 +21,15 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // P1-02: Login artık HttpOnly cookie set ediyor (backend tarafında)
+      // localStorage fallback: geçiş dönemi için token'ları da saklıyoruz
       const tokens = await authApi.login(email, password);
-      localStorage.setItem("access_token", tokens.access_token);
-      localStorage.setItem("refresh_token", tokens.refresh_token);
+      if (tokens.access_token) {
+        localStorage.setItem("access_token", tokens.access_token);
+      }
+      if (tokens.refresh_token) {
+        localStorage.setItem("refresh_token", tokens.refresh_token);
+      }
 
       const user = await authApi.getMe();
       setUser(user);
@@ -36,6 +42,8 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  const showDemoAccounts = process.env.NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS === "true";
 
   const demoAccounts = [
     { label: "Admin", email: "admin@bihocam.com", password: "password123", color: "bg-violet-100 text-violet-700" },
@@ -55,6 +63,7 @@ export default function LoginPage() {
         </div>
 
         {/* Demo giriş bilgileri */}
+        {showDemoAccounts && (
         <div className="mb-6 bg-gray-50 rounded-xl p-4 border border-gray-100">
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Demo Hesaplar</div>
           <div className="space-y-2">
@@ -81,6 +90,7 @@ export default function LoginPage() {
             ))}
           </div>
         </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {error && (

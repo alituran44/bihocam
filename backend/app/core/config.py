@@ -1,3 +1,6 @@
+import logging
+import secrets
+
 from pydantic_settings import BaseSettings
 
 
@@ -5,6 +8,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "BiHocam API"
     VERSION: str = "0.1.0"
     API_V1_STR: str = "/api/v1"
+    DEBUG: bool = True
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/bihocam"
@@ -82,9 +86,56 @@ class Settings(BaseSettings):
     MAX_STORAGE_QUOTA_MB: int = 10240  # 10GB max quota
     QUOTA_RESET_PERIOD_DAYS: int = 30  # Aylık reset
 
+    # PayTR Ödeme Entegrasyonu
+    PAYTR_MERCHANT_ID: str = ""
+    PAYTR_MERCHANT_KEY: str = ""
+    PAYTR_MERCHANT_SALT: str = ""
+    PAYTR_TEST_MODE: int = 1  # 1=test, 0=canlı
+    PAYTR_DEBUG: int = 1  # 1=hata detayı döner
+    PAYTR_MAX_INSTALLMENT: int = 12  # Maksimum taksit sayısı
+    PAYTR_NO_INSTALLMENT: int = 0  # 1=taksit kapalı
+    PAYTR_TIMEOUT_LIMIT: int = 30  # dakika
+    PAYTR_CURRENCY: str = "TL"
+
+    # DB Connection Pool
+    DB_POOL_SIZE: int = 20
+    DB_MAX_OVERFLOW: int = 40
+    DB_POOL_RECYCLE: int = 3600
+    DB_POOL_PRE_PING: bool = True
+
     class Config:
         env_file = ".env"
         case_sensitive = True
 
 
+_INSECURE_SECRET_KEYS = {
+    "dev-secret-key-change-in-production",
+    "secret",
+    "changeme",
+    "",
+}
+
 settings = Settings()
+
+# Startup güvenlik kontrolü
+_logger = logging.getLogger(__name__)
+
+if not settings.DEBUG:
+    if settings.SECRET_KEY in _INSECURE_SECRET_KEYS or len(settings.SECRET_KEY) < 32:
+        raise RuntimeError(
+            "GÜVENLIK HATASI: Production modunda (DEBUG=false) güçlü bir SECRET_KEY gereklidir. "
+            ".env dosyanıza en az 32 karakterlik bir SECRET_KEY ekleyin. "
+            f"Örnek: SECRET_KEY={secrets.token_urlsafe(48)}"
+        )
+    if "postgres:postgres@localhost" in settings.DATABASE_URL:
+        _logger.warning(
+            "UYARI: DATABASE_URL varsayılan localhost credentials kullanıyor. "
+            "Production için güvenli bir DATABASE_URL ayarlayın."
+        )
+else:
+    if settings.SECRET_KEY in _INSECURE_SECRET_KEYS:
+        _logger.warning(
+            "UYARI: Varsayılan SECRET_KEY kullanılıyor. "
+            "Bu sadece geliştirme ortamı için uygundur. "
+            "Production'da DEBUG=false ve güçlü bir SECRET_KEY ayarlayın."
+        )

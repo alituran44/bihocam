@@ -6,7 +6,11 @@ import logging
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from starlette.middleware.base import BaseHTTPMiddleware
+
+from app.core.rate_limit import limiter
 
 from app.api.v1.router import api_router
 from app.core.config import settings
@@ -137,6 +141,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# P1-03: Rate limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -162,8 +170,13 @@ class MaintenanceModeMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        # Auth endpoint'leri muaf (login, register, refresh token) - bakım modunda bile çalışmalı
-        if request.url.path.startswith("/api/v1/auth/"):
+        # Auth endpoint'leri muaf (login, me) - bakım modunda bile çalışmalı
+        # P3-09: Register bakım modunda engellensin
+        if request.url.path in ["/api/v1/auth/login", "/api/v1/auth/me"]:
+            return await call_next(request)
+
+        # PayTR callback — ödeme bildirimi bakım modunda da çalışmalı
+        if request.url.path == "/api/v1/payments/callback":
             return await call_next(request)
 
         # Public settings endpoint muaf (maintenance mode kontrolü için gerekli)
@@ -244,11 +257,22 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    import uuid
+    error_id = str(uuid.uuid4())[:8]
     error_detail = traceback.format_exc()
-    print(f"ERROR: {error_detail}")
+
+    logger = logging.getLogger(__name__)
+    logger.error(f"[{error_id}] Unhandled exception on {request.method} {request.url.path}: {error_detail}")
+
+    if settings.DEBUG:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": str(exc), "error_id": error_id, "traceback": error_detail}
+        )
+
     return JSONResponse(
         status_code=500,
-        content={"detail": str(exc), "traceback": error_detail}
+        content={"detail": "Sunucu hatası oluştu.", "error_id": error_id}
     )
 
 

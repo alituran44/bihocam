@@ -3,7 +3,17 @@
     "allow": [
       "Bash(ls:*)",
       "Bash(find:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(wc -l /c/Users/sdlok/Desktop/Summarify/Projeler/BiHocam/backend/app/api/v1/endpoints/*.py)",
+      "Bash(wc -l /c/Users/sdlok/Desktop/Summarify/Projeler/BiHocam/backend/app/services/*.py)",
+      "Bash(python -m pytest tests/test_order_security.py tests/test_security_config.py -v)",
+      "Bash(python -m pytest tests/test_faz4.py -v)",
+      "Bash(python -m pytest tests/test_faz4.py::test_demo_accounts_behind_env_flag -v --tb=short)",
+      "Bash(python -m pytest tests/test_auth.py -v --tb=short)",
+      "Bash(python -m pytest tests/test_auth.py::test_register_student -v --tb=long)",
+      "Bash(pip show:*)",
+      "WebFetch(domain:dev.paytr.com)",
+      "Bash(python -m pytest tests/ --tb=no -q)"
     ]
   }
 }
