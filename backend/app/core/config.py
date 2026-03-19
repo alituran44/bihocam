@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: list[str] = ["http://localhost:3454"]
 
     # Redis (for future use)
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -73,7 +73,7 @@ class Settings(BaseSettings):
     GCS_CREDENTIALS_PATH: str = ""
 
     # Frontend URL (for password reset links, etc.)
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "http://localhost:3454"
     PASSWORD_RESET_TOKEN_EXPIRE_HOURS: int = 24
 
     # Email worker settings
