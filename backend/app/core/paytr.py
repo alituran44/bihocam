@@ -29,11 +29,14 @@ PAYTR_TRANSFER_URL = "https://www.paytr.com/odeme/platform/transfer"
 PAYTR_IFRAME_BASE = "https://www.paytr.com/odeme/guvenli"
 
 
-def _hmac_sha256_base64(data: str, key: str) -> str:
-    """HMAC-SHA256 hesapla ve base64 encode et. Tüm PayTR token'ları bu fonksiyonla üretilir."""
+def _hmac_sha256_base64(hash_str: str, merchant_key: str, merchant_salt: str) -> str:
+    """
+    PayTR HMAC-SHA256 token hesapla.
+    Resmi formül: base64(hmac(merchant_key_bytes, hash_str_bytes + merchant_salt_bytes, sha256))
+    """
     signature = hmac.new(
-        key.encode("utf-8"),
-        data.encode("utf-8"),
+        merchant_key.encode("utf-8"),
+        hash_str.encode("utf-8") + merchant_salt.encode("utf-8"),
         hashlib.sha256,
     ).digest()
     return base64.b64encode(signature).decode("utf-8")
@@ -99,7 +102,7 @@ def generate_iframe_token_hash(
         f"max_installment={max_installment}, currency={currency}, test_mode={test_mode}"
     )
 
-    token = _hmac_sha256_base64(hash_str + settings.PAYTR_MERCHANT_SALT, settings.PAYTR_MERCHANT_KEY)
+    token = _hmac_sha256_base64(hash_str, settings.PAYTR_MERCHANT_KEY, settings.PAYTR_MERCHANT_SALT)
     logger.debug(f"PayTR hash_str length={len(hash_str)}, token={token[:20]}...")
     return token
 
@@ -189,8 +192,9 @@ def verify_callback_hash(merchant_oid: str, status: str, total_amount: str, inco
     Callback'ten gelen hash'i doğrular.
     Formül: base64(HMAC-SHA256(merchant_oid + merchant_salt + status + total_amount, merchant_key))
     """
+    # Callback hash: merchant_oid + merchant_salt + status + total_amount (salt hash_str'in içinde)
     hash_str = f"{merchant_oid}{settings.PAYTR_MERCHANT_SALT}{status}{total_amount}"
-    expected_hash = _hmac_sha256_base64(hash_str, settings.PAYTR_MERCHANT_KEY)
+    expected_hash = _hmac_sha256_base64(hash_str, settings.PAYTR_MERCHANT_KEY, "")
     return hmac.compare_digest(expected_hash, incoming_hash)
 
 
@@ -202,8 +206,8 @@ async def refund_payment(merchant_oid: str, return_amount: Decimal, reference_no
     """
     return_amount_str = f"{return_amount:.2f}"
 
-    hash_str = f"{settings.PAYTR_MERCHANT_ID}{merchant_oid}{return_amount_str}{settings.PAYTR_MERCHANT_SALT}"
-    paytr_token = _hmac_sha256_base64(hash_str, settings.PAYTR_MERCHANT_KEY)
+    hash_str = f"{settings.PAYTR_MERCHANT_ID}{merchant_oid}{return_amount_str}"
+    paytr_token = _hmac_sha256_base64(hash_str, settings.PAYTR_MERCHANT_KEY, settings.PAYTR_MERCHANT_SALT)
 
     payload = {
         "merchant_id": settings.PAYTR_MERCHANT_ID,
@@ -230,8 +234,8 @@ async def refund_payment(merchant_oid: str, return_amount: Decimal, reference_no
 
 async def query_payment_status(merchant_oid: str) -> dict[str, Any]:
     """PayTR durum sorgulama API'si."""
-    hash_str = f"{settings.PAYTR_MERCHANT_ID}{merchant_oid}{settings.PAYTR_MERCHANT_SALT}"
-    paytr_token = _hmac_sha256_base64(hash_str, settings.PAYTR_MERCHANT_KEY)
+    hash_str = f"{settings.PAYTR_MERCHANT_ID}{merchant_oid}"
+    paytr_token = _hmac_sha256_base64(hash_str, settings.PAYTR_MERCHANT_KEY, settings.PAYTR_MERCHANT_SALT)
 
     payload = {
         "merchant_id": settings.PAYTR_MERCHANT_ID,
@@ -259,9 +263,8 @@ async def create_platform_transfer(
     hash_str = (
         f"{settings.PAYTR_MERCHANT_ID}{merchant_oid}{trans_id}"
         f"{submerchant_amount}{total_amount}{transfer_name}{transfer_iban}"
-        f"{settings.PAYTR_MERCHANT_SALT}"
     )
-    paytr_token = _hmac_sha256_base64(hash_str, settings.PAYTR_MERCHANT_KEY)
+    paytr_token = _hmac_sha256_base64(hash_str, settings.PAYTR_MERCHANT_KEY, settings.PAYTR_MERCHANT_SALT)
 
     payload = {
         "merchant_id": settings.PAYTR_MERCHANT_ID,
