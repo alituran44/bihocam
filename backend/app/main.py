@@ -139,6 +139,7 @@ app = FastAPI(
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
+    redirect_slashes=False,
 )
 
 # P1-03: Rate limiting
