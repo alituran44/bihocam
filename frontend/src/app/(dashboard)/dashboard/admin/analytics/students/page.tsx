@@ -256,7 +256,7 @@ export default function StudentAnalyticsPage() {
               <YAxis stroke="#6b7280" style={{ fontSize: "12px" }} tickFormatter={(value) => formatCurrency(value)} />
               <Tooltip
                 contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.95)", border: "1px solid #e5e7eb", borderRadius: "12px", padding: "12px" }}
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value) => formatCurrency(Number(value ?? 0))}
               />
               <Legend />
               <Bar dataKey="total_spent" fill="#14b8a6" name="Toplam Harcama" radius={[8, 8, 0, 0]} />
@@ -276,7 +276,7 @@ export default function StudentAnalyticsPage() {
                 cx="50%"
                 cy="50%"
                 outerRadius={100}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }: any) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
               >
                 {completionDistribution.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

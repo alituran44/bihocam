@@ -205,10 +205,10 @@ export default function AdminCrmTemplatesPage() {
                 />
                 <button
                   onClick={() => sendSystemTest.mutate()}
-                  disabled={!testEmail || sendSystemTest.isLoading}
+                  disabled={!testEmail || sendSystemTest.isPending}
                   className="px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-semibold disabled:opacity-50"
                 >
-                  {sendSystemTest.isLoading ? "Gönderiliyor..." : "Test Gönder"}
+                  {sendSystemTest.isPending ? "Gönderiliyor..." : "Test Gönder"}
                 </button>
               </div>
               <button onClick={() => refetchPreview()} className="text-xs text-teal-700">Önizlemeyi yenile</button>

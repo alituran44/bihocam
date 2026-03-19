@@ -123,17 +123,17 @@ export default function AdminCrmAudienceCreatePage() {
           <div className="flex gap-2">
             <button
               onClick={() => previewMutation.mutate()}
-              disabled={selectedUserIds.length === 0 || previewMutation.isLoading}
+              disabled={selectedUserIds.length === 0 || previewMutation.isPending}
               className="px-4 py-2 rounded-lg border border-teal-600 text-teal-700 bg-white text-sm font-semibold disabled:opacity-50"
             >
-              {previewMutation.isLoading ? "Hesaplanıyor..." : "Alıcı Önizle"}
+              {previewMutation.isPending ? "Hesaplanıyor..." : "Alıcı Önizle"}
             </button>
             <button
               onClick={() => createMutation.mutate()}
-              disabled={!segmentName || selectedUserIds.length === 0 || createMutation.isLoading}
+              disabled={!segmentName || selectedUserIds.length === 0 || createMutation.isPending}
               className="px-4 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold disabled:opacity-50"
             >
-              {createMutation.isLoading ? "Oluşturuluyor..." : "Kitleyi Oluştur"}
+              {createMutation.isPending ? "Oluşturuluyor..." : "Kitleyi Oluştur"}
             </button>
           </div>
 

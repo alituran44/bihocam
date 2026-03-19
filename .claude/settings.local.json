@@ -13,7 +13,8 @@
       "Bash(python -m pytest tests/test_auth.py::test_register_student -v --tb=long)",
       "Bash(pip show:*)",
       "WebFetch(domain:dev.paytr.com)",
-      "Bash(python -m pytest tests/ --tb=no -q)"
+      "Bash(python -m pytest tests/ --tb=no -q)",
+      "Bash(npx next:*)"
     ]
   }
 }

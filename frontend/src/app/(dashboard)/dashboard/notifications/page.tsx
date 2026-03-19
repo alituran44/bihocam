@@ -123,10 +123,10 @@ export default function NotificationSettingsPage() {
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
             <button
               type="submit"
-              disabled={mutation.isLoading}
+              disabled={mutation.isPending}
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-teal-500/30 disabled:opacity-50 transition-all"
             >
-              {mutation.isLoading ? "Kaydediliyor..." : "Ayarları Kaydet"}
+              {mutation.isPending ? "Kaydediliyor..." : "Ayarları Kaydet"}
             </button>
           </div>
         </form>

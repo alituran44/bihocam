@@ -178,7 +178,7 @@ export default function CoursePerformancePage() {
                   borderRadius: "12px",
                   padding: "12px",
                 }}
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value) => formatCurrency(Number(value ?? 0))}
               />
               <Legend />
               <Bar dataKey="total_revenue" fill="#14b8a6" name="Ciro" radius={[8, 8, 0, 0]} />

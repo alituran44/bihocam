@@ -79,8 +79,7 @@ export default function BlogStatsPage() {
   const postsByStatusData = [
     { name: "Yayınlanmış", value: stats.published_posts || 0, color: COLORS[1] },
     { name: "Taslak", value: stats.draft_posts || 0, color: COLORS[2] },
-    { name: "Onay Bekliyor", value: stats.pending_posts || 0, color: COLORS[2] },
-    { name: "Arşivlenmiş", value: (stats.total_posts || 0) - (stats.published_posts || 0) - (stats.draft_posts || 0) - (stats.pending_posts || 0), color: COLORS[3] },
+    { name: "Diğer", value: (stats.total_posts || 0) - (stats.published_posts || 0) - (stats.draft_posts || 0), color: COLORS[3] },
   ].filter((item) => item.value > 0);
 
   const topPostsData = (stats.top_posts || []).slice(0, 10).map((post: any) => ({
@@ -197,7 +196,7 @@ export default function BlogStatsPage() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }: any) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                     outerRadius={100}
                     fill="#8884d8"
                     dataKey="value"

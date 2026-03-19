@@ -248,7 +248,7 @@ export default function TeacherPerformancePage() {
               <YAxis stroke="#6b7280" style={{ fontSize: "12px" }} tickFormatter={(value) => formatCurrency(value)} />
               <Tooltip
                 contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.95)", border: "1px solid #e5e7eb", borderRadius: "12px", padding: "12px" }}
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value) => formatCurrency(Number(value ?? 0))}
               />
               <Legend />
               <Bar dataKey="total_revenue" fill="#14b8a6" name="Toplam Gelir" radius={[8, 8, 0, 0]} />
@@ -267,7 +267,7 @@ export default function TeacherPerformancePage() {
                 cx="50%"
                 cy="50%"
                 outerRadius={100}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }: any) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
               >
                 {courseDistribution.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -315,7 +315,7 @@ export default function TeacherPerformancePage() {
                     <td className="py-3 px-4">
                       <div className="font-semibold text-gray-900">{teacher.teacher_name}</div>
                     </td>
-                    <td className="py-3 px-4 text-gray-600 text-sm">{teacher.teacher_email}</td>
+                    <td className="py-3 px-4 text-gray-600 text-sm">{teacher.teacher_id.slice(0, 8)}...</td>
                     <td className="py-3 px-4 text-right font-medium text-gray-700">{teacher.total_courses}</td>
                     <td className="py-3 px-4 text-right font-medium text-emerald-600">{teacher.total_students}</td>
                     <td className="py-3 px-4 text-right font-bold text-teal-600">{formatCurrency(teacher.total_revenue)}</td>
@@ -327,7 +327,7 @@ export default function TeacherPerformancePage() {
                         <span className="font-semibold text-gray-700">{teacher.average_rating?.toFixed(1) || "-"}</span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-gray-600 text-sm">{formatDate(teacher.joined_at)}</td>
+                    <td className="py-3 px-4 text-gray-600 text-sm">{teacher.total_sales} satış</td>
                   </tr>
                 ))
               )}

@@ -212,13 +212,13 @@ export default function AdminCrmAudienceListPage() {
               </div>
 
               <div className="flex gap-2">
-                <button onClick={() => previewMutation.mutate()} disabled={!selectedSegmentId || previewMutation.isLoading} className="px-4 py-2 rounded-lg border border-teal-600 text-teal-700 bg-white text-sm font-semibold disabled:opacity-50">
-                  {previewMutation.isLoading ? "Hesaplanıyor..." : "Alıcı Önizle"}
+                <button onClick={() => previewMutation.mutate()} disabled={!selectedSegmentId || previewMutation.isPending} className="px-4 py-2 rounded-lg border border-teal-600 text-teal-700 bg-white text-sm font-semibold disabled:opacity-50">
+                  {previewMutation.isPending ? "Hesaplanıyor..." : "Alıcı Önizle"}
                 </button>
-                <button onClick={() => updateMutation.mutate()} disabled={!editorName || editorUserIds.length === 0 || updateMutation.isLoading} className="px-4 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold disabled:opacity-50">
-                  {updateMutation.isLoading ? "Güncelleniyor..." : "Kaydet"}
+                <button onClick={() => updateMutation.mutate()} disabled={!editorName || editorUserIds.length === 0 || updateMutation.isPending} className="px-4 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold disabled:opacity-50">
+                  {updateMutation.isPending ? "Güncelleniyor..." : "Kaydet"}
                 </button>
-                <button onClick={() => deleteMutation.mutate(selectedSegmentId)} disabled={deleteMutation.isLoading} className="px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-semibold disabled:opacity-50">
+                <button onClick={() => deleteMutation.mutate(selectedSegmentId)} disabled={deleteMutation.isPending} className="px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-semibold disabled:opacity-50">
                   Sil
                 </button>
               </div>
@@ -228,10 +228,10 @@ export default function AdminCrmAudienceListPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={() => exportCsvMutation.mutate(selectedSegmentId)}
-                    disabled={exportCsvMutation.isLoading}
+                    disabled={exportCsvMutation.isPending}
                     className="px-3 py-2 rounded-lg border border-teal-600 text-teal-700 bg-white text-xs font-semibold disabled:opacity-50"
                   >
-                    {exportCsvMutation.isLoading ? "Hazırlanıyor..." : "CSV Dışa Aktar"}
+                    {exportCsvMutation.isPending ? "Hazırlanıyor..." : "CSV Dışa Aktar"}
                   </button>
                   <select
                     value={importMode}
@@ -251,10 +251,10 @@ export default function AdminCrmAudienceListPage() {
                 />
                 <button
                   onClick={() => importCsvMutation.mutate()}
-                  disabled={!csvFile || importCsvMutation.isLoading}
+                  disabled={!csvFile || importCsvMutation.isPending}
                   className="px-3 py-2 rounded-lg bg-orange-500 text-white text-xs font-semibold disabled:opacity-50"
                 >
-                  {importCsvMutation.isLoading ? "İçe aktarılıyor..." : "CSV İçe Aktar"}
+                  {importCsvMutation.isPending ? "İçe aktarılıyor..." : "CSV İçe Aktar"}
                 </button>
                 <div className="text-[11px] text-gray-600">Kolonlar: <code>user_id</code> veya <code>email</code></div>
               </div>

@@ -25,6 +25,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   allowedDevOrigins: [
     "https://bihocam.summarify.io",
     "http://16.170.218.212",

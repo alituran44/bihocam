@@ -72,7 +72,7 @@ export default function AdminEmailLogsPage() {
             value={status}
             onChange={(e) => {
               setPage(0);
-              setStatus(e.target.value);
+              setStatus(e.target.value as any);
             }}
             className="px-3 py-2 rounded-lg border border-gray-200 text-sm"
           >

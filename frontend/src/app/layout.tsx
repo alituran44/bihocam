@@ -4,6 +4,9 @@ import "./globals.css";
 import { Providers } from "@/lib/providers";
 import SiteSettingsScripts from "@/components/SiteSettingsScripts";
 
+// Tüm sayfalar dynamic render — useSearchParams SSR hatalarını önler
+export const dynamic = "force-dynamic";
+
 const inter = Inter({
   variable: "--font-body",
   subsets: ["latin"],

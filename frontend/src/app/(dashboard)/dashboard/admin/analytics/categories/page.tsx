@@ -172,7 +172,7 @@ export default function CategoryAnalyticsPage() {
                     borderRadius: "12px",
                     padding: "12px",
                   }}
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value) => formatCurrency(Number(value ?? 0))}
                 />
                 <Legend />
                 <Bar dataKey="total_revenue" fill="#14b8a6" name="Ciro" radius={[8, 8, 0, 0]} />
@@ -190,7 +190,7 @@ export default function CategoryAnalyticsPage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ category_name, percent }) => `${category_name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }: any) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="total_revenue"
@@ -206,7 +206,7 @@ export default function CategoryAnalyticsPage() {
                     borderRadius: "12px",
                     padding: "12px",
                   }}
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value) => formatCurrency(Number(value ?? 0))}
                 />
               </PieChart>
             </ResponsiveContainer>

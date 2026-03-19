@@ -397,10 +397,10 @@ export default function AdminNotificationsPage() {
           </div>
           <button
             type="submit"
-            disabled={mutation.isLoading}
+            disabled={mutation.isPending}
             className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-teal-500/30 disabled:opacity-50 transition-all"
           >
-            {mutation.isLoading ? "Gönderiliyor..." : "Bildirim Gönder"}
+            {mutation.isPending ? "Gönderiliyor..." : "Bildirim Gönder"}
           </button>
         </div>
 

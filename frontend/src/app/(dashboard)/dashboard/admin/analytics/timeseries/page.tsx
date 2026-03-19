@@ -203,7 +203,7 @@ export default function TimeSeriesAnalyticsPage() {
                     borderRadius: "12px",
                     padding: "12px",
                   }}
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value) => formatCurrency(Number(value ?? 0))}
                 />
                 <Legend />
                 <Area
@@ -246,11 +246,11 @@ export default function TimeSeriesAnalyticsPage() {
                     borderRadius: "12px",
                     padding: "12px",
                   }}
-                  formatter={(value: number, name: string) => {
+                  formatter={(value: any, name: any) => {
                     if (name === "Gelir") {
-                      return formatCurrency(value);
+                      return formatCurrency(Number(value ?? 0));
                     }
-                    return value;
+                    return String(value);
                   }}
                 />
                 <Legend />
