@@ -141,22 +141,23 @@ async def get_iframe_token(
         test_mode=test_mode,
     )
 
+    # PayTR tüm değerleri string olarak bekler (form-urlencoded POST)
     payload = {
-        "merchant_id": settings.PAYTR_MERCHANT_ID,
-        "user_ip": user_ip,
-        "merchant_oid": merchant_oid,
-        "email": email,
-        "payment_amount": payment_amount,
-        "paytr_token": paytr_token,
-        "user_basket": user_basket,
-        "debug_on": settings.PAYTR_DEBUG,
-        "no_installment": no_installment,
-        "max_installment": max_installment,
-        "currency": currency,
-        "test_mode": test_mode,
-        "merchant_ok_url": merchant_ok_url,
-        "merchant_fail_url": merchant_fail_url,
-        "timeout_limit": settings.PAYTR_TIMEOUT_LIMIT,
+        "merchant_id": str(settings.PAYTR_MERCHANT_ID),
+        "user_ip": str(user_ip),
+        "merchant_oid": str(merchant_oid),
+        "email": str(email),
+        "payment_amount": str(payment_amount),
+        "paytr_token": str(paytr_token),
+        "user_basket": str(user_basket),
+        "debug_on": str(settings.PAYTR_DEBUG),
+        "no_installment": str(no_installment),
+        "max_installment": str(max_installment),
+        "currency": str(currency),
+        "test_mode": str(test_mode),
+        "merchant_ok_url": str(merchant_ok_url),
+        "merchant_fail_url": str(merchant_fail_url),
+        "timeout_limit": str(settings.PAYTR_TIMEOUT_LIMIT),
         "lang": "tr",
     }
 
