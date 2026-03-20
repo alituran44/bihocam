@@ -32,9 +32,23 @@ function PaymentSuccessContent() {
   });
 
   if (!orderId) {
+    // oid olmadan geldiyse genel başarı sayfası göster
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Geçersiz sayfa.</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-emerald-50">
+        <div className="bg-white rounded-2xl shadow-xl p-10 max-w-lg text-center">
+          <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-12 h-12 text-emerald-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Odemeniz Tamamlandi!</h1>
+          <p className="text-gray-500 mb-8">Kurslariniza hemen erismeye baslayabilirsiniz.</p>
+          <Link
+            href="/dashboard"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-colors font-medium"
+          >
+            <BookOpen className="w-5 h-5" />
+            Kurslarima Git
+          </Link>
+        </div>
       </div>
     );
   }

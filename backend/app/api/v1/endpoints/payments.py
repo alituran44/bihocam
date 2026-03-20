@@ -246,6 +246,8 @@ async def checkout(
         user_name=user_name or current_user.full_name or "Müşteri",
         user_phone=user_phone or getattr(current_user, "phone", None) or "05000000000",
         user_address=user_address or "Türkiye",
+        merchant_ok_url=f"{settings.FRONTEND_URL}/payment/success?oid={order.id}",
+        merchant_fail_url=f"{settings.FRONTEND_URL}/payment/fail",
     )
 
     if paytr_result.get("status") != "success":
