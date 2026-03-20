@@ -46,7 +46,9 @@ export default function LoginPage() {
   const showDemoAccounts = process.env.NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS === "true";
 
   const demoAccounts = [
-    { label: "Admin", email: "admin@bihocam.com", password: "admin123456", color: "bg-violet-100 text-violet-700" },
+    { label: "Admin", email: "admin@bihocam.com", password: "password123", color: "bg-violet-100 text-violet-700" },
+    { label: "Ogretmen", email: "ahmet.yilmaz@bihocam.com", password: "password123", color: "bg-teal-100 text-teal-700" },
+    { label: "Ogrenci", email: "ogrenci1@bihocam.com", password: "password123", color: "bg-orange-100 text-orange-700" },
   ];
 
   return (
