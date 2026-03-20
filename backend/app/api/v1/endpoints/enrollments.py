@@ -25,11 +25,7 @@ async def get_my_enrollments(
         select(Enrollment)
         .options(
             selectinload(Enrollment.course).selectinload(Course.teacher),
-            # P2-02: Tüm lesson'ları yüklemek yerine sadece count/özet bilgi için
-            # lesson'ların sadece id ve title'ını yükle (N+1 fix)
-            selectinload(Enrollment.course).selectinload(Course.lessons).load_only(
-                Lesson.id, Lesson.title, Lesson.order, Lesson.lesson_type, Lesson.is_preview,
-            ),
+            selectinload(Enrollment.course).selectinload(Course.lessons),
             selectinload(Enrollment.course).selectinload(Course.categories),
         )
         .where(Enrollment.user_id == current_user.id)
