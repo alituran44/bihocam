@@ -371,12 +371,17 @@ export default function MyCourseDetailPage() {
 
             {categories && categories.length > 0 && (
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Kategoriler</label>
-                <CategoryPicker
-                  categories={categories}
-                  selectedIds={editCategoryIds}
-                  onChange={setEditCategoryIds}
-                />
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Kategori</label>
+                <select
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  onChange={(e) => setEditCategoryIds(e.target.value ? [e.target.value] : [])}
+                  defaultValue=""
+                >
+                  <option value="">Kategori secin (opsiyonel)</option>
+                  {categories.map((cat: any) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
               </div>
             )}
 
