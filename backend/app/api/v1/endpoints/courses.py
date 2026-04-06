@@ -1,3 +1,4 @@
+from uuid import UUID as UUIDType
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, cast, String
 from sqlalchemy.dialects.postgresql import ENUM, TEXT
@@ -5,6 +6,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 import logging
+
+
+def _validate_uuid(value: str, name: str = "id") -> str:
+    """UUID formatini dogrula, gecersizse 404 don."""
+    try:
+        UUIDType(value)
+        return value
+    except (ValueError, AttributeError):
+        raise HTTPException(status_code=404, detail=f"Gecersiz {name}")
 
 from app.api.v1.endpoints.auth import get_current_user, get_current_user_optional
 from app.db.session import get_db
@@ -230,6 +240,7 @@ async def get_course(
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_current_user_optional),
 ):
+    _validate_uuid(course_id, "course_id")
     result = await db.execute(
         select(Course)
         .options(
@@ -686,7 +697,7 @@ async def get_course_students(
     current_user: User = Depends(require_teacher_or_admin),
 ):
     """Belirli bir kursa kayıtlı öğrencileri listele (sadece kurs sahibi öğretmen / admin / kurum)."""
-    # Önce kursu ve sahibini kontrol et
+    _validate_uuid(course_id, "course_id")
     course_result = await db.execute(select(Course).where(Course.id == course_id))
     course = course_result.scalar_one_or_none()
     if not course:
