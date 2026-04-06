@@ -101,10 +101,11 @@ async def get_category_tree(
     Get hierarchical category tree (all categories in nested structure).
     Optimized to prevent N+1 queries.
     """
-    # Fetch all categories in one query
-    query = select(Category).where(Category.is_active == is_active)
+    # Fetch all categories in one query with children eager loaded
+    from sqlalchemy.orm import selectinload
+    query = select(Category).options(selectinload(Category.children)).where(Category.is_active == is_active)
     query = query.order_by(Category.order, Category.name)
-    
+
     result = await db.execute(query)
     all_categories = result.scalars().all()
     

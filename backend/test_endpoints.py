@@ -112,9 +112,11 @@ async def main():
             report("GET /courses/{{id}}/reviews/stats", r.status_code, [200])
 
         # Teacher: kurs olusturma
+        import time
+        unique_slug = f"test-kurs-{int(time.time())}"
         r = await c.post(f"{BASE}/courses", headers=teacher_h, json={
             "title": "Test Kurs Endpoint",
-            "slug": "test-kurs-endpoint-check",
+            "slug": unique_slug,
             "description": "Bu bir test kursudur",
             "price": 99.90,
         })
@@ -239,8 +241,8 @@ async def main():
         r = await c.get(f"{BASE}/admin/students", headers=admin_h, params={"skip": 0, "limit": 5})
         report("GET /admin/students", r.status_code, [200])
 
-        r = await c.get(f"{BASE}/admin/teachers", headers=admin_h, params={"skip": 0, "limit": 5})
-        report("GET /admin/teachers", r.status_code, [200])
+        # admin/teachers route'u yok, teachers admin listesi /teachers endpoint'inde
+        # r = await c.get(f"{BASE}/admin/teachers", headers=admin_h, params={"skip": 0, "limit": 5})
 
         # ====== ADMIN — ORDERS ======
         r = await c.get(f"{BASE}/admin/orders", headers=admin_h, params={"skip": 0, "limit": 5})
@@ -265,11 +267,11 @@ async def main():
         # ====== PUBLIC ======
         print("\n--- PUBLIC ---")
 
-        r = await c.get(f"{BASE}/public/settings")
-        report("GET /public/settings", r.status_code, [200])
+        r = await c.get(f"{BASE}/settings/public")
+        report("GET /settings/public", r.status_code, [200])
 
-        r = await c.get(f"{BASE}/public/announcements/active")
-        report("GET /public/announcements/active", r.status_code, [200])
+        r = await c.get(f"{BASE}/announcements/active")
+        report("GET /announcements/active", r.status_code, [200])
 
         r = await c.get(f"{BASE}/public/popups/active")
         report("GET /public/popups/active", r.status_code, [200])
@@ -283,17 +285,17 @@ async def main():
         # ====== BLOG ======
         print("\n--- BLOG ---")
 
-        r = await c.get(f"{BASE}/public/blog/posts", params={"skip": 0, "limit": 5})
-        report("GET /public/blog/posts", r.status_code, [200])
+        r = await c.get(f"{BASE}/blog/posts", params={"skip": 0, "limit": 5})
+        report("GET /blog/posts", r.status_code, [200])
 
-        r = await c.get(f"{BASE}/public/blog/categories")
-        report("GET /public/blog/categories", r.status_code, [200])
+        r = await c.get(f"{BASE}/blog/categories")
+        report("GET /blog/categories", r.status_code, [200])
 
         # ====== CERTIFICATES ======
         print("\n--- CERTIFICATES ---")
 
-        r = await c.get(f"{BASE}/certificates/my", headers=student_h)
-        report("GET /certificates/my", r.status_code, [200])
+        r = await c.get(f"{BASE}/certificates/my-certificates", headers=student_h)
+        report("GET /certificates/my-certificates", r.status_code, [200])
 
         # ====== MESSAGES ======
         print("\n--- MESSAGES ---")
