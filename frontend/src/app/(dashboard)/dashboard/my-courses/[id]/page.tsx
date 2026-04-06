@@ -34,6 +34,17 @@ export default function MyCourseDetailPage() {
   const queryClient = useQueryClient();
   const id = params.id as string;
   const isNew = id === "new";
+
+  // Yeni kurs olusturma mutation (hook'lar kosullu return'den once olmali)
+  const createCourseMutation = useMutation({
+    mutationFn: (data: { title: string; slug: string; description: string; price: number; category_ids?: string[] }) =>
+      coursesApi.create(data),
+    onSuccess: (newCourse: any) => {
+      queryClient.invalidateQueries({ queryKey: ["my-courses"] });
+      router.push(`/dashboard/my-courses/${newCourse.id}`);
+    },
+  });
+
   const [showAddLessonForm, setShowAddLessonForm] = useState(false);
   const [editingLesson, setEditingLesson] = useState<LessonResponse | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -322,16 +333,6 @@ export default function MyCourseDetailPage() {
   }
 
   const totalDurationSeconds = course.lessons.reduce((total, lesson) => total + (lesson.duration_seconds || 0), 0);
-
-  // Yeni kurs olusturma modu
-  const createCourseMutation = useMutation({
-    mutationFn: (data: { title: string; slug: string; description: string; price: number; category_ids?: string[] }) =>
-      coursesApi.create(data),
-    onSuccess: (newCourse: any) => {
-      queryClient.invalidateQueries({ queryKey: ["my-courses"] });
-      router.push(`/dashboard/my-courses/${newCourse.id}`);
-    },
-  });
 
   if (isNew) {
     return (
