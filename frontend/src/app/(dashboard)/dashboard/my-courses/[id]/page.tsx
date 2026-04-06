@@ -33,6 +33,7 @@ export default function MyCourseDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const id = params.id as string;
+  const isNew = id === "new";
   const [showAddLessonForm, setShowAddLessonForm] = useState(false);
   const [editingLesson, setEditingLesson] = useState<LessonResponse | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -49,23 +50,23 @@ export default function MyCourseDetailPage() {
   const [liveLessonUrl, setLiveLessonUrl] = useState("");
 
 
-  const { data: course, isLoading } = useQuery<Course>({ 
+  const { data: course, isLoading } = useQuery<Course>({
     queryKey: ["my-course", id],
     queryFn: () => coursesApi.get(id),
-    enabled: !!id,
+    enabled: !!id && !isNew,
   });
 
   const { data: students } = useQuery<CourseStudent[]>({
     queryKey: ["course-students", id],
     queryFn: () => coursesApi.getCourseStudents(id),
-    enabled: !!id,
+    enabled: !!id && !isNew,
   });
 
   // Review history çek (REJECTED durumunda admin notunu göstermek için)
   const { data: reviewHistory } = useQuery({
     queryKey: ["course-review-history", id],
     queryFn: () => coursesApi.getCourseReviewHistory(id),
-    enabled: !!id && course?.status === "rejected",
+    enabled: !!id && !isNew && course?.status === "rejected",
   });
 
   // Son reddetme notunu bul
