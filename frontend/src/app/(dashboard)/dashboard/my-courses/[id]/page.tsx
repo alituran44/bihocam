@@ -299,7 +299,7 @@ export default function MyCourseDetailPage() {
     );
   }
 
-  if (!course) {
+  if (!course && !isNew) {
     return (
       <div className="bg-white border-2 border-gray-200 rounded-2xl p-12 text-center shadow-lg">
         <svg className="w-20 h-20 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -322,6 +322,121 @@ export default function MyCourseDetailPage() {
   }
 
   const totalDurationSeconds = course.lessons.reduce((total, lesson) => total + (lesson.duration_seconds || 0), 0);
+
+  // Yeni kurs olusturma modu
+  const createCourseMutation = useMutation({
+    mutationFn: (data: { title: string; slug: string; description: string; price: number; category_ids?: string[] }) =>
+      coursesApi.create(data),
+    onSuccess: (newCourse: any) => {
+      queryClient.invalidateQueries({ queryKey: ["my-courses"] });
+      router.push(`/dashboard/my-courses/${newCourse.id}`);
+    },
+  });
+
+  if (isNew) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <button
+          onClick={() => router.push("/dashboard/my-courses")}
+          className="text-sm text-teal-600 hover:text-teal-700 mb-6 flex items-center gap-2 font-medium"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Egitimlerime don
+        </button>
+
+        <div className="bg-white rounded-2xl border-2 border-gray-200 p-8 shadow-lg">
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">Yeni Kurs Olustur</h1>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const title = formData.get("title") as string;
+              const slug = title
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, "")
+                .replace(/\s+/g, "-")
+                .replace(/-+/g, "-")
+                .trim();
+              createCourseMutation.mutate({
+                title,
+                slug: slug || `kurs-${Date.now()}`,
+                description: formData.get("description") as string,
+                price: Number(formData.get("price") || 0),
+                category_ids: editCategoryIds.length > 0 ? editCategoryIds : undefined,
+              });
+            }}
+            className="space-y-5"
+          >
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Kurs Adi <span className="text-red-500">*</span>
+              </label>
+              <input
+                name="title"
+                type="text"
+                required
+                placeholder="Ornek: Python ile Web Gelistirme"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Aciklama</label>
+              <textarea
+                name="description"
+                rows={4}
+                placeholder="Kursunuzu kisaca tanitin..."
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Fiyat (TL) <span className="text-red-500">*</span>
+              </label>
+              <input
+                name="price"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue="0"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              />
+              <p className="text-xs text-gray-400 mt-1">0 girerseniz kurs ucretsiz olur</p>
+            </div>
+
+            {categories && categories.length > 0 && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Kategoriler</label>
+                <CategoryPicker
+                  categories={categories}
+                  selectedIds={editCategoryIds}
+                  onChange={setEditCategoryIds}
+                />
+              </div>
+            )}
+
+            {createCourseMutation.isError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
+                {(createCourseMutation.error as any)?.response?.data?.detail || "Kurs olusturulamadi"}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={createCourseMutation.isPending}
+              className="w-full py-3.5 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-colors font-semibold text-lg disabled:opacity-50"
+            >
+              {createCourseMutation.isPending ? "Olusturuluyor..." : "Kurs Olustur"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto">
