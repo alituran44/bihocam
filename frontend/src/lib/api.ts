@@ -698,7 +698,7 @@ export const couponsApi = {
     return data;
   },
   update: async (couponId: string, coupon: CouponUpdate): Promise<Coupon> => {
-    const { data } = await api.put(`/admin/coupons/${couponId}`, coupon);
+    const { data } = await api.patch(`/admin/coupons/${couponId}`, coupon);
     return data;
   },
   delete: async (couponId: string): Promise<void> => {
