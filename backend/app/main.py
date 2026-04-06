@@ -267,6 +267,10 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    # Gecersiz UUID → 404 (orn: /courses/new, /certificates/my)
+    exc_str = str(exc)
+    if "invalid UUID" in exc_str or "invalid input for query argument" in exc_str:
+        return JSONResponse(status_code=404, detail="Kaynak bulunamadi")
     import uuid
     error_id = str(uuid.uuid4())[:8]
     error_detail = traceback.format_exc()
