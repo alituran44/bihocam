@@ -47,7 +47,7 @@ export default function MyCourseDetailPage() {
 
   const [showAddLessonForm, setShowAddLessonForm] = useState(false);
   const [editingLesson, setEditingLesson] = useState<LessonResponse | null>(null);
-  const [showEditForm, setShowEditForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(isNew);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editPrice, setEditPrice] = useState(0);
@@ -294,117 +294,7 @@ export default function MyCourseDetailPage() {
     );
   };
 
-  if (isNew) {
-    return (
-      <div className="max-w-3xl mx-auto">
-        <button
-          onClick={() => router.push("/dashboard/my-courses")}
-          className="text-sm text-teal-600 hover:text-teal-700 mb-6 flex items-center gap-2 font-medium"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Egitimlerime don
-        </button>
-
-        <div className="bg-white rounded-2xl border-2 border-gray-200 p-8 shadow-lg">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Yeni Kurs Olustur</h1>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const formData = new FormData(e.currentTarget);
-              const title = formData.get("title") as string;
-              const slug = title
-                .toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, "")
-                .replace(/\s+/g, "-")
-                .replace(/-+/g, "-")
-                .trim();
-              createCourseMutation.mutate({
-                title,
-                slug: slug || `kurs-${Date.now()}`,
-                description: formData.get("description") as string,
-                price: Number(formData.get("price") || 0),
-                category_ids: editCategoryIds.length > 0 ? editCategoryIds : undefined,
-              });
-            }}
-            className="space-y-5"
-          >
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Kurs Adi <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="title"
-                type="text"
-                required
-                placeholder="Ornek: Python ile Web Gelistirme"
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Aciklama</label>
-              <textarea
-                name="description"
-                rows={4}
-                placeholder="Kursunuzu kisaca tanitin..."
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Fiyat (TL) <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="price"
-                type="number"
-                min="0"
-                step="0.01"
-                defaultValue="0"
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              />
-              <p className="text-xs text-gray-400 mt-1">0 girerseniz kurs ucretsiz olur</p>
-            </div>
-
-            {categories && categories.length > 0 && (
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Kategori</label>
-                <select
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                  onChange={(e) => setEditCategoryIds(e.target.value ? [e.target.value] : [])}
-                  defaultValue=""
-                >
-                  <option value="">Kategori secin (opsiyonel)</option>
-                  {categories.map((cat: any) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {createCourseMutation.isError && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
-                {(createCourseMutation.error as any)?.response?.data?.detail || "Kurs olusturulamadi"}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={createCourseMutation.isPending}
-              className="w-full py-3.5 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-colors font-semibold text-lg disabled:opacity-50"
-            >
-              {createCourseMutation.isPending ? "Olusturuluyor..." : "Kurs Olustur"}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
+  if (isLoading && !isNew) {
     return (
       <div className="space-y-6">
         <div className="h-10 w-64 bg-gray-200 rounded animate-pulse" />
@@ -420,7 +310,7 @@ export default function MyCourseDetailPage() {
     );
   }
 
-  if (!course) {
+  if (!course && !isNew) {
     return (
       <div className="bg-white border-2 border-gray-200 rounded-2xl p-12 text-center shadow-lg">
         <h1 className="text-2xl font-bold text-gray-900 mb-3">Kursunuz bulunamadi</h1>
@@ -432,7 +322,13 @@ export default function MyCourseDetailPage() {
     );
   }
 
-  const totalDurationSeconds = course.lessons.reduce((total: number, lesson: any) => total + (lesson.duration_seconds || 0), 0);
+  // isNew modunda course yok — tum course.xxx erisimleri icin default obje
+  const c: Course = course || {
+    id: "", title: "", slug: "", description: "", thumbnail_path: null,
+    price: 0, discount_price: null, status: "draft",
+    lessons: [] as Lesson[], categories: [], created_at: new Date().toISOString(),
+  };
+  const totalDurationSeconds = c.lessons.reduce((total: number, lesson: any) => total + (lesson.duration_seconds || 0), 0);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -449,7 +345,7 @@ export default function MyCourseDetailPage() {
         </button>
 
         {/* REJECTED Durumunda Admin Notu Alert Bloğu */}
-        {course.status === "rejected" && lastRejectionNote && (
+        {c.status === "rejected" && lastRejectionNote && (
           <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6 mb-6 shadow-lg">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
@@ -472,7 +368,7 @@ export default function MyCourseDetailPage() {
         )}
 
         {/* PENDING_REVIEW Durumunda Bilgilendirme */}
-        {course.status === "pending_review" && (
+        {c.status === "pending_review" && (
           <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-6 mb-6 shadow-lg">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
@@ -494,7 +390,7 @@ export default function MyCourseDetailPage() {
 
         <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6 mb-6">
           {/* Arşivlenmiş Kurs Uyarısı */}
-          {course.status === "archived" && (
+          {c.status === "archived" && (
             <div className="mb-4 p-4 bg-amber-50 border-2 border-amber-200 rounded-lg">
               <div className="flex items-center gap-2 text-amber-800 font-semibold mb-2">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -509,7 +405,7 @@ export default function MyCourseDetailPage() {
           )}
 
           {/* Onaya Göndermek İçin Eksik Alanlar Uyarısı - Draft ve Rejected durumlarında */}
-          {(course.status === "draft" || course.status === "rejected") && (
+          {(c.status === "draft" || c.status === "rejected") && (
             <div className="mb-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
               <div className="flex items-center gap-2 text-blue-800 font-semibold mb-2">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -518,15 +414,15 @@ export default function MyCourseDetailPage() {
                 Onaya göndermek için kontrol edin
               </div>
               <ul className="text-sm text-blue-700 space-y-1 mb-3">
-                {(!course.description || course.description.length < 50) && (
+                {(!c.description || c.description.length < 50) && (
                   <li className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    <span>Kurs açıklaması en az 50 karakter olmalıdır (şu an: {course.description?.length || 0} karakter)</span>
+                    <span>Kurs açıklaması en az 50 karakter olmalıdır (şu an: {c.description?.length || 0} karakter)</span>
                   </li>
                 )}
-                {course.description && course.description.length >= 50 && (
+                {c.description && c.description.length >= 50 && (
                   <li className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -534,7 +430,7 @@ export default function MyCourseDetailPage() {
                     <span>Kurs açıklaması tamamlandı</span>
                   </li>
                 )}
-                {(!course.categories || course.categories.length === 0) && (
+                {(!c.categories || c.categories.length === 0) && (
                   <li className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -542,15 +438,15 @@ export default function MyCourseDetailPage() {
                     <span>Kurs en az 1 kategoriye atanmalıdır</span>
                   </li>
                 )}
-                {course.categories && course.categories.length > 0 && (
+                {c.categories && c.categories.length > 0 && (
                   <li className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Kategori ataması tamamlandı ({course.categories.length} kategori)</span>
+                    <span>Kategori ataması tamamlandı ({c.categories.length} kategori)</span>
                   </li>
                 )}
-                {course.lessons.length === 0 && (
+                {c.lessons.length === 0 && (
                   <li className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -558,15 +454,15 @@ export default function MyCourseDetailPage() {
                     <span>Kurs en az 1 ders içermelidir</span>
                   </li>
                 )}
-                {course.lessons.length > 0 && (
+                {c.lessons.length > 0 && (
                   <li className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Ders sayısı yeterli ({course.lessons.length} ders)</span>
+                    <span>Ders sayısı yeterli ({c.lessons.length} ders)</span>
                   </li>
                 )}
-                {course.price === null || course.price === undefined ? (
+                {c.price === null || c.price === undefined ? (
                   <li className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -578,7 +474,7 @@ export default function MyCourseDetailPage() {
                     <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Fiyat belirtilmiş (₺{Number(course.price || 0).toFixed(2)})</span>
+                    <span>Fiyat belirtilmiş (₺{Number(c.price || 0).toFixed(2)})</span>
                   </li>
                 )}
               </ul>
@@ -591,29 +487,29 @@ export default function MyCourseDetailPage() {
           <div className="flex items-start justify-between gap-6">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3 flex-wrap">
-                <h1 className="text-3xl font-bold text-gray-900">{course.title}</h1>
-                {course.status === "published" ? (
+                <h1 className="text-3xl font-bold text-gray-900">{c.title}</h1>
+                {c.status === "published" ? (
                   <span className="px-4 py-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg text-sm font-bold shadow-md flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     Yayında
                   </span>
-                ) : course.status === "pending_review" ? (
+                ) : c.status === "pending_review" ? (
                   <span className="px-4 py-1.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg text-sm font-bold shadow-md flex items-center gap-2">
                     <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     İncelemede
                   </span>
-                ) : course.status === "rejected" ? (
+                ) : c.status === "rejected" ? (
                   <span className="px-4 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg text-sm font-bold shadow-md flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                     Reddedildi
                   </span>
-                ) : course.status === "archived" ? (
+                ) : c.status === "archived" ? (
                   <span className="px-4 py-1.5 bg-gradient-to-r from-slate-500 to-slate-600 text-white rounded-lg text-sm font-bold shadow-md flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
@@ -634,7 +530,7 @@ export default function MyCourseDetailPage() {
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
-                  {course.lessons.length} ders
+                  {c.lessons.length} ders
                 </span>
                 <span className="flex items-center gap-1">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -646,7 +542,7 @@ export default function MyCourseDetailPage() {
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  ₺{Number(course.price || 0).toFixed(2)}
+                  ₺{Number(c.price || 0).toFixed(2)}
                 </span>
               </div>
             </div>
@@ -654,10 +550,10 @@ export default function MyCourseDetailPage() {
             {/* Action Buttons */}
             <div className="flex items-center gap-2 flex-wrap">
               {/* Onaya Gönder Butonu - Draft ve Rejected durumlarında göster */}
-              {(course.status === "draft" || course.status === "rejected") && (
+              {(c.status === "draft" || c.status === "rejected") && (
                 <button
                   onClick={() => {
-                    if (course.lessons.length === 0) {
+                    if (c.lessons.length === 0) {
                       alert("Kursu onaya göndermek için en az 1 ders eklemeniz gerekiyor.");
                       return;
                     }
@@ -665,7 +561,7 @@ export default function MyCourseDetailPage() {
                       submitForReviewMutation.mutate();
                     }
                   }}
-                  disabled={submitForReviewMutation.isPending || course.lessons.length === 0}
+                  disabled={submitForReviewMutation.isPending || c.lessons.length === 0}
                   className="px-5 py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 hover:shadow-lg hover:shadow-teal-500/30 disabled:bg-gray-400 text-white text-sm rounded-lg transition-all flex items-center gap-2 font-semibold shadow-md hover:shadow-lg disabled:shadow-none"
                 >
                   {submitForReviewMutation.isPending ? (
@@ -686,7 +582,7 @@ export default function MyCourseDetailPage() {
                   )}
                 </button>
               )}
-              {course.status === "published" && (
+              {c.status === "published" && (
                 <>
                   <button
                     onClick={() => {
@@ -718,7 +614,7 @@ export default function MyCourseDetailPage() {
                   </button>
                 </>
               )}
-              {(course.status === "archived" || course?.status === "archived") && (
+              {(c.status === "archived" || course?.status === "archived") && (
                 <button
                   onClick={() => {
                     if (confirm("Kursu arşivden çıkarmak istediğinize emin misiniz? Kurs yayınlanacak.")) {
@@ -868,11 +764,11 @@ export default function MyCourseDetailPage() {
                 onClick={() => {
                   setShowEditForm(false);
                   if (course) {
-                    setEditTitle(course.title);
-                    setEditDescription(course.description || "");
-                    setEditPrice(Number(course.price || 0));
-                    if (course.categories && Array.isArray(course.categories)) {
-                      setEditCategoryIds(course.categories.map((cat: any) => cat.id));
+                    setEditTitle(c.title);
+                    setEditDescription(c.description || "");
+                    setEditPrice(Number(c.price || 0));
+                    if (c.categories && Array.isArray(c.categories)) {
+                      setEditCategoryIds(c.categories.map((cat: any) => cat.id));
                     } else {
                       setEditCategoryIds([]);
                     }
@@ -891,7 +787,7 @@ export default function MyCourseDetailPage() {
         {/* Sol: Kurs açıklaması ve içerik */}
         <div className="md:col-span-2 space-y-6">
           {/* Kurs Açıklaması */}
-          {course.description && (
+          {c.description && (
             <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-lg">
               <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -899,7 +795,7 @@ export default function MyCourseDetailPage() {
                 </svg>
                 Kurs Açıklaması
               </h2>
-              <p className="text-gray-700 whitespace-pre-line leading-relaxed">{course.description}</p>
+              <p className="text-gray-700 whitespace-pre-line leading-relaxed">{c.description}</p>
             </div>
           )}
 
@@ -941,7 +837,7 @@ export default function MyCourseDetailPage() {
 
             {/* EPIC-10: Sortable Lesson List */}
             <SortableLessonList
-              lessons={course.lessons.slice().sort((a, b) => a.order - b.order)}
+              lessons={c.lessons.slice().sort((a, b) => a.order - b.order)}
               courseId={id}
               onEdit={handleEditLesson}
               onDelete={handleDeleteLesson}
@@ -957,10 +853,10 @@ export default function MyCourseDetailPage() {
         {/* Sağ: Özet kartı */}
         <div>
           <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-lg sticky top-8 space-y-6">
-            {course.thumbnail_path ? (
+            {c.thumbnail_path ? (
               <img
-                src={course.thumbnail_path}
-                alt={course.title}
+                src={c.thumbnail_path}
+                alt={c.title}
                 className="w-full h-48 object-cover rounded-xl mb-6 border-2 border-gray-200"
               />
             ) : (
@@ -980,13 +876,13 @@ export default function MyCourseDetailPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Fiyat</span>
-                    <span className="font-bold text-gray-900">₺{Number(course.price || 0).toFixed(2)}</span>
+                    <span className="font-bold text-gray-900">₺{Number(c.price || 0).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
 
               <div className="pt-4 border-t-2 border-gray-200">
-                {(course.status === "archived" || course?.status === "archived") ? (
+                {(c.status === "archived" || course?.status === "archived") ? (
                   <button
                     onClick={() => {
                       if (confirm("Kursu arşivden çıkarmak istediğinize emin misiniz? Kurs yayınlanacak.")) {
@@ -1015,7 +911,7 @@ export default function MyCourseDetailPage() {
                   </button>
                 ) : (
                   <Link
-                    href={`/courses/${course.slug}`}
+                    href={`/courses/${c.slug}`}
                     className="block text-center w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg mb-3"
                   >
                     Kurs Sayfasına Git
