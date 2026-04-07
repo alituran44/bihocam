@@ -32,8 +32,8 @@ nul
 *.log
 npm-debug.log*
 
-# Media uploads (too large for git)
-backend/media/
+# Media uploads — live recordings hariç git'te
+backend/media/live_recordings/
 
 # Nested repo leftovers
 backend/backend/
