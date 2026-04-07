@@ -247,6 +247,10 @@ export const coursesApi = {
     const { data } = await api.patch(`/courses/${id}`, course);
     return data;
   },
+  delete: async (id: string) => {
+    const { data } = await api.delete(`/courses/${id}`);
+    return data;
+  },
   // EPIC-10: Enhanced Lesson List with Filtering (EP10-BE-10)
   getLessons: async (courseId: string, params?: {
     lesson_type?: LessonType;

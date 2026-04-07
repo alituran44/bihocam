@@ -349,6 +349,42 @@ async def create_course(
     return created_course
 
 
+@router.delete("/{course_id}")
+async def delete_course(
+    course_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_teacher_or_admin),
+):
+    """
+    Kurs silme — sadece draft/rejected kurslar silinebilir.
+    Published kurslar oncelikle arsivlenmeli.
+    Teacher kendi kursunu, admin herhangi bir kursu silebilir.
+    """
+    _validate_uuid(course_id, "course_id")
+    result = await db.execute(select(Course).where(Course.id == course_id))
+    course = result.scalar_one_or_none()
+    if not course:
+        raise HTTPException(status_code=404, detail="Kurs bulunamadi")
+
+    if current_user.role == UserRole.TEACHER and course.teacher_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Bu kursu silme yetkiniz yok")
+
+    if course.status == "published":
+        raise HTTPException(status_code=400, detail="Yayindaki kurslar silinemez. Oncelikle arsivleyin.")
+
+    # Enrollment kontrolu
+    from sqlalchemy import func
+    enrollment_count = await db.execute(
+        select(func.count(Enrollment.id)).where(Enrollment.course_id == course_id)
+    )
+    if (enrollment_count.scalar() or 0) > 0:
+        raise HTTPException(status_code=400, detail="Kayitli ogrencisi olan kurslar silinemez")
+
+    await db.delete(course)
+    await db.commit()
+    return {"message": "Kurs basariyla silindi"}
+
+
 @router.patch("/{course_id}", response_model=CourseResponse)
 async def update_course(
     course_id: str,
