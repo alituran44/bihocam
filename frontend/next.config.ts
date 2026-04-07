@@ -4,7 +4,7 @@ const securityHeaders = [
   {
     key: "Content-Security-Policy",
     value:
-      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.paytr.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http: https:; font-src 'self' data:; connect-src 'self' http://localhost:6767 https://api-bihocam.summarify.io ws://localhost:3454; frame-src 'self' https://www.paytr.com;",
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.paytr.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http: https:; font-src 'self' data:; connect-src 'self' http://localhost:6767 https://api-bihocam.summarify.io ws://localhost:3454; frame-src 'self' https://www.paytr.com; media-src 'self' http://localhost:6767 https://api-bihocam.summarify.io blob:;",
   },
   {
     key: "X-Content-Type-Options",
