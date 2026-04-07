@@ -149,14 +149,19 @@ export default function CourseDetailPage() {
     setExpandedLessons(newExpanded);
   };
 
+  const [cartError, setCartError] = useState<string | null>(null);
+
   const addToCartMutation = useMutation({
     mutationFn: (courseId: string) => cartApi.addToCart(courseId),
     onSuccess: () => {
+      setCartError(null);
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       router.push("/cart");
     },
-    onError: () => {
+    onError: (err: any) => {
       setAddingToCart(false);
+      const detail = err?.response?.data?.detail || "Sepete eklenemedi";
+      setCartError(detail);
     },
   });
 
@@ -716,6 +721,11 @@ export default function CourseDetailPage() {
                       >
                         {addingToCart || addToCartMutation.isPending ? "Ekleniyor..." : "Sepete Ekle"}
                       </button>
+                      {cartError && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 text-sm text-amber-800 text-center">
+                          {cartError}
+                        </div>
+                      )}
                       {course.price === 0 && (
                         <button className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:shadow-lg hover:shadow-emerald-500/30 text-white py-4 rounded-xl font-bold transition-all mb-3">
                           Hemen Kaydol

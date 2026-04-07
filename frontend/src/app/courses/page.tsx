@@ -131,13 +131,21 @@ export default function CoursesPage() {
     return result;
   }, [courses, selectedCategoryIds, filter, sort]);
 
+  const [cartError, setCartError] = useState<string | null>(null);
+
   const addMutation = useMutation({
     mutationFn: (id: string) => cartApi.addToCart(id),
     onSuccess: () => {
+      setCartError(null);
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       setAddingId(null);
     },
-    onError: () => setAddingId(null),
+    onError: (err: any) => {
+      setAddingId(null);
+      const detail = err?.response?.data?.detail || "Sepete eklenemedi";
+      setCartError(detail);
+      setTimeout(() => setCartError(null), 4000);
+    },
   });
 
   const handleAdd = (id: string) => {
@@ -149,6 +157,13 @@ export default function CoursesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
+
+      {/* Cart Error Toast */}
+      {cartError && (
+        <div className="fixed top-4 right-4 z-50 bg-amber-50 border border-amber-300 rounded-xl px-5 py-3 shadow-lg text-amber-800 font-medium text-sm animate-in fade-in">
+          {cartError}
+        </div>
+      )}
 
       {/* Hero Header */}
       <div className="bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800 pt-24 pb-16">
