@@ -240,14 +240,91 @@ export default function ProgramDetailPage() {
                         {openSection === i && section.items && (
                           <div className="px-5 py-3 bg-white">
                             <ul className="space-y-2">
-                              {section.items.map((item: string, j: number) => (
-                                <li key={j} className="flex items-center gap-3 text-xs sm:text-sm text-gray-600 py-2 border-b border-gray-50 last:border-0 font-semibold">
-                                  <svg className="w-4 h-4 text-teal-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.873v6.254a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                  </svg>
-                                  {item}
-                                </li>
-                              ))}
+                              {section.items.map((item: any, j: number) => {
+                                const title = typeof item === "string" ? item : (item?.title || "");
+                                const lessonType = typeof item === "string" ? "video" : (item?.lesson_type || "video");
+                                const contentUrl = typeof item === "string" ? "" : (item?.content_url || "");
+                                return (
+                                  <li key={j} className="flex items-center justify-between gap-3 text-xs sm:text-sm text-gray-600 py-3 border-b border-gray-50 last:border-0 font-semibold group hover:bg-gray-50/30 px-2 rounded-lg transition-colors">
+                                    <div className="flex items-center gap-3">
+                                      {lessonType === "live_class" && (
+                                        <div className="relative flex items-center justify-center flex-shrink-0">
+                                          <span className="animate-ping absolute inline-flex h-2.5 w-2.5 rounded-full bg-red-400 opacity-75"></span>
+                                          <svg className="w-4 h-4 text-red-500 relative flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 000-7.072m-2.828 9.9a9 0 000-12.728M12 14a2 2 0 100-4 2 2 0 000 4z" />
+                                          </svg>
+                                        </div>
+                                      )}
+                                      {lessonType === "pdf" && (
+                                        <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
+                                      )}
+                                      {lessonType === "text" && (
+                                        <svg className="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                        </svg>
+                                      )}
+                                      {lessonType === "video" && (
+                                        <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                      )}
+                                      <span className="text-gray-700 group-hover:text-teal-600 transition-colors">{title}</span>
+                                    </div>
+                                    <div className="flex-shrink-0">
+                                      {contentUrl ? (
+                                        <a
+                                          href={contentUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className={`px-2.5 py-1 rounded text-[10px] font-bold tracking-wide uppercase flex items-center gap-1 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer ${
+                                            lessonType === "live_class" ? "bg-red-500 hover:bg-red-600 text-white" :
+                                            lessonType === "pdf" ? "bg-emerald-600 hover:bg-emerald-700 text-white" :
+                                            lessonType === "text" ? "bg-indigo-600 hover:bg-indigo-700 text-white" :
+                                            "bg-blue-600 hover:bg-blue-700 text-white"
+                                          }`}
+                                        >
+                                          {lessonType === "live_class" && (
+                                            <>
+                                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                                              Canlı Derse Katıl
+                                            </>
+                                          )}
+                                          {lessonType === "pdf" && "📄 PDF Dokümanını Aç"}
+                                          {lessonType === "text" && "✍️ Yazıyı Oku"}
+                                          {lessonType === "video" && "🎥 Videoyu İzle"}
+                                        </a>
+                                      ) : (
+                                        <>
+                                          {lessonType === "live_class" && (
+                                            <span className="bg-red-50 text-red-700 border border-red-100 px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase flex items-center gap-1 shadow-sm">
+                                              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                                              Canlı Ders
+                                            </span>
+                                          )}
+                                          {lessonType === "pdf" && (
+                                            <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase shadow-sm">
+                                              PDF Dosyası
+                                            </span>
+                                          )}
+                                          {lessonType === "text" && (
+                                            <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase shadow-sm">
+                                              Yazılı Ders
+                                            </span>
+                                          )}
+                                          {lessonType === "video" && (
+                                            <span className="bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase shadow-sm">
+                                              Video Ders
+                                            </span>
+                                          )}
+                                        </>
+                                      )}
+                                    </div>
+                                  </li>
+                                );
+                              })}
                             </ul>
                           </div>
                         )}

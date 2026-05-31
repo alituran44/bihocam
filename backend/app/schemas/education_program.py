@@ -1,13 +1,13 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 
 
 class CurriculumSectionSchema(BaseModel):
     title: str
     lessonCount: int
     duration: str
-    items: List[str] = []
+    items: List[Union[str, Dict[str, Any]]] = []
 
 
 class FAQSchema(BaseModel):

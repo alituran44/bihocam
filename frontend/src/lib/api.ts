@@ -4140,7 +4140,7 @@ export interface CurriculumSection {
   title: string;
   lessonCount: number;
   duration: string;
-  items: string[];
+  items: (string | { title: string; lesson_type: string })[];
 }
 
 export interface FAQ {

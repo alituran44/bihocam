@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { authApi, notificationsApi, siteSettingsApi, api } from "@/lib/api";
+import { authApi, notificationsApi, siteSettingsApi, api, teacherProfileApi, bankAccountsApi, teacherApplicationsApi, mediaApi, API_URL, type BankAccount } from "@/lib/api";
 
 interface UserProfile {
   id: string;
@@ -42,6 +42,18 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState("");
   const [bio, setBio] = useState("");
 
+  // Teacher profile states
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [bankNameForm, setBankNameForm] = useState("");
+  const [ibanForm, setIbanForm] = useState("");
+  const [holderNameForm, setHolderNameForm] = useState("");
+
+  const [cvPath, setCvPath] = useState("");
+  const [gradCertPath, setGradCertPath] = useState("");
+  const [crimRecordPath, setCrimRecordPath] = useState("");
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingDoc, setIsUploadingDoc] = useState<Record<string, boolean>>({});
+
   // Password form state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -50,6 +62,27 @@ export default function SettingsPage() {
   const { data: user, isLoading } = useQuery<UserProfile>({
     queryKey: ["me"],
     queryFn: () => authApi.getMe(),
+  });
+
+  const { data: bankAccounts, refetch: refetchBankAccounts } = useQuery<BankAccount[]>({
+    queryKey: ["my-bank-accounts"],
+    queryFn: () => bankAccountsApi.list(),
+    enabled: user?.role === "teacher",
+  });
+
+  const { data: application, refetch: refetchApplication } = useQuery({
+    queryKey: ["my-teacher-application"],
+    queryFn: async () => {
+      try {
+        return await teacherApplicationsApi.getMyApplication();
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          return null;
+        }
+        throw err;
+      }
+    },
+    enabled: user?.role === "teacher",
   });
 
   const { data: notifPrefs } = useQuery({
@@ -68,8 +101,17 @@ export default function SettingsPage() {
       setFullName(user.full_name || "");
       setPhone(user.phone || "");
       setBio(user.bio || "");
+      setAvatarUrl(user.avatar_url || "");
     }
   }, [user]);
+
+  useEffect(() => {
+    if (application) {
+      setCvPath(application.cv_path || "");
+      setGradCertPath(application.graduation_cert_path || "");
+      setCrimRecordPath(application.criminal_record_path || "");
+    }
+  }, [application]);
 
   useEffect(() => {
     if (siteSettings?.platform) {
@@ -138,6 +180,14 @@ export default function SettingsPage() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async () => {
+      if (user?.role === "teacher") {
+        return teacherProfileApi.updateMyProfile({
+          full_name: fullName,
+          phone: phone || undefined,
+          bio: bio || undefined,
+          avatar_url: avatarUrl || undefined,
+        });
+      }
       const { data } = await api.put("/auth/me", {
         full_name: fullName,
         phone: phone || null,
@@ -155,6 +205,103 @@ export default function SettingsPage() {
       setMessage(null);
     },
   });
+
+  const addBankAccountMutation = useMutation({
+    mutationFn: async (data: { bank_name: string; iban: string; account_holder_name: string }) => {
+      return bankAccountsApi.create(data);
+    },
+    onSuccess: () => {
+      setMessage("Banka hesabı başarıyla eklendi ve onay bekliyor.");
+      setError(null);
+      setBankNameForm("");
+      setIbanForm("");
+      setHolderNameForm("");
+      refetchBankAccounts();
+    },
+    onError: (err: any) => {
+      setError("Banka hesabı eklenirken hata oluştu: " + (err.response?.data?.detail || err.message));
+      setMessage(null);
+    },
+  });
+
+  const handleAvatarUpload = async (file: File) => {
+    setIsUploadingAvatar(true);
+    try {
+      const result = await mediaApi.uploadAvatar(file);
+      setAvatarUrl(result.url);
+      
+      // Save it using the update mutation
+      if (user?.role === "teacher") {
+        await teacherProfileApi.updateMyProfile({
+          avatar_url: result.url,
+        });
+      } else {
+        await api.put("/auth/me", {
+          full_name: fullName,
+          phone: phone || null,
+          bio: bio || null,
+          avatar_url: result.url,
+        });
+      }
+      
+      setMessage("Profil fotoğrafı başarıyla güncellendi!");
+      setError(null);
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+    } catch (err: any) {
+      setError("Profil fotoğrafı yüklenirken hata oluştu: " + (err.response?.data?.detail || err.message));
+      setMessage(null);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleDocumentUpload = async (docType: "cv" | "graduation" | "criminal", file: File) => {
+    setIsUploadingDoc((prev) => ({ ...prev, [docType]: true }));
+    try {
+      const uploadResult = await teacherApplicationsApi.uploadDocument(file);
+      
+      const docsUpdate: Record<string, string> = {};
+      if (docType === "cv") {
+        setCvPath(uploadResult.path);
+        docsUpdate.cv_path = uploadResult.path;
+      } else if (docType === "graduation") {
+        setGradCertPath(uploadResult.path);
+        docsUpdate.graduation_cert_path = uploadResult.path;
+      } else if (docType === "criminal") {
+        setCrimRecordPath(uploadResult.path);
+        docsUpdate.criminal_record_path = uploadResult.path;
+      }
+
+      if (!application) {
+        await teacherApplicationsApi.submitApplication({
+          full_name: fullName || user?.full_name || "",
+          phone: phone || user?.phone || "0000000000",
+          address: "Ayarlar menüsünden yüklendi",
+          birth_date: "1990-01-01",
+          gender: "Belirtilmemiş",
+          branches: ["Genel"],
+          levels: ["Genel"],
+          experience_years: 1,
+          bio: bio || "Eğitmen profili",
+          heard_from: "Sistem Ayarları",
+          cv_path: docType === "cv" ? uploadResult.path : "",
+          graduation_cert_path: docType === "graduation" ? uploadResult.path : "",
+          criminal_record_path: docType === "criminal" ? uploadResult.path : "",
+        });
+      } else {
+        await api.patch("/teacher-applications/me/documents", docsUpdate);
+      }
+
+      setMessage("Belge başarıyla yüklendi!");
+      setError(null);
+      refetchApplication();
+    } catch (err: any) {
+      setError("Belge yüklenirken hata oluştu: " + (err.response?.data?.detail || err.message));
+      setMessage(null);
+    } finally {
+      setIsUploadingDoc((prev) => ({ ...prev, [docType]: false }));
+    }
+  };
 
   const changePasswordMutation = useMutation({
     mutationFn: async () => {
@@ -290,62 +437,352 @@ export default function SettingsPage() {
         <div className="p-6 md:p-8">
           {/* Profile Tab */}
           {activeTab === "profile" && (
-            <div className="max-w-2xl space-y-6">
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1 block">Ad Soyad</label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
-                />
-              </div>
+            <div className={user?.role === "teacher" ? "grid grid-cols-1 lg:grid-cols-2 gap-8" : "max-w-2xl space-y-6"}>
+              
+              {/* Left Column (Main Form fields) */}
+              <div className="space-y-6">
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-1 block">Ad Soyad</label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                  />
+                </div>
 
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1 block">E-posta</label>
-                <input
-                  type="email"
-                  value={user?.email || ""}
-                  disabled
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 text-sm"
-                />
-                <p className="text-xs text-gray-400 mt-1">E-posta adresi değiştirilemez</p>
-              </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-1 block">E-posta</label>
+                  <input
+                    type="email"
+                    value={user?.email || ""}
+                    disabled
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 text-sm"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">E-posta adresi değiştirilemez</p>
+                </div>
 
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1 block">Telefon</label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+90 5XX XXX XX XX"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
-                />
-              </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-1 block">Telefon</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+90 5XX XXX XX XX"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                  />
+                </div>
 
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1 block">Hakkında</label>
-                <textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  rows={4}
-                  placeholder="Kendinizi kısaca tanıtın..."
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
-                />
-              </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-1 block">Hakkında</label>
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    rows={4}
+                    placeholder="Kendinizi kısaca tanıtın..."
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                  />
+                </div>
 
-              <div className="flex items-center gap-4 pt-2">
-                <button
-                  onClick={() => updateProfileMutation.mutate()}
-                  disabled={updateProfileMutation.isPending}
-                  className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-teal-700 hover:to-emerald-700 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl"
-                >
-                  {updateProfileMutation.isPending ? "Kaydediliyor..." : "Değişiklikleri Kaydet"}
-                </button>
-                <div className="text-sm text-gray-500">
-                  Rol: <span className="font-semibold text-teal-700 capitalize">{user?.role}</span>
+                <div className="flex items-center gap-4 pt-2">
+                  <button
+                    onClick={() => updateProfileMutation.mutate()}
+                    disabled={updateProfileMutation.isPending}
+                    className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-teal-700 hover:to-emerald-700 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl"
+                  >
+                    {updateProfileMutation.isPending ? "Kaydediliyor..." : "Değişiklikleri Kaydet"}
+                  </button>
+                  <div className="text-sm text-gray-500">
+                    Rol: <span className="font-semibold text-teal-700 capitalize">{user?.role}</span>
+                  </div>
                 </div>
               </div>
+
+              {/* Right Column (Only for Teachers) */}
+              {user?.role === "teacher" && (
+                <div className="space-y-8">
+                  
+                  {/* 1. Profile Avatar Upload */}
+                  <div className="bg-slate-50 border border-gray-200 rounded-2xl p-6 space-y-4">
+                    <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                      <span>📸</span> Profil Fotoğrafı
+                    </h4>
+                    <div className="flex items-center gap-4">
+                      <div className="relative group w-20 h-20 rounded-full overflow-hidden border-2 border-teal-500 flex-shrink-0 bg-teal-50 flex items-center justify-center">
+                        {avatarUrl ? (
+                          <img
+                            src={mediaApi.getAvatarUrl(avatarUrl)}
+                            className="w-full h-full object-cover"
+                            alt="Profile"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-teal-50 flex items-center justify-center text-teal-600 text-2xl font-bold">
+                            {fullName?.charAt(0)?.toUpperCase() || "?"}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          id="settings-avatar-input"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleAvatarUpload(e.target.files[0]);
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor="settings-avatar-input"
+                          className="inline-block px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold hover:border-teal-500 hover:text-teal-600 cursor-pointer shadow-sm transition-all"
+                        >
+                          {isUploadingAvatar ? "Yükleniyor..." : "Fotoğraf Seç ve Yükle"}
+                        </label>
+                        <p className="text-[10px] text-gray-400">Önerilen: Kare biçiminde, maksimum 5MB (JPG, PNG)</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Bank & IBAN Account */}
+                  <div className="bg-slate-50 border border-gray-200 rounded-2xl p-6 space-y-4">
+                    <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                      <span>🏦</span> Banka & IBAN Bilgileri
+                    </h4>
+                    {bankAccounts && bankAccounts.length > 0 ? (
+                      (() => {
+                        const defaultAccount = bankAccounts.find((a) => a.is_default) || bankAccounts[0];
+                        return (
+                          <div className="bg-white border border-emerald-100 rounded-xl p-4 space-y-2 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-gray-900">{defaultAccount.bank_name}</span>
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  defaultAccount.status === "approved"
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                    : defaultAccount.status === "rejected"
+                                    ? "bg-red-50 text-red-700 border border-red-100"
+                                    : "bg-amber-50 text-amber-700 border border-amber-100"
+                                }`}
+                              >
+                                {defaultAccount.status === "approved"
+                                  ? "Onaylandı"
+                                  : defaultAccount.status === "rejected"
+                                  ? "Reddedildi"
+                                  : "Beklemede"}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-gray-500 font-semibold">{defaultAccount.account_holder_name}</p>
+                            <p className="text-xs font-mono text-gray-900 bg-gray-50 p-2 rounded border border-gray-100 tracking-wider">
+                              {defaultAccount.iban}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                window.location.href = "/dashboard/teacher/profile?tab=bank-accounts";
+                              }}
+                              className="text-[10px] text-teal-600 font-bold hover:underline block pt-1"
+                            >
+                              Tüm Banka Hesaplarını Yönet ➜
+                            </button>
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-[10px] text-gray-500 leading-relaxed">
+                          Ödemelerinizi alabilmek için banka hesabınızı ekleyin.
+                        </p>
+                        <div className="grid grid-cols-1 gap-3">
+                          <input
+                            type="text"
+                            placeholder="Banka Adı (Örn: Ziraat Bankası)"
+                            value={bankNameForm}
+                            onChange={(e) => setBankNameForm(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs bg-white"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Hesap Sahibi Adı Soyadı"
+                            value={holderNameForm}
+                            onChange={(e) => setHolderNameForm(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs bg-white"
+                          />
+                          <input
+                            type="text"
+                            placeholder="IBAN Numarası (TR...)"
+                            value={ibanForm}
+                            onChange={(e) => {
+                              let val = e.target.value.toUpperCase().replace(/\s/g, "");
+                              if (val.startsWith("TR") && val.length > 2) {
+                                val =
+                                  val.slice(0, 2) +
+                                  " " +
+                                  val.slice(2, 4) +
+                                  " " +
+                                  val.slice(4, 8) +
+                                  " " +
+                                  val.slice(8, 12) +
+                                  " " +
+                                  val.slice(12, 16) +
+                                  " " +
+                                  val.slice(16, 20) +
+                                  " " +
+                                  val.slice(20, 24) +
+                                  " " +
+                                  val.slice(24, 26);
+                              }
+                              setIbanForm(val.trim());
+                            }}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs font-mono bg-white tracking-wider"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!bankNameForm || !holderNameForm || !ibanForm) {
+                                alert("Lütfen tüm alanları doldurun.");
+                                return;
+                              }
+                              addBankAccountMutation.mutate({
+                                bank_name: bankNameForm,
+                                account_holder_name: holderNameForm,
+                                iban: ibanForm.replace(/\s/g, ""),
+                              });
+                            }}
+                            disabled={addBankAccountMutation.isPending}
+                            className="w-full py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-xs font-bold rounded-xl hover:shadow-md transition-all disabled:opacity-50"
+                          >
+                            {addBankAccountMutation.isPending ? "Ekleniyor..." : "Banka Hesabı Ekle"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. Teacher Documents */}
+                  <div className="bg-slate-50 border border-gray-200 rounded-2xl p-6 space-y-4">
+                    <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                      <span>📄</span> Eğitmen Belgeleri
+                    </h4>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">
+                      Hesabınızın onaylı kalması ve denetimler için evraklarınızı güncel tutun. Mezuniyet belgesi, CV veya sertifikalarınızı yükleyebilirsiniz.
+                    </p>
+                    <div className="space-y-3">
+                      
+                      {/* CV Upload */}
+                      <div className="border border-gray-150 bg-white rounded-xl p-3 shadow-sm space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-700">Özgeçmiş (CV)</span>
+                          {cvPath ? (
+                            <a
+                              href={cvPath.startsWith("http") ? cvPath : `${API_URL.replace("/api/v1", "")}/${cvPath}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-teal-600 font-bold hover:underline flex items-center gap-1"
+                            >
+                              <span>📥</span> İndir
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-red-500 font-semibold">Eksik</span>
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          id="settings-cv-input"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleDocumentUpload("cv", e.target.files[0]);
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor="settings-cv-input"
+                          className="w-full block py-1.5 border-2 border-dashed border-gray-200 hover:border-teal-500 rounded-lg text-center cursor-pointer text-[10px] font-bold text-gray-500 hover:text-teal-600 transition-colors"
+                        >
+                          {isUploadingDoc["cv"] ? "Yükleniyor..." : cvPath ? "Dosyayı Güncelle" : "Özgeçmiş Yükle (.pdf, .doc)"}
+                        </label>
+                      </div>
+
+                      {/* Graduation Certificate Upload */}
+                      <div className="border border-gray-150 bg-white rounded-xl p-3 shadow-sm space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-700">Mezuniyet Belgesi / Diploma</span>
+                          {gradCertPath ? (
+                            <a
+                              href={gradCertPath.startsWith("http") ? gradCertPath : `${API_URL.replace("/api/v1", "")}/${gradCertPath}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-teal-600 font-bold hover:underline flex items-center gap-1"
+                            >
+                              <span>📥</span> İndir
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-red-500 font-semibold">Eksik</span>
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          id="settings-grad-input"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleDocumentUpload("graduation", e.target.files[0]);
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor="settings-grad-input"
+                          className="w-full block py-1.5 border-2 border-dashed border-gray-200 hover:border-teal-500 rounded-lg text-center cursor-pointer text-[10px] font-bold text-gray-500 hover:text-teal-600 transition-colors"
+                        >
+                          {isUploadingDoc["graduation"] ? "Yükleniyor..." : gradCertPath ? "Dosyayı Güncelle" : "Belge Yükle (.pdf, .png, .jpg)"}
+                        </label>
+                      </div>
+
+                      {/* Criminal Record Upload */}
+                      <div className="border border-gray-150 bg-white rounded-xl p-3 shadow-sm space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-700">Adli Sicil Kaydı</span>
+                          {crimRecordPath ? (
+                            <a
+                              href={crimRecordPath.startsWith("http") ? crimRecordPath : `${API_URL.replace("/api/v1", "")}/${crimRecordPath}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-teal-600 font-bold hover:underline flex items-center gap-1"
+                            >
+                              <span>📥</span> İndir
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-red-500 font-semibold">Eksik</span>
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          id="settings-criminal-input"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleDocumentUpload("criminal", e.target.files[0]);
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor="settings-criminal-input"
+                          className="w-full block py-1.5 border-2 border-dashed border-gray-200 hover:border-teal-500 rounded-lg text-center cursor-pointer text-[10px] font-bold text-gray-500 hover:text-teal-600 transition-colors"
+                        >
+                          {isUploadingDoc["criminal"] ? "Yükleniyor..." : crimRecordPath ? "Dosyayı Güncelle" : "Adli Sicil Belgesi Yükle (.pdf)"}
+                        </label>
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
             </div>
           )}
 

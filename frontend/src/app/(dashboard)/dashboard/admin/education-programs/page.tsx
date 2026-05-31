@@ -121,7 +121,22 @@ function AdminEduContent() {
       active: prog.active,
     });
     setFormWhatYouLearn(prog.what_you_learn || []);
-    setFormCurriculum(prog.curriculum || []);
+    // Normalize curriculum items when editing (backwards compatibility)
+    const normalizedCurriculum = (prog.curriculum || []).map(section => ({
+      ...section,
+      items: (section.items || []).map(item => {
+        if (typeof item === "string") {
+          return { title: item, lesson_type: "video", content_url: "" };
+        }
+        return {
+          title: item?.title || "",
+          lesson_type: item?.lesson_type || "video",
+          content_url: item?.content_url || ""
+        };
+      })
+    }));
+
+    setFormCurriculum(normalizedCurriculum);
     setFormFaqs(prog.faqs || []);
     setFormReviews(prog.reviews || []);
     setBuilderTab("general");
@@ -256,7 +271,7 @@ function AdminEduContent() {
   };
   const addCurriculumLesson = (sIdx: number) => {
     const next = [...formCurriculum];
-    next[sIdx].items = [...next[sIdx].items, ""];
+    next[sIdx].items = [...next[sIdx].items, { title: "", lesson_type: "video", content_url: "" }];
     next[sIdx].lessonCount = next[sIdx].items.length;
     setFormCurriculum(next);
   };
@@ -266,9 +281,14 @@ function AdminEduContent() {
     next[sIdx].lessonCount = next[sIdx].items.length;
     setFormCurriculum(next);
   };
-  const updateCurriculumLesson = (sIdx: number, lIdx: number, val: string) => {
+  const updateCurriculumLesson = (sIdx: number, lIdx: number, key: "title" | "lesson_type" | "content_url", val: string) => {
     const next = [...formCurriculum];
-    next[sIdx].items[lIdx] = val;
+    let currentItem = next[sIdx].items[lIdx];
+    if (typeof currentItem === "string") {
+      currentItem = { title: currentItem, lesson_type: "video", content_url: "" };
+    }
+    currentItem = { ...currentItem, [key]: val };
+    next[sIdx].items[lIdx] = currentItem;
     setFormCurriculum(next);
   };
 
@@ -775,27 +795,77 @@ function AdminEduContent() {
                       <div className="space-y-2 bg-white rounded-xl p-4 border border-gray-100">
                         <p className="text-xs font-black text-gray-600 mb-2">Dersler & Konular ({section.items.length} ders)</p>
                         
-                        {section.items.map((lesson, lIdx) => (
-                          <div key={lIdx} className="flex gap-2">
-                            <span className="text-xs text-gray-400 font-mono flex items-center justify-center w-6">
-                              {lIdx + 1}.
-                            </span>
-                            <input
-                              type="text"
-                              placeholder="Örn: Sayılar ve İşlemlere Giriş"
-                              value={lesson}
-                              onChange={e => updateCurriculumLesson(sIdx, lIdx, e.target.value)}
-                              className="flex-1 px-3 py-1.5 border border-gray-100 rounded-lg bg-gray-50 text-xs font-semibold focus:outline-none"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeCurriculumLesson(sIdx, lIdx)}
-                              className="text-red-500 hover:bg-red-50 p-1 rounded cursor-pointer"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ))}
+                        {section.items.map((lesson, lIdx) => {
+                          const title = typeof lesson === "string" ? lesson : (lesson?.title || "");
+                          const lessonType = typeof lesson === "string" ? "video" : (lesson?.lesson_type || "video");
+                          const contentUrl = typeof lesson === "string" ? "" : (lesson?.content_url || "");
+                          return (
+                            <div key={lIdx} className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100 hover:bg-gray-50/80 transition-all space-y-2.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-400 font-mono flex items-center justify-center w-6">
+                                  {lIdx + 1}.
+                                </span>
+                                <div className="flex items-center justify-center w-5 relative">
+                                  {lessonType === "live_class" && (
+                                    <>
+                                      <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping absolute" />
+                                      <span className="w-2.5 h-2.5 rounded-full bg-red-500 relative" />
+                                    </>
+                                  )}
+                                  {lessonType === "pdf" && <span className="text-xs">📄</span>}
+                                  {lessonType === "text" && <span className="text-xs">✍️</span>}
+                                  {lessonType === "video" && <span className="text-xs">🎥</span>}
+                                </div>
+                                <input
+                                  type="text"
+                                  placeholder="Örn: Sayılar ve İşlemlere Giriş"
+                                  value={title}
+                                  onChange={e => updateCurriculumLesson(sIdx, lIdx, "title", e.target.value)}
+                                  className="flex-1 px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-teal-500"
+                                />
+                                <select
+                                  value={lessonType}
+                                  onChange={e => updateCurriculumLesson(sIdx, lIdx, "lesson_type", e.target.value)}
+                                  className="px-2 py-1.5 border border-gray-200 rounded-lg bg-white text-xs font-semibold focus:outline-none text-gray-600 w-32 cursor-pointer"
+                                >
+                                  <option value="video">🎥 Video Ders</option>
+                                  <option value="live_class">🔴 Canlı Ders</option>
+                                  <option value="pdf">📄 PDF Dosyası</option>
+                                  <option value="text">✍️ Yazılı Ders</option>
+                                </select>
+                                <button
+                                  type="button"
+                                  onClick={() => removeCurriculumLesson(sIdx, lIdx)}
+                                  className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-red-100"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+
+                              {/* Link / Content sub-row */}
+                              <div className="pl-13 flex items-center gap-2 w-full">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-36 flex-shrink-0 text-right pr-2">
+                                  {lessonType === "live_class" && "🔴 Canlı Ders Linki:"}
+                                  {lessonType === "pdf" && "📄 PDF Dosya Linki:"}
+                                  {lessonType === "text" && "✍️ Doküman / Yazı Linki:"}
+                                  {lessonType === "video" && "🎥 Video Ders Linki:"}
+                                </span>
+                                <input
+                                  type="text"
+                                  placeholder={
+                                    lessonType === "live_class" ? "Zoom veya Google Meet katılım linki..." :
+                                    lessonType === "pdf" ? "PDF indirme veya Drive doküman linki..." :
+                                    lessonType === "text" ? "Okuma makalesi veya blog yazı linki..." :
+                                    "YouTube, Vimeo veya mp4 video adresi..."
+                                  }
+                                  value={contentUrl}
+                                  onChange={e => updateCurriculumLesson(sIdx, lIdx, "content_url", e.target.value)}
+                                  className="flex-1 px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-sm"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
 
                         <button
                           type="button"
