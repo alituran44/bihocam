@@ -30,6 +30,9 @@ class TeacherProfileUpdate(BaseModel):
     expertise_tags: Optional[list[str]] = Field(None, max_length=20)  # Max 20 tag
     social_links: Optional[SocialLinks] = None
     avatar_url: Optional[str] = Field(None, max_length=500)
+    live_class_price: Optional[float] = Field(None, ge=0.0)
+    live_class_discount_price: Optional[float] = Field(None, ge=0.0)
+    live_class_link: Optional[str] = Field(None, max_length=500)
 
     @field_validator("bio")
     @classmethod
@@ -81,6 +84,9 @@ class TeacherProfileResponse(BaseModel):
     expertise_tags: Optional[list[str]] = None
     social_links: Optional[SocialLinks] = None
     avatar_url: Optional[str] = None
+    live_class_price: Optional[float] = None
+    live_class_discount_price: Optional[float] = None
+    live_class_link: Optional[str] = None
     is_active: bool
     is_verified: bool
     created_at: datetime

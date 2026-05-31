@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:6767/api/v1";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -952,6 +952,64 @@ export const teachersApi = {
   },
   get: async (teacherId: string) => {
     const { data } = await api.get(`/teachers/${teacherId}`);
+    return data;
+  },
+  getAvailability: async (teacherId: string) => {
+    const { data } = await api.get(`/teachers/${teacherId}/availability`);
+    return data;
+  },
+  bookLiveClass: async (teacherId: string, payload: { availability_id: string; student_notes?: string }) => {
+    const { data } = await api.post(`/teachers/${teacherId}/book-live-class`, payload);
+    return data;
+  },
+  getMyAvailability: async () => {
+    const { data } = await api.get("/teachers/me/availability");
+    return data;
+  },
+  createAvailability: async (payload: { slots: { date: string; start_time: string; end_time: string }[] }) => {
+    const { data } = await api.post("/teachers/me/availability", payload);
+    return data;
+  },
+  deleteAvailability: async (slotId: string) => {
+    const { data } = await api.delete(`/teachers/me/availability/${slotId}`);
+    return data;
+  },
+  getTeacherReservations: async () => {
+    const { data } = await api.get("/teachers/me/reservations");
+    return data;
+  },
+  updateReservationStatus: async (reservationId: string, status: "approved" | "rejected" | "cancelled") => {
+    const { data } = await api.put(`/teachers/me/reservations/${reservationId}/status`, null, {
+      params: { status },
+    });
+    return data;
+  },
+  getMyBookings: async () => {
+    const { data } = await api.get("/teachers/my-bookings");
+    return data;
+  },
+  getLibrary: async (teacherId: string) => {
+    const { data } = await api.get(`/teachers/${teacherId}/library`);
+    return data;
+  },
+  getMyLibrary: async () => {
+    const { data } = await api.get("/teachers/me/library");
+    return data;
+  },
+  addLibraryItem: async (item: any) => {
+    const { data } = await api.post("/teachers/me/library", item);
+    return data;
+  },
+  uploadLibraryFile: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post("/teachers/me/library/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+  deleteLibraryItem: async (itemId: string) => {
+    const { data } = await api.delete(`/teachers/me/library/${itemId}`);
     return data;
   },
 };
@@ -3931,3 +3989,224 @@ export const messagesApi = {
     return data;
   },
 };
+
+export interface TeacherApplicationCreate {
+  full_name: string;
+  phone: string;
+  address: string;
+  birth_date: string;
+  gender: string;
+  branches: string[];
+  levels: string[];
+  experience_years: number;
+  bio: string;
+  heard_from: string;
+  cv_path: string;
+  graduation_cert_path: string;
+  criminal_record_path: string;
+}
+
+export interface TeacherApplication {
+  id: string;
+  user_id: string;
+  full_name: string;
+  phone: string;
+  address: string;
+  birth_date: string;
+  gender: string;
+  branches: string[];
+  levels: string[];
+  experience_years: number;
+  bio: string;
+  heard_from: string;
+  cv_path: string;
+  graduation_cert_path: string;
+  criminal_record_path: string;
+  status: "pending" | "approved" | "rejected";
+  admin_note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const teacherApplicationsApi = {
+  submitApplication: async (data: TeacherApplicationCreate): Promise<TeacherApplication> => {
+    const { data: response } = await api.post("/teacher-applications", data);
+    return response;
+  },
+  getMyApplication: async (): Promise<TeacherApplication> => {
+    const { data } = await api.get("/teacher-applications/me");
+    return data;
+  },
+  uploadDocument: async (file: File): Promise<{ path: string; url: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post("/media/upload-document", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+  uploadImage: async (file: File): Promise<{ path: string; url: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post("/media/upload-image", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+  listApplications: async (params?: { status?: string }): Promise<TeacherApplication[]> => {
+    const { data } = await api.get("/teacher-applications", { params });
+    return data;
+  },
+  reviewApplication: async (
+    id: string,
+    data: { status: "approved" | "rejected"; admin_note?: string }
+  ): Promise<TeacherApplication> => {
+    const { data: response } = await api.post(`/teacher-applications/${id}/review`, data);
+    return response;
+  },
+};
+
+export const pagesApi = {
+  getAll: async (includeInactive = false): Promise<any[]> => {
+    const { data } = await api.get("/pages", { params: { include_inactive: includeInactive } });
+    return data;
+  },
+  getBySlug: async (slug: string): Promise<any> => {
+    const { data } = await api.get(`/pages/${slug}`);
+    return data;
+  },
+  create: async (pageData: any): Promise<any> => {
+    const { data } = await api.post("/pages", pageData);
+    return data;
+  },
+  update: async (slug: string, pageData: any): Promise<any> => {
+    const { data } = await api.put(`/pages/${slug}`, pageData);
+    return data;
+  },
+  delete: async (slug: string): Promise<any> => {
+    const { data } = await api.delete(`/pages/${slug}`);
+    return data;
+  },
+};
+
+export const homeworksApi = {
+  create: async (homeworkData: any): Promise<any> => {
+    const { data } = await api.post("/homeworks", homeworkData);
+    return data;
+  },
+  list: async (courseId: string): Promise<any[]> => {
+    const { data } = await api.get("/homeworks", { params: { course_id: courseId } });
+    return data;
+  },
+  submit: async (homeworkId: string, submissionData: any): Promise<any> => {
+    const { data } = await api.post(`/homeworks/${homeworkId}/submit`, submissionData);
+    return data;
+  },
+  getSubmissions: async (homeworkId: string): Promise<any[]> => {
+    const { data } = await api.get(`/homeworks/${homeworkId}/submissions`);
+    return data;
+  },
+  grade: async (submissionId: string, gradeData: any): Promise<any> => {
+    const { data } = await api.post(`/homeworks/submissions/${submissionId}/grade`, gradeData);
+    return data;
+  },
+};
+
+export const examsApi = {
+  create: async (examData: any): Promise<any> => {
+    const { data } = await api.post("/exams", examData);
+    return data;
+  },
+  list: async (courseId: string): Promise<any[]> => {
+    const { data } = await api.get("/exams", { params: { course_id: courseId } });
+    return data;
+  },
+  addQuestion: async (examId: string, questionData: any): Promise<any> => {
+    const { data } = await api.post(`/exams/${examId}/questions`, questionData);
+    return data;
+  },
+  startAttempt: async (examId: string): Promise<any> => {
+    const { data } = await api.post(`/exams/${examId}/attempt`);
+    return data;
+  },
+  submitAttempt: async (attemptId: string, attemptAnswers: any): Promise<any> => {
+    const { data } = await api.post(`/exams/attempts/${attemptId}/submit`, attemptAnswers);
+    return data;
+  },
+};
+
+// ── Education Programs API ──
+export interface CurriculumSection {
+  title: string;
+  lessonCount: number;
+  duration: string;
+  items: string[];
+}
+
+export interface FAQ {
+  q: string;
+  a: string;
+}
+
+export interface Review {
+  name: string;
+  score: number;
+  role: string;
+  text: string;
+  date: string;
+}
+
+export interface EducationProgram {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  gradient: string;
+  price: number;
+  original_price?: number;
+  rating: number;
+  review_count: number;
+  students: number;
+  hours: number;
+  lessons: number;
+  badge?: string;
+  description: string;
+  what_you_learn: string[];
+  curriculum: CurriculumSection[];
+  faqs: FAQ[];
+  reviews: Review[];
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export const educationProgramsApi = {
+  list: async (params?: { category?: string; include_inactive?: boolean }): Promise<EducationProgram[]> => {
+    const { data } = await api.get("/education-programs", { params });
+    return data;
+  },
+  getBySlug: async (slug: string): Promise<EducationProgram> => {
+    const { data } = await api.get(`/education-programs/slug/${slug}`);
+    return data;
+  },
+  getById: async (id: string): Promise<EducationProgram> => {
+    const { data } = await api.get(`/education-programs/${id}`);
+    return data;
+  },
+  create: async (payload: any): Promise<EducationProgram> => {
+    const { data } = await api.post("/education-programs", payload);
+    return data;
+  },
+  update: async (id: string, payload: any): Promise<EducationProgram> => {
+    const { data } = await api.patch(`/education-programs/${id}`, payload);
+    return data;
+  },
+  delete: async (id: string): Promise<any> => {
+    const { data } = await api.delete(`/education-programs/${id}`);
+    return data;
+  },
+};
+
+
+
+

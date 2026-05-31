@@ -107,6 +107,7 @@ async def list_quizzes(
             id=quiz.id,
             title=quiz.title,
             lesson_id=quiz.lesson_id,
+            pdf_path=quiz.pdf_path,
             question_count=question_count,
             attempt_count=attempt_count,
             created_at=quiz.created_at,

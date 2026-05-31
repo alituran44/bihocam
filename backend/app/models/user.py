@@ -2,7 +2,7 @@ import enum
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, Enum, String, Boolean, ForeignKey, func, Index, Text, JSON
+from sqlalchemy import DateTime, Enum, String, Boolean, ForeignKey, func, Index, Text, JSON, Float
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -41,6 +41,11 @@ class User(Base):
     expertise_tags: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)  # Uzmanlık alanları
     social_links: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # Sosyal medya linkleri: {linkedin, twitter, instagram, website}
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)  # Profil resmi URL
+    
+    # Live class fields
+    live_class_price: Mapped[float | None] = mapped_column(Float, nullable=True)
+    live_class_discount_price: Mapped[float | None] = mapped_column(Float, nullable=True)
+    live_class_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

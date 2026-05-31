@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -48,6 +48,9 @@ export default function DashboardLayout({
     blog: true,
     settings: true,
     crm: true,
+    contact: true,
+    payment: true,
+    programs: true,
   });
   
   const isActive = (path: string) => pathname === path;
@@ -244,6 +247,61 @@ export default function DashboardLayout({
               </svg>
             ),
           },
+          {
+            href: "/dashboard/teacher/live-classes",
+            label: "Canlı Ders Yönetimi",
+            active: startsWithPath("/dashboard/teacher/live-classes"),
+            icon: (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
+              </svg>
+            ),
+          },
+          {
+            href: "/dashboard/teacher/homeworks",
+            label: "Ödev Yönetimi",
+            active: startsWithPath("/dashboard/teacher/homeworks"),
+            icon: (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+            ),
+          },
+          {
+            href: "/dashboard/teacher/quizzes",
+            label: "Test Yönetimi",
+            active: startsWithPath("/dashboard/teacher/quizzes"),
+            icon: (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ),
+          },
+          {
+            href: "/dashboard/teacher/library",
+            label: "Kütüphane Yönetimi",
+            active: startsWithPath("/dashboard/teacher/library"),
+            icon: (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H20" />
+              </svg>
+            ),
+          },
+          {
+            href: "/dashboard/teacher/ai-assistant",
+            label: "AI Asistan",
+            active: startsWithPath("/dashboard/teacher/ai-assistant"),
+            icon: (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            ),
+          },
         ]
       : [];
 
@@ -327,6 +385,36 @@ export default function DashboardLayout({
               </svg>
             ),
           },
+          {
+            href: "/dashboard/become-instructor",
+            label: "Eğitmen Ol",
+            active: startsWithPath("/dashboard/become-instructor"),
+            icon: (
+              <svg className="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                />
+              </svg>
+            ),
+          },
+          {
+            href: "/dashboard/student/live-classes",
+            label: "Canlı Derslerim",
+            active: startsWithPath("/dashboard/student/live-classes"),
+            icon: (
+              <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            ),
+          },
         ]
       : [];
 
@@ -343,6 +431,16 @@ export default function DashboardLayout({
               </svg>
             ),
             items: [
+              {
+                href: "/dashboard/admin/courses",
+                label: "Tüm Kurslar",
+                active: startsWithPath("/dashboard/admin/courses") && !startsWithPath("/dashboard/admin/courses/pending"),
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                ),
+              },
               {
                 href: "/dashboard/admin/courses/pending",
                 label: "Bekleyen Eğitimler",
@@ -391,6 +489,16 @@ export default function DashboardLayout({
                 icon: (
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                ),
+              },
+              {
+                href: "/dashboard/admin/teacher-applications",
+                label: "Eğitmen Başvuruları",
+                active: startsWithPath("/dashboard/admin/teacher-applications"),
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 ),
               },
@@ -881,6 +989,133 @@ export default function DashboardLayout({
               },
             ],
           },
+          // İletişim Yönetimi
+          {
+            key: "contact",
+            label: "İletişim",
+            icon: (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.945a2 2 0 002.22 0L21 8m-18 8h18a2 2 0 002-2V8a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2z" />
+              </svg>
+            ),
+            items: [
+              {
+                href: "/dashboard/admin/contact",
+                label: "İletişim Bilgileri",
+                active: isActive("/dashboard/admin/contact"),
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                ),
+              },
+              {
+                href: "/dashboard/admin/contact?tab=faq",
+                label: "SSS Yönetimi",
+                active: false,
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ),
+              },
+              {
+                href: "/dashboard/admin/contact?tab=messages",
+                label: "Gelen Mesajlar",
+                active: false,
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                ),
+              },
+            ],
+          },
+          // Ödeme & Destek Ayarları
+          {
+            key: "payment",
+            label: "Ödeme & Destek",
+            icon: (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+            ),
+            items: [
+              {
+                href: "/dashboard/admin/payment-settings",
+                label: "Banka Hesapları",
+                active: isActive("/dashboard/admin/payment-settings"),
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                ),
+              },
+              {
+                href: "/dashboard/admin/payment-settings?tab=whatsapp",
+                label: "WhatsApp Ayarları",
+                active: false,
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                ),
+              },
+              {
+                href: "/dashboard/admin/payment-settings?tab=aichat",
+                label: "AI Canlı Destek",
+                active: false,
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                ),
+              },
+            ],
+          },
+          // Eğitim Programları
+          {
+            key: "programs",
+            label: "Eğitim Programları",
+            icon: (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            ),
+            items: [
+              {
+                href: "/dashboard/admin/education-programs",
+                label: "Tüm Programlar",
+                active: isActive("/dashboard/admin/education-programs"),
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                ),
+              },
+              {
+                href: "/dashboard/admin/education-programs?tab=add",
+                label: "Yeni Program Ekle",
+                active: false,
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                ),
+              },
+              {
+                href: "/dashboard/admin/education-programs?tab=categories",
+                label: "Kategori Sıralaması",
+                active: false,
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+                  </svg>
+                ),
+              },
+            ],
+          },
         ]
       : [];
 
@@ -934,19 +1169,11 @@ export default function DashboardLayout({
       <aside className="fixed left-0 top-0 h-full w-72 bg-white/95 backdrop-blur-xl border-r border-gray-200/50 shadow-xl z-20">
         {/* Logo */}
         <div className="p-6 border-b border-gray-200/50 bg-gradient-to-br from-teal-500/5 to-blue-500/5">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="w-12 h-12 bg-gradient-to-br from-teal-500 via-teal-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/30 group-hover:shadow-xl group-hover:shadow-teal-500/40 transition-all duration-300 group-hover:scale-105">
-                <span className="text-white font-bold text-xl">B</span>
-              </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-white shadow-sm"></div>
-            </div>
-            <div>
-              <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                BiHocam
-              </span>
-              <p className="text-xs text-gray-500 font-medium">Admin Panel</p>
-            </div>
+          <Link href="/" className="flex flex-col items-start gap-1 group">
+            <img src="/logo.png" alt="BiHocam Logo" className="h-10 w-auto object-contain" />
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1.5 ml-1">
+              {user?.role === "admin" ? "Admin Panel" : user?.role === "teacher" ? "Eğitmen Paneli" : "Öğrenci Paneli"}
+            </p>
           </Link>
         </div>
 
@@ -1131,6 +1358,10 @@ export default function DashboardLayout({
                 {startsWithPath("/dashboard/admin/orders") && "Sipariş Yönetimi"}
                 {startsWithPath("/dashboard/admin/coupons") && "Kupon Yönetimi"}
                 {startsWithPath("/dashboard/teacher/sales") && "Satışlarım"}
+                {startsWithPath("/dashboard/teacher/library") && "Kütüphane Yönetimi"}
+                {startsWithPath("/dashboard/teacher/ai-assistant") && "AI Öğretmen Asistanı"}
+                {startsWithPath("/dashboard/teacher/homeworks") && "Ödev Yönetimi"}
+                {startsWithPath("/dashboard/teacher/quizzes") && "Test Yönetimi"}
                 {startsWithPath("/dashboard/settings") && "Ayarlar"}
                 {startsWithPath("/dashboard/admin/announcements") && "Duyuru Yönetimi"}
                 {startsWithPath("/dashboard/admin/popups") && "Pop-up Duyuruları"}

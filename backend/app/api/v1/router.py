@@ -41,6 +41,11 @@ from app.api.v1.endpoints import (
     blog_admin,
     blog_public,
     messages,
+    teacher_applications,
+    pages,
+    homeworks,
+    exams,
+    education_programs,
 )
 
 api_router = APIRouter()
@@ -50,6 +55,7 @@ api_router.include_router(users.router, prefix="/admin/users", tags=["Admin - Us
 api_router.include_router(students.router, prefix="/admin/students", tags=["Admin - Students"])
 api_router.include_router(courses.router, prefix="/courses", tags=["courses"])
 api_router.include_router(teachers.router, prefix="/teachers", tags=["teachers"])
+api_router.include_router(teacher_applications.router, prefix="/teacher-applications", tags=["Teacher Applications"])
 # course_reviews router'ı teachers router'ından SONRA eklenmeli (me/reviews endpoint'i teacher_id ile çakışmaz)
 api_router.include_router(course_reviews.router, prefix="/teachers", tags=["Teacher - Reviews"])
 api_router.include_router(teachers.admin_router, prefix="/admin/teachers", tags=["Admin - Teachers"])
@@ -92,3 +98,7 @@ api_router.include_router(blog_tags.router, prefix="/blog/tags", tags=["Blog Tag
 api_router.include_router(blog_admin.router, prefix="/admin/blog", tags=["Admin - Blog"])
 api_router.include_router(blog_public.router, prefix="/public/blog", tags=["Public - Blog"])
 api_router.include_router(messages.router, prefix="/messages", tags=["Messages"])
+api_router.include_router(pages.router, prefix="/pages", tags=["Pages"])
+api_router.include_router(education_programs.router, prefix="/education-programs", tags=["Education Programs"])
+api_router.include_router(homeworks.router, prefix="/homeworks", tags=["Homeworks"])
+api_router.include_router(exams.router, prefix="/exams", tags=["Exams"])

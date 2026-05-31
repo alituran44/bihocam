@@ -26,6 +26,7 @@ from app.models.crm import CrmAudience, CrmAudienceMember, CrmEmailTemplate
 from app.models.certificate import Certificate, CertificateTemplate, TemplateType
 from app.models.popup_announcement import PopupAnnouncement, PopupType
 from app.models.ad_placement import AdPlacement, PlacementType
+from app.models.teacher_application import TeacherApplication, TeacherApplicationStatus
 from app.models.ad_campaign import (
     AdCampaign,
     CampaignStatus,
@@ -48,6 +49,12 @@ from app.models.messaging import (
 )
 from app.models.content_audit_log import ContentAuditLog
 from app.models.storage_quota import StorageQuota
+from app.models.page import Page
+from app.models.homework import Homework, HomeworkSubmission
+from app.models.exam import Exam, ExamQuestion, ExamAttempt, ExamAttemptAnswer
+from app.models.live_class import TeacherAvailability, LiveClassReservation
+from app.models.library import TeacherLibraryItem
+from app.models.education_program import EducationProgram
 
 __all__ = [
     "User",
@@ -124,4 +131,17 @@ __all__ = [
     "MessageReport",
     "ContentAuditLog",
     "StorageQuota",
+    "TeacherApplication",
+    "TeacherApplicationStatus",
+    "Page",
+    "Homework",
+    "HomeworkSubmission",
+    "Exam",
+    "ExamQuestion",
+    "ExamAttempt",
+    "ExamAttemptAnswer",
+    "TeacherAvailability",
+    "LiveClassReservation",
+    "TeacherLibraryItem",
+    "EducationProgram",
 ]

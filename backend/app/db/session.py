@@ -1,4 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler
+
+# PostgreSQL -> SQLite type compatibility
+if not hasattr(SQLiteTypeCompiler, "visit_JSONB"):
+    SQLiteTypeCompiler.visit_JSONB = lambda self, type_, **kw: "JSON"
+
+if not hasattr(SQLiteTypeCompiler, "visit_UUID"):
+    SQLiteTypeCompiler.visit_UUID = lambda self, type_, **kw: "VARCHAR(36)"
 
 from app.core.config import settings
 

@@ -166,14 +166,23 @@ export default function CoursesPage() {
       )}
 
       {/* Hero Header */}
-      <div className="bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800 pt-24 pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative bg-gradient-to-br from-teal-900 via-slate-900 to-teal-950 pt-32 pb-24 overflow-hidden border-b border-teal-800/10">
+        {/* Background Image Overlay */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-35 mix-blend-overlay pointer-events-none"
+          style={{ backgroundImage: "url('/courses_banner_bg.png')" }}
+        />
+        {/* Glowing Gradient Highlights */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(20,184,166,0.12),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(13,148,136,0.18),transparent_60%)]" />
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
-          <div className="mb-2 flex items-center gap-2 text-sm text-teal-100/80">
+          <div className="mb-4 flex items-center gap-2 text-sm text-teal-300/80 font-semibold">
             <Link href="/" className="hover:text-white transition-colors">
               Ana Sayfa
             </Link>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
             <Link href="/courses" className="hover:text-white transition-colors">
@@ -181,7 +190,7 @@ export default function CoursesPage() {
             </Link>
             {categoryBreadcrumb.map((cat) => (
               <span key={cat.id} className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
                 <Link
@@ -194,10 +203,10 @@ export default function CoursesPage() {
             ))}
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
+          <h1 className="text-4xl md:text-5xl font-black text-white mb-3 tracking-tight">
             {currentCategory ? currentCategory.name : "Tüm Kurslar"}
           </h1>
-          <p className="text-teal-100 text-lg">
+          <p className="text-teal-100/90 text-lg font-semibold">
             {isLoading ? "Yükleniyor..." : `${filtered.length} kurs mevcut`}
           </p>
         </div>

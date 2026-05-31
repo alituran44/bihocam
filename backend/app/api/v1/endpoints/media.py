@@ -844,19 +844,51 @@ async def get_document(
             lesson = lessons[0]
     
     if not lesson:
-        # Final check: does the file exist in storage?
-        try:
-            file_exists = await storage.exists(storage_key)
-            import logging
-            logger = logging.getLogger(__name__)
-            if file_exists:
-                logger.warning(f"File exists in storage but no lesson found. Storage key: {storage_key}")
-            else:
-                logger.warning(f"File does not exist in storage. Storage key: {storage_key}")
-        except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error checking file existence: {e}")
+        # TeacherApplication kontrolü yap
+        from app.models.teacher_application import TeacherApplication
+        from sqlalchemy import or_
+        
+        stmt = select(TeacherApplication).where(
+            or_(
+                TeacherApplication.cv_path == storage_key,
+                TeacherApplication.graduation_cert_path == storage_key,
+                TeacherApplication.criminal_record_path == storage_key,
+                TeacherApplication.cv_path.like(f"%{decoded_filename}%"),
+                TeacherApplication.graduation_cert_path.like(f"%{decoded_filename}%"),
+                TeacherApplication.criminal_record_path.like(f"%{decoded_filename}%")
+            )
+        )
+        app_result = await db.execute(stmt)
+        application = app_result.scalar_one_or_none()
+        
+        if application:
+            if not current_user:
+                raise HTTPException(status_code=401, detail="Giriş yapmalısınız")
+            
+            is_owner = application.user_id == current_user.id
+            is_admin = current_user.role == UserRole.ADMIN
+            
+            if not is_owner and not is_admin:
+                raise HTTPException(status_code=403, detail="Bu dokümana erişim yetkiniz yok")
+                
+            try:
+                file_content = await storage.download(storage_key)
+            except StorageNotFoundError:
+                raise HTTPException(status_code=404, detail="Doküman bulunamadı")
+                
+            mime_type = MIME_TYPE_MAP.get(Path(filename).suffix.lower(), "application/octet-stream")
+            display_filename = filename
+            sanitized_filename = sanitize_filename_for_content_disposition(display_filename)
+            
+            disposition = "attachment" if download else "inline"
+            return StreamingResponse(
+                iter([file_content]),
+                media_type=mime_type,
+                headers={
+                    "Content-Disposition": f'{disposition}; filename="{sanitized_filename}"',
+                    "Cache-Control": "private, max-age=3600",
+                }
+            )
         
         raise HTTPException(status_code=404, detail=f"Doküman bulunamadı (filename: {decoded_filename}, storage_key: {storage_key})")
     
@@ -1486,6 +1518,130 @@ async def delete_course_thumbnail(
         )
     
     return {"message": "Kurs thumbnail'ı başarıyla silindi"}
+
+
+@router.post("/upload-image")
+async def upload_general_image(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    storage: StorageBackend = Depends(get_storage),
+):
+    """
+    Genel görsel yükleme endpoint'i (Quiz, Reklam, vb. için)
+    - WebP'ye optimize eder ve settings.THUMBNAILS_DIR'a kaydeder.
+    - Public erişilebilir URL döner.
+    """
+    file_ext = Path(file.filename).suffix.lower()
+    if file_ext not in ALLOWED_IMAGE_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Geçersiz resim formatı. Desteklenenler: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}"
+        )
+    
+    file_content = await file.read()
+    if len(file_content) > MAX_AVATAR_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Resim boyutu çok büyük. Maksimum {settings.MAX_AVATAR_SIZE_MB}MB olmalıdır."
+        )
+    
+    # Process image with Pillow to WebP
+    try:
+        import io
+        from PIL import Image
+        image = Image.open(io.BytesIO(file_content))
+        
+        # EXIF temizle
+        image_data = list(image.getdata())
+        image_without_exif = Image.new(image.mode, image.size)
+        image_without_exif.putdata(image_data)
+        
+        # RGB'ye dönüştür
+        if image_without_exif.mode != "RGB":
+            image_without_exif = image_without_exif.convert("RGB")
+            
+        output = io.BytesIO()
+        image_without_exif.save(output, format="WEBP", quality=85, optimize=True)
+        processed_content = output.getvalue()
+    except Exception as e:
+        processed_content = file_content
+        
+    from datetime import datetime
+    import hashlib
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    content_hash = hashlib.md5(processed_content).hexdigest()[:8]
+    filename = f"gen_{timestamp}_{content_hash}.webp"
+    destination_path = f"{settings.THUMBNAILS_DIR}/{filename}"
+    
+    upload_result = await storage.upload(
+        file_content=processed_content,
+        destination_path=destination_path,
+        content_type="image/webp",
+    )
+    
+    access_url = f"{settings.FRONTEND_URL.rstrip('/')}/api/v1/media/thumbnails/{filename}"
+    if settings.STORAGE_BACKEND != "local":
+        access_url = upload_result.access_url
+        
+    return {
+        "message": "Görsel başarıyla yüklendi",
+        "filename": filename,
+        "path": upload_result.storage_key,
+        "url": f"/api/v1/media/thumbnails/{filename}",
+        "full_url": access_url,
+        "size": upload_result.file_size,
+    }
+
+
+@router.post("/upload-document")
+async def upload_general_document(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    storage: StorageBackend = Depends(get_storage),
+):
+    """
+    Genel doküman yükleme endpoint'i (Eğitmen Başvurusu vb. için)
+    - settings.DOCUMENTS_DIR'a kaydeder.
+    """
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Dosya adı belirtilmedi")
+        
+    file_ext = Path(file.filename).suffix.lower()
+    if file_ext not in ALLOWED_DOCUMENT_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Geçersiz doküman formatı. İzin verilen formatlar: {', '.join(ALLOWED_DOCUMENT_EXTENSIONS)}"
+        )
+        
+    file_content = await file.read()
+    if len(file_content) > MAX_DOCUMENT_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Doküman boyutu çok büyük. Maksimum {settings.MAX_DOCUMENT_SIZE_MB}MB olmalıdır."
+        )
+        
+    from datetime import datetime
+    import hashlib
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    content_hash = hashlib.md5(file_content).hexdigest()[:8]
+    filename = f"doc_{current_user.id}_{timestamp}_{content_hash}{file_ext}"
+    destination_path = f"{settings.DOCUMENTS_DIR}/{filename}"
+    
+    upload_result = await storage.upload(
+        file_content=file_content,
+        destination_path=destination_path,
+        content_type=MIME_TYPE_MAP.get(file_ext, "application/octet-stream"),
+    )
+    
+    return {
+        "message": "Doküman başarıyla yüklendi",
+        "filename": filename,
+        "path": upload_result.storage_key,
+        "url": f"/api/v1/media/documents/{filename}",
+        "size": upload_result.file_size,
+    }
 
 
 @router.get("/thumbnails/{filename}")

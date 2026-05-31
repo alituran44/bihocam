@@ -39,6 +39,13 @@ from app.models.blog_post import BlogPost  # noqa: F401
 from app.models.blog_category import BlogCategory  # noqa: F401
 from app.models.blog_tag import BlogTag  # noqa: F401
 from app.models.messaging import Conversation, Message, UserBlock, MessageReport  # noqa: F401
+from app.models.teacher_application import TeacherApplication  # noqa: F401
+from app.models.page import Page  # noqa: F401
+from app.models.education_program import EducationProgram  # noqa: F401
+from app.models.homework import Homework, HomeworkSubmission  # noqa: F401
+from app.models.exam import Exam, ExamQuestion, ExamAttempt, ExamAttemptAnswer  # noqa: F401
+
+
 
 
 async def run_ad_campaign_scheduler():
@@ -91,6 +98,21 @@ async def lifespan(app: FastAPI):
     # Startup
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        
+        # Run custom SQLite column migrations for existing users table
+        def run_sqlite_migrations(connection):
+            dbapi_conn = connection.connection
+            cursor = dbapi_conn.cursor()
+            cursor.execute("PRAGMA table_info(users)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if "live_class_price" not in columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN live_class_price FLOAT")
+            if "live_class_discount_price" not in columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN live_class_discount_price FLOAT")
+            if "live_class_link" not in columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN live_class_link VARCHAR(500)")
+                
+        await conn.run_sync(run_sqlite_migrations)
     
     # Seed default ad placements and pricing
     try:
@@ -101,6 +123,15 @@ async def lifespan(app: FastAPI):
         # Log error but don't fail startup
         logger = logging.getLogger(__name__)
         logger.warning(f"Failed to seed ad placements: {e}")
+
+    # Seed default corporate pages
+    try:
+        from app.services.page_seed import seed_default_pages
+        async with AsyncSessionLocal() as db:
+            await seed_default_pages(db)
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to seed corporate pages: {e}")
     
     # Start background task for ad campaign scheduler
     logger = logging.getLogger(__name__)

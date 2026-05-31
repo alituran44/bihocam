@@ -23,6 +23,8 @@ class SiteGeneralSettings(BaseModel):
 
 class SitePlatformSettings(BaseModel):
     platform_commission_rate: float | None = Field(default=None, ge=0.0, le=1.0)  # 0.0-1.0 arası (örn: 0.35 = %35)
+    course_commission_rate: float | None = Field(default=0.20, ge=0.0, le=1.0)  # Kurs komisyonu (Varsayılan %20)
+    live_class_commission_rate: float | None = Field(default=0.15, ge=0.0, le=1.0)  # Canlı ders komisyonu (Varsayılan %15)
     currency: str | None = Field(default="TRY")
     tax_rate: float | None = Field(default=None, ge=0.0, le=1.0)  # Opsiyonel, 0.0-1.0 arası
     maintenance_mode: bool | None = Field(default=False)

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { authApi, notificationsApi, api } from "@/lib/api";
+import { authApi, notificationsApi, siteSettingsApi, api } from "@/lib/api";
 
 interface UserProfile {
   id: string;
@@ -18,9 +18,24 @@ interface UserProfile {
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"profile" | "password" | "notifications">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "password" | "notifications" | "payment">("profile");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Payment setting states
+  const [paytrActive, setPaytrActive] = useState(false);
+  const [paytrMerchantId, setPaytrMerchantId] = useState("");
+  const [paytrMerchantKey, setPaytrMerchantKey] = useState("");
+  const [paytrMerchantSalt, setPaytrMerchantSalt] = useState("");
+  const [paytrTestMode, setPaytrTestMode] = useState(true);
+
+  const [bankActive, setBankActive] = useState(false);
+  const [bankName, setBankName] = useState("");
+  const [bankReceiver, setBankReceiver] = useState("");
+  const [bankIban, setBankIban] = useState("");
+
+  const [courseCommission, setCourseCommission] = useState("20");
+  const [liveClassCommission, setLiveClassCommission] = useState("15");
 
   // Profile form state
   const [fullName, setFullName] = useState("");
@@ -42,6 +57,12 @@ export default function SettingsPage() {
     queryFn: () => notificationsApi.getPreferences(),
   });
 
+  const { data: siteSettings, refetch: refetchSettings } = useQuery({
+    queryKey: ["site-settings"],
+    queryFn: () => siteSettingsApi.get(),
+    enabled: user?.role === "admin",
+  });
+
   useEffect(() => {
     if (user) {
       setFullName(user.full_name || "");
@@ -49,6 +70,71 @@ export default function SettingsPage() {
       setBio(user.bio || "");
     }
   }, [user]);
+
+  useEffect(() => {
+    if (siteSettings?.platform) {
+      const p = siteSettings.platform as Record<string, any>;
+      setPaytrActive(!!p.paytr_active);
+      setPaytrMerchantId(p.paytr_merchant_id || "");
+      setPaytrMerchantKey(p.paytr_merchant_key || "");
+      setPaytrMerchantSalt(p.paytr_merchant_salt || "");
+      setPaytrTestMode(p.paytr_test_mode !== false);
+
+      setBankActive(!!p.bank_active);
+      setBankName(p.bank_name || "");
+      setBankReceiver(p.bank_receiver || "");
+      setBankIban(p.bank_iban || "");
+
+      const courseComm = p.course_commission_rate !== undefined ? Math.round(p.course_commission_rate * 100).toString() : "20";
+      const liveComm = p.live_class_commission_rate !== undefined ? Math.round(p.live_class_commission_rate * 100).toString() : "15";
+      setCourseCommission(courseComm);
+      setLiveClassCommission(liveComm);
+    }
+  }, [siteSettings]);
+
+  const updatePaymentSettingsMutation = useMutation({
+    mutationFn: async () => {
+      const currentPlatform = siteSettings?.platform || {};
+      const updatedPlatform = {
+        ...currentPlatform,
+        paytr_active: paytrActive,
+        paytr_merchant_id: paytrMerchantId,
+        paytr_merchant_key: paytrMerchantKey,
+        paytr_merchant_salt: paytrMerchantSalt,
+        paytr_test_mode: paytrTestMode,
+        bank_active: bankActive,
+        bank_name: bankName,
+        bank_receiver: bankReceiver,
+        bank_iban: bankIban,
+        course_commission_rate: parseFloat(courseCommission) / 100,
+        live_class_commission_rate: parseFloat(liveClassCommission) / 100,
+      };
+      return siteSettingsApi.update({
+        platform: updatedPlatform,
+      });
+    },
+    onSuccess: () => {
+      setMessage("Ödeme ayarları başarıyla kaydedildi!");
+      setError(null);
+      refetchSettings();
+    },
+    onError: () => {
+      setError("Ödeme ayarları kaydedilirken hata oluştu.");
+      setMessage(null);
+    },
+  });
+
+  const tabs = useMemo(() => {
+    const list = [
+      { key: "profile" as const, label: "Profil Bilgileri" },
+      { key: "password" as const, label: "Şifre Değiştir" },
+      { key: "notifications" as const, label: "Bildirim Tercihleri" },
+    ];
+    if (user?.role === "admin") {
+      list.push({ key: "payment" as const, label: "Ödeme Ayarları" });
+    }
+    return list;
+  }, [user?.role]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async () => {
@@ -185,11 +271,7 @@ export default function SettingsPage() {
       <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
         <div className="border-b border-gray-200 px-6">
           <nav className="flex gap-6">
-            {[
-              { key: "profile" as const, label: "Profil Bilgileri" },
-              { key: "password" as const, label: "Şifre Değiştir" },
-              { key: "notifications" as const, label: "Bildirim Tercihleri" },
-            ].map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => { setActiveTab(tab.key); setMessage(null); setError(null); }}
@@ -340,6 +422,199 @@ export default function SettingsPage() {
                   </label>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Payment Settings Tab */}
+          {activeTab === "payment" && user?.role === "admin" && (
+            <div className="space-y-10 max-w-3xl">
+              
+              {/* 1. PayTR Credit Card Integration */}
+              <div className="bg-slate-50/50 border border-gray-200/60 rounded-3xl p-6 md:p-8 space-y-6">
+                <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">💳</span>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">Kredi Kartı (PayTR) Entegrasyonu</h3>
+                      <p className="text-xs text-gray-400 font-semibold mt-0.5">PayTR API parametrelerini dinamik olarak yapılandırın</p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={paytrActive}
+                      onChange={(e) => setPaytrActive(e.target.checked)}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+                  </label>
+                </div>
+
+                {paytrActive && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Merchant ID (Mağaza Numarası) *</label>
+                      <input
+                        type="text"
+                        value={paytrMerchantId}
+                        onChange={(e) => setPaytrMerchantId(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                        placeholder="Örn: 123456"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Merchant Key *</label>
+                      <input
+                        type="text"
+                        value={paytrMerchantKey}
+                        onChange={(e) => setPaytrMerchantKey(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                        placeholder="Mağaza API Key"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Merchant Salt *</label>
+                      <input
+                        type="text"
+                        value={paytrMerchantSalt}
+                        onChange={(e) => setPaytrMerchantSalt(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                        placeholder="Mağaza API Salt"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2 flex items-center justify-between py-2 border-t border-gray-200/50">
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900">Test Modu</div>
+                        <div className="text-xs text-gray-400">PayTR test ortamını kullan (Sanbox modu)</div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={paytrTestMode}
+                          onChange={(e) => setPaytrTestMode(e.target.checked)}
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Bank Wire / EFT Account Settings */}
+              <div className="bg-slate-50/50 border border-gray-200/60 rounded-3xl p-6 md:p-8 space-y-6">
+                <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🏦</span>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">Banka Havalesi / EFT Ayarları</h3>
+                      <p className="text-xs text-gray-400 font-semibold mt-0.5">Havale ile ödemeler için resmi banka hesap ayrıntıları</p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={bankActive}
+                      onChange={(e) => setBankActive(e.target.checked)}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+                  </label>
+                </div>
+
+                {bankActive && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Banka Adı *</label>
+                      <input
+                        type="text"
+                        value={bankName}
+                        onChange={(e) => setBankName(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                        placeholder="Örn: Garanti BBVA"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Alıcı Adı *</label>
+                      <input
+                        type="text"
+                        value={bankReceiver}
+                        onChange={(e) => setBankReceiver(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                        placeholder="Firma veya Şahıs Ünvanı"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="text-sm font-semibold text-gray-700 mb-1.5 block">IBAN Numarası *</label>
+                      <input
+                        type="text"
+                        value={bankIban}
+                        onChange={(e) => setBankIban(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm font-mono"
+                        placeholder="TR00 0000 0000 0000 0000 0000 00"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Commission Rates Settings */}
+              <div className="bg-slate-50/50 border border-gray-200/60 rounded-3xl p-6 md:p-8 space-y-6">
+                <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
+                  <span className="text-2xl">📊</span>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Komisyon Oranları</h3>
+                    <p className="text-xs text-gray-400 font-semibold mt-0.5">Eğitmen satışlarından alınacak platform komisyon yüzdeleri</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Kurs Satış Komisyonu (%) *</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={courseCommission}
+                      onChange={(e) => setCourseCommission(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                      placeholder="Örn: 20"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Eğitmenlerin sattığı video kurslardan alınacak komisyon oranı (örn. %20 için 20 yazın)</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Canlı Ders Komisyonu (%) *</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={liveClassCommission}
+                      onChange={(e) => setLiveClassCommission(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                      placeholder="Örn: 15"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Eğitmenlerin canlı ders rezervasyonlarından alınacak komisyon oranı (örn. %15 için 15 yazın)</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="flex justify-end pt-4">
+                <button
+                  onClick={() => updatePaymentSettingsMutation.mutate()}
+                  disabled={updatePaymentSettingsMutation.isPending}
+                  className="px-8 py-3.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold rounded-2xl hover:from-teal-700 hover:to-emerald-700 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl"
+                >
+                  {updatePaymentSettingsMutation.isPending ? "Ayarlar Kaydediliyor..." : "Ödeme Ayarlarını Kaydet"}
+                </button>
+              </div>
+
             </div>
           )}
         </div>

@@ -28,6 +28,22 @@ interface Course {
   created_at: string;
 }
 
+const slugify = (text: string) => {
+  const trMap: Record<string, string> = {
+    'ç': 'c', 'Ç': 'C', 'ğ': 'g', 'Ğ': 'G', 'ı': 'i', 'I': 'I', 'İ': 'i', 'ö': 'o', 'Ö': 'O', 'ş': 's', 'Ş': 'S', 'ü': 'u', 'Ü': 'U'
+  };
+  let slug = text;
+  for (const key in trMap) {
+    slug = slug.replace(new RegExp(key, 'g'), trMap[key]);
+  }
+  return slug
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+};
+
 export default function MyCourseDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -751,19 +767,29 @@ export default function MyCourseDetailPage() {
                     alert("Lütfen en az 1 kategori seçin.");
                     return;
                   }
-                  // Her durumda price gönder (backend kontrol edecek)
-                  const updateData: any = {
-                    title: editTitle,
-                    description: editDescription || undefined,
-                    category_ids: editCategoryIds,
-                    price: editPrice,
-                  };
-                  updateCourseMutation.mutate(updateData);
+                  if (isNew) {
+                    const slug = slugify(editTitle);
+                    createCourseMutation.mutate({
+                      title: editTitle,
+                      slug: slug,
+                      description: editDescription,
+                      price: editPrice,
+                      category_ids: editCategoryIds,
+                    });
+                  } else {
+                    const updateData: any = {
+                      title: editTitle,
+                      description: editDescription || undefined,
+                      category_ids: editCategoryIds,
+                      price: editPrice,
+                    };
+                    updateCourseMutation.mutate(updateData);
+                  }
                 }}
-                disabled={!editTitle.trim() || editCategoryIds.length === 0 || updateCourseMutation.isPending}
-                className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg transition-all font-semibold shadow-lg hover:shadow-xl disabled:shadow-none flex items-center gap-2"
+                disabled={!editTitle.trim() || editCategoryIds.length === 0 || (isNew ? createCourseMutation.isPending : updateCourseMutation.isPending)}
+                className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg transition-all font-semibold shadow-lg hover:shadow-xl disabled:shadow-none flex items-center gap-2 cursor-pointer"
               >
-                {updateCourseMutation.isPending ? (
+                {(isNew ? createCourseMutation.isPending : updateCourseMutation.isPending) ? (
                   <>
                     <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -776,7 +802,7 @@ export default function MyCourseDetailPage() {
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Kaydet
+                    {isNew ? "Kursu Oluştur" : "Kaydet"}
                   </>
                 )}
               </button>

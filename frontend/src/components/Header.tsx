@@ -11,8 +11,11 @@ import NotificationBell from "./NotificationBell";
 
 const navItems = [
   { label: "Kurslar", href: "/courses" },
+  { label: "Eğitim Programları", href: "/egitim-programlari" },
   { label: "Eğitmenler", href: "/teachers" },
+  { label: "Eğitmen Ol", href: "/become-instructor" },
   { label: "Blog", href: "/blog" },
+  { label: "İletişim", href: "/iletisim" },
 ];
 
 export default function Header() {
@@ -49,13 +52,8 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg shadow-teal-500/20">
-              <span className="text-white font-bold text-lg">B</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900">
-              bi<span className="text-teal-600">hocam</span>
-            </span>
+          <Link href="/" className="flex items-center">
+            <img src="/logo.png" alt="BiHocam Logo" className="h-10 w-auto object-contain" />
           </Link>
 
           {/* Desktop Nav */}

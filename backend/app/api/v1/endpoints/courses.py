@@ -271,6 +271,13 @@ async def create_course(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_teacher_or_admin),
 ):
+    # Eğitmen onaylı mı kontrol et
+    if current_user.role == UserRole.TEACHER and not current_user.is_verified:
+        raise HTTPException(
+            status_code=403,
+            detail="Hesabınız admin tarafından onaylanmamıştır. Kurs oluşturmak için onaylı bir eğitmen olmanız gerekmektedir."
+        )
+
     # Slug kontrolü - önceden kontrol et
     existing_slug = await db.execute(
         select(Course).where(Course.slug == course_in.slug)
@@ -411,35 +418,17 @@ async def update_course(
         raise HTTPException(status_code=404, detail="Kurs bulunamadı")
 
     is_admin = current_user.role == UserRole.ADMIN
-    # String karşılaştırması için str() kullan
     is_owner = str(course.teacher_id) == str(current_user.id)
 
     # Yetki kontrolü
     if not is_admin and not is_owner:
         raise HTTPException(status_code=403, detail="Bu kursu düzenleme yetkiniz yok")
     
-    # PENDING_REVIEW durumundaki kurslar sadece admin tarafından düzenlenebilir
-    # Ancak öğretmen kendi kursunda bazı alanları (title, description, category_ids) düzenleyebilir
-    if course.status == "pending_review" and not is_admin:
-        # Öğretmen sadece belirli alanları düzenleyebilir
-        allowed_fields_for_pending = {'title', 'description', 'meta_title', 'meta_description', 'category_ids'}
-        update_fields = set(course_in.model_dump(exclude_unset=True).keys())
-        if not update_fields.issubset(allowed_fields_for_pending):
-            raise HTTPException(
-                status_code=403,
-                detail={
-                    "code": "COURSE_PENDING_REVIEW",
-                    "message": "Bu kurs onay bekliyor. Şu anda sadece başlık, açıklama ve kategorileri düzenleyebilirsiniz. Diğer alanlar için onay sürecinin tamamlanmasını bekleyin."
-                }
-            )
-
-    # Teacher için izin verilen alanlar (sınırlı)
-    # Draft ve Rejected durumunda: title, description, price, meta_title, meta_description, category_ids
-    # Pending review durumunda: sadece title, description, meta_title, meta_description, category_ids (price yok)
-    if course.status in ["draft", "rejected"]:
-        teacher_allowed_fields = {'title', 'description', 'price', 'meta_title', 'meta_description', 'category_ids'}
-    else:
-        teacher_allowed_fields = {'title', 'description', 'meta_title', 'meta_description', 'category_ids'}
+    # Teacher için izin verilen alanlar
+    teacher_allowed_fields = {
+        'title', 'description', 'price', 'discount_price', 
+        'meta_title', 'meta_description', 'category_ids', 'thumbnail_path'
+    }
     
     # Admin için tüm alanlar izinli
     update_data = course_in.model_dump(exclude_unset=True, exclude={'category_ids'})
@@ -452,9 +441,11 @@ async def update_course(
                 status_code=403,
                 detail={
                     "code": "FIELD_ACCESS_DENIED",
-                    "message": f"Öğretmen olarak şu alanları güncelleyemezsiniz: {', '.join(restricted_fields)}. {f'Draft durumunda başlık, açıklama, fiyat, meta bilgiler ve kategoriler güncellenebilir.' if course.status == 'draft' else 'Onay bekleyen kurslarda sadece başlık, açıklama, meta bilgiler ve kategoriler güncellenebilir.'}"
+                    "message": f"Öğretmen olarak şu alanları güncelleyemezsiniz: {', '.join(restricted_fields)}."
                 }
             )
+        # Her düzenlemeden sonra adminin onayına düşer
+        course.status = "pending_review"
     
     # Değişiklik takibi için eski değerleri sakla
     old_status = course.status
@@ -866,6 +857,8 @@ async def add_lesson(
             raise HTTPException(status_code=400, detail=f"İçerik validasyonu başarısız: {str(e)}")
 
     lesson = Lesson(**lesson_data, course_id=course_id)
+    if current_user.role != UserRole.ADMIN:
+        course.status = "pending_review"
     db.add(lesson)
     await db.commit()
     await db.refresh(lesson)
@@ -959,6 +952,9 @@ async def reorder_lessons(
             lesson = all_lessons[lesson_id]
             lesson.order = order
         
+        if current_user.role != UserRole.ADMIN:
+            course.status = "pending_review"
+            
         await db.commit()
         
         return {
@@ -1052,6 +1048,9 @@ async def update_lesson(
     for key, value in update_data.items():
         setattr(lesson, key, value)
     
+    if current_user.role != UserRole.ADMIN:
+        course.status = "pending_review"
+        
     await db.commit()
     await db.refresh(lesson)
     
@@ -1139,6 +1138,9 @@ async def delete_lesson(
         if remaining_lesson.order != new_order:
             remaining_lesson.order = new_order
     
+    if current_user.role != UserRole.ADMIN:
+        course.status = "pending_review"
+        
     await db.commit()
     
     return {

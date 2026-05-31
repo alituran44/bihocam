@@ -171,13 +171,14 @@ class TeacherInfo(BaseModel):
     id: str
     full_name: str
     email: str
+    phone: Optional[str] = None
     bio: Optional[str] = None
     expertise_tags: Optional[list[str]] = None
     social_links: Optional[dict] = None
     avatar_url: Optional[str] = None
-    id: str
-    full_name: str
-    email: str
+    live_class_price: Optional[float] = None
+    live_class_discount_price: Optional[float] = None
+    live_class_link: Optional[str] = None
 
     class Config:
         from_attributes = True

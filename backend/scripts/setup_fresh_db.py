@@ -38,8 +38,7 @@ from app.models.user import User, UserRole  # noqa
 from app.models.course import Course, Lesson  # noqa
 from app.models.cart import CartItem  # noqa
 from app.models.coupon import Coupon, CouponUsage  # noqa
-from app.models.order import Order, OrderItem  # noqa
-from app.models.enrollment import Enrollment  # noqa
+from app.models.order import Order, OrderItem, Enrollment  # noqa
 from app.models.quiz import Quiz, QuizQuestion, QuizAttempt, QuizAttemptAnswer  # noqa
 from app.models.lesson_progress import LessonProgress  # noqa
 from app.models.course_review import CourseReview  # noqa
@@ -77,10 +76,16 @@ async def setup():
     # ── 1. Baglanti kontrolu ──
     print("\n[1/5] Veritabani baglantiyi kontrol ediliyor...")
     try:
+        from app.core.config import settings
         async with engine.begin() as conn:
-            result = await conn.execute(text("SELECT version();"))
-            version = result.scalar_one()
-            print(f"  OK - PostgreSQL: {version[:60]}...")
+            if "sqlite" in settings.DATABASE_URL:
+                result = await conn.execute(text("SELECT sqlite_version();"))
+                version = result.scalar_one()
+                print(f"  OK - SQLite: {version}...")
+            else:
+                result = await conn.execute(text("SELECT version();"))
+                version = result.scalar_one()
+                print(f"  OK - PostgreSQL: {version[:60]}...")
     except Exception as e:
         print(f"  HATA: Veritabanina baglanilamiyor!")
         print(f"  Detay: {e}")
@@ -94,9 +99,15 @@ async def setup():
     
     # Kac tablo var kontrol et
     async with AsyncSessionLocal() as db:
-        result = await db.execute(text(
-            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'"
-        ))
+        from app.core.config import settings
+        if "sqlite" in settings.DATABASE_URL:
+            result = await db.execute(text(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table'"
+            ))
+        else:
+            result = await db.execute(text(
+                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'"
+            ))
         table_count = result.scalar_one()
         print(f"  OK - {table_count} tablo mevcut")
 

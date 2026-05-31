@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/lib/providers";
 import SiteSettingsScripts from "@/components/SiteSettingsScripts";
+import FloatingChat from "@/components/FloatingChat";
 
 // Tüm sayfalar dynamic render — useSearchParams SSR hatalarını önler
 export const dynamic = "force-dynamic";
@@ -31,6 +32,7 @@ export default function RootLayout({
         <Providers>
           <SiteSettingsScripts />
           {children}
+          <FloatingChat />
         </Providers>
       </body>
     </html>

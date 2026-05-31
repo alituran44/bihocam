@@ -315,140 +315,158 @@ export function QuizTakingInterface({
         </div>
       </div>
 
-      {/* Question */}
-      <div className="p-6">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentQuestion.id}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="mb-6">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center text-white font-bold">
-                  {currentQuestionIndex + 1}
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-xl font-semibold text-gray-900 mb-2">
-                    {currentQuestion.question_text}
-                  </h4>
-                  <div className="text-sm text-gray-500">
-                    {currentQuestion.points} puan • {currentQuestion.question_type === "multiple_choice" ? "Çoktan Seçmeli" : currentQuestion.question_type === "true_false" ? "Doğru/Yanlış" : "Kısa Cevap"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Answer Input */}
-              <div className="mt-6">
-                {currentQuestion.question_type === "multiple_choice" && currentQuestion.options ? (
-                  <div className="space-y-3">
-                    {Object.entries(currentQuestion.options).map(([key, value]) => (
-                      <label
-                        key={key}
-                        className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                          answers[currentQuestion.id] === key
-                            ? "border-teal-500 bg-teal-50"
-                            : "border-gray-200 hover:border-gray-300"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name={`question-${currentQuestion.id}`}
-                          value={key}
-                          checked={answers[currentQuestion.id] === key}
-                          onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-                          className="w-5 h-5 text-teal-600 focus:ring-teal-500"
-                        />
-                        <span className="ml-3 font-medium text-gray-900">{key}. {value}</span>
-                      </label>
-                    ))}
-                  </div>
-                ) : currentQuestion.question_type === "true_false" ? (
-                  <div className="space-y-3">
-                    {["true", "false"].map((option) => (
-                      <label
-                        key={option}
-                        className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                          answers[currentQuestion.id] === option
-                            ? "border-teal-500 bg-teal-50"
-                            : "border-gray-200 hover:border-gray-300"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name={`question-${currentQuestion.id}`}
-                          value={option}
-                          checked={answers[currentQuestion.id] === option}
-                          onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-                          className="w-5 h-5 text-teal-600 focus:ring-teal-500"
-                        />
-                        <span className="ml-3 font-medium text-gray-900">
-                          {option === "true" ? "Doğru" : "Yanlış"}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <textarea
-                    value={answers[currentQuestion.id] || ""}
-                    onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-                    placeholder="Cevabınızı buraya yazın..."
-                    className="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none resize-none"
-                    rows={4}
-                  />
-                )}
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Navigation */}
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
-          <button
-            onClick={handlePrevious}
-            disabled={currentQuestionIndex === 0}
-            className="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Önceki
-          </button>
-
-          <div className="flex items-center gap-2">
-            {quiz.questions.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentQuestionIndex(idx)}
-                className={`w-10 h-10 rounded-lg border-2 transition-all ${
-                  idx === currentQuestionIndex
-                    ? "border-teal-500 bg-teal-500 text-white"
-                    : answers[quiz.questions![idx].id]
-                    ? "border-green-500 bg-green-50 text-green-700"
-                    : "border-gray-300 text-gray-600 hover:border-gray-400"
-                }`}
-              >
-                {idx + 1}
-              </button>
-            ))}
+      {/* Body: Split grid if PDF exists */}
+      <div className={`grid grid-cols-1 ${quiz.pdf_path ? "lg:grid-cols-2" : ""} gap-6 p-6`}>
+        
+        {/* Left Column: PDF Sınav Kitapçığı Viewer */}
+        {quiz.pdf_path && (
+          <div className="w-full flex flex-col space-y-3">
+            <span className="text-xs font-bold text-teal-600 bg-teal-50 border border-teal-150 px-3 py-1.5 rounded-lg self-start flex items-center gap-1.5">
+              <span>📄</span> Sınav Kitapçığı (PDF)
+            </span>
+            <iframe
+              src={`http://localhost:8000/media/${quiz.pdf_path}#toolbar=0`}
+              className="w-full h-[550px] rounded-2xl border border-gray-200 shadow-inner bg-slate-100"
+            />
           </div>
+        )}
 
-          {currentQuestionIndex === quiz.questions.length - 1 ? (
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting || answeredCount < quiz.questions.length}
-              className="px-6 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold"
+        {/* Right Column: Question & Answers */}
+        <div className="flex flex-col justify-between">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentQuestion.id}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
             >
-              {isSubmitting ? "Gönderiliyor..." : "Gönder"}
-            </button>
-          ) : (
+              <div className="mb-6">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center text-white font-bold">
+                    {currentQuestionIndex + 1}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-xl font-semibold text-gray-900 mb-2">
+                      {currentQuestion.question_text}
+                    </h4>
+                    <div className="text-sm text-gray-500">
+                      {currentQuestion.points} puan • {currentQuestion.question_type === "multiple_choice" ? "Çoktan Seçmeli" : currentQuestion.question_type === "true_false" ? "Doğru/Yanlış" : "Kısa Cevap"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Answer Input */}
+                <div className="mt-6">
+                  {currentQuestion.question_type === "multiple_choice" && currentQuestion.options ? (
+                    <div className="space-y-3">
+                      {Object.entries(currentQuestion.options).map(([key, value]) => (
+                        <label
+                          key={key}
+                          className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                            answers[currentQuestion.id] === key
+                              ? "border-teal-500 bg-teal-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name={`question-${currentQuestion.id}`}
+                            value={key}
+                            checked={answers[currentQuestion.id] === key}
+                            onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
+                            className="w-5 h-5 text-teal-600 focus:ring-teal-500"
+                          />
+                          <span className="ml-3 font-medium text-gray-900">{key}. {value}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : currentQuestion.question_type === "true_false" ? (
+                    <div className="space-y-3">
+                      {["true", "false"].map((option) => (
+                        <label
+                          key={option}
+                          className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                            answers[currentQuestion.id] === option
+                              ? "border-teal-500 bg-teal-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name={`question-${currentQuestion.id}`}
+                            value={option}
+                            checked={answers[currentQuestion.id] === option}
+                            onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
+                            className="w-5 h-5 text-teal-600 focus:ring-teal-500"
+                          />
+                          <span className="ml-3 font-medium text-gray-900">
+                            {option === "true" ? "Doğru" : "Yanlış"}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <textarea
+                      value={answers[currentQuestion.id] || ""}
+                      onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
+                      placeholder="Cevabınızı buraya yazın..."
+                      className="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none resize-none"
+                      rows={4}
+                    />
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Navigation */}
+          <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
             <button
-              onClick={handleNext}
-              className="px-6 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all font-semibold"
+              onClick={handlePrevious}
+              disabled={currentQuestionIndex === 0}
+              className="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Sonraki
+              Önceki
             </button>
-          )}
+
+            <div className="flex items-center gap-2">
+              {quiz.questions.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentQuestionIndex(idx)}
+                  className={`w-10 h-10 rounded-lg border-2 transition-all ${
+                    idx === currentQuestionIndex
+                      ? "border-teal-500 bg-teal-500 text-white"
+                      : answers[quiz.questions![idx].id]
+                      ? "border-green-500 bg-green-50 text-green-700"
+                      : "border-gray-300 text-gray-600 hover:border-gray-400"
+                  }`}
+                >
+                  {idx + 1}
+                </button>
+              ))}
+            </div>
+
+            {currentQuestionIndex === quiz.questions.length - 1 ? (
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting || answeredCount < quiz.questions.length}
+                className="px-6 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold"
+              >
+                {isSubmitting ? "Gönderiliyor..." : "Gönder"}
+              </button>
+            ) : (
+              <button
+                onClick={handleNext}
+                className="px-6 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all font-semibold"
+              >
+                Sonraki
+              </button>
+            )}
+          </div>
         </div>
+
       </div>
     </div>
   );

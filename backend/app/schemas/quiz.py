@@ -7,6 +7,7 @@ from app.models.quiz import QuizQuestionType, QuizAttemptStatus
 class QuizBase(BaseModel):
     title: str
     description: str | None = None
+    pdf_path: str | None = None
     passing_score: int = 70
     time_limit_minutes: int | None = None
     max_attempts: int | None = None
@@ -21,6 +22,7 @@ class QuizCreate(QuizBase):
 class QuizUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
+    pdf_path: str | None = None
     passing_score: int | None = None
     time_limit_minutes: int | None = None
     max_attempts: int | None = None
@@ -43,6 +45,7 @@ class QuizListItem(BaseModel):
     id: str
     title: str
     lesson_id: str
+    pdf_path: str | None = None
     question_count: int
     attempt_count: int
     created_at: datetime

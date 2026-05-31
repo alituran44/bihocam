@@ -4,22 +4,39 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900">
+    <footer className="bg-gray-900 border-t border-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">B</span>
+            {/* Premium Integrated Mini CTA Card */}
+            <div 
+              className="p-4 rounded-2xl bg-[#0A1128] border border-blue-900/40 text-left relative overflow-hidden backdrop-blur-sm shadow-lg shadow-blue-950/20"
+              style={{
+                backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px)",
+                backgroundSize: "16px 16px"
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 via-transparent to-transparent pointer-events-none"></div>
+              <div className="relative z-10 space-y-3">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 border border-white/10 rounded-full text-white/90 text-[10px] font-extrabold tracking-wide uppercase">
+                  <span>💪</span>
+                  <span>Başlayalım</span>
+                </div>
+                <h5 className="text-sm font-black text-white leading-snug tracking-tight">
+                  Başarıya Doğru <br />İlk Adımı Atın
+                </h5>
+                <div>
+                  <Link
+                    href="/courses"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 transform hover:-translate-y-0.5"
+                  >
+                    <span>🎓</span>
+                    <span>Kurslara Kaydolun</span>
+                  </Link>
+                </div>
               </div>
-              <span className="text-xl font-bold text-white">
-                bi<span className="text-teal-400">hocam</span>
-              </span>
-            </Link>
-            <p className="text-gray-400 text-sm mb-4 max-w-xs leading-relaxed">
-              Online eğitimde yeni nesil deneyim. Uzman eğitmenlerle hedeflerine ulaş.
-            </p>
+            </div>
           </div>
 
           {/* Platform */}
@@ -29,6 +46,11 @@ export default function Footer() {
               <li>
                 <Link href="/courses" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
                   Kurslar
+                </Link>
+              </li>
+              <li>
+                <Link href="/egitim-programlari" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
+                  Eğitim Programları
                 </Link>
               </li>
               <li>
@@ -46,44 +68,68 @@ export default function Footer() {
                   Eğitmen Ol
                 </Link>
               </li>
-            </ul>
-          </div>
-
-          {/* Şirket */}
-          <div>
-            <h4 className="font-semibold text-white text-sm mb-4">Şirket</h4>
-            <ul className="space-y-3">
               <li>
-                <Link href="#" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
-                  Hakkımızda
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
+                <Link href="/iletisim" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
                   İletişim
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Destek */}
+          {/* Kurumsal */}
           <div>
-            <h4 className="font-semibold text-white text-sm mb-4">Destek</h4>
+            <h4 className="font-semibold text-white text-sm mb-4">Kurumsal</h4>
             <ul className="space-y-3">
               <li>
-                <Link href="#" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
-                  Yardım Merkezi
+                <Link href="/pages/hakkimizda" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
+                  Hakkımızda
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
-                  Gizlilik Politikası
+                <Link href="/pages/uyelik-sozlesmesi" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
+                  Üyelik Sözleşmesi
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
-                  Kullanım Şartları
+                <Link href="/pages/gizlilik" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
+                  Gizlilik ve Çerez Politikası
                 </Link>
+              </li>
+              <li>
+                <Link href="/pages/KVKK-aydinlatma-metni" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
+                  KVKK Aydınlatma Metni
+                </Link>
+              </li>
+              <li>
+                <Link href="/pages/mesafeli-satis-sozlesmesi" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
+                  Mesafeli Satış Sözleşmesi
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* İletişim */}
+          <div>
+            <h4 className="font-semibold text-white text-sm mb-4">İletişim</h4>
+            <ul className="space-y-3 text-gray-400 text-sm">
+              <li className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-teal-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Çanakkale/Turkey</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-teal-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                <a href="tel:+908508405543" className="hover:text-teal-400 transition-colors">+90 8508405543</a>
+              </li>
+              <li className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-teal-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <a href="mailto:bilgi@bihocam.com" className="hover:text-teal-400 transition-colors">bilgi@bihocam.com</a>
               </li>
             </ul>
           </div>

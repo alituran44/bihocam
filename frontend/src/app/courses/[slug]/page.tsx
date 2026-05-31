@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { coursesApi, cartApi, enrollmentsApi, courseReviewsApi, mediaApi, type Category, type LessonResponse } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import Header from "@/components/Header";
@@ -60,6 +61,7 @@ export default function CourseDetailPage() {
   const slug = params.slug as string;
   const { isAuthenticated, user } = useAuthStore();
   const queryClient = useQueryClient();
+  
   const [addingToCart, setAddingToCart] = useState(false);
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -73,6 +75,9 @@ export default function CourseDetailPage() {
     queryFn: () => coursesApi.getBySlug(slug),
     enabled: !!slug,
   });
+
+  const courseUrl = typeof window !== "undefined" ? window.location.origin + `/courses/${slug}` : "";
+  const shareText = course ? `BiHocam'da harika bir kurs buldum: ${course.title}` : "";
 
   const { data: enrollments } = useQuery({
     queryKey: ["my-enrollments"],
@@ -236,17 +241,33 @@ export default function CourseDetailPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      {/* Hero Section with Gradient */}
-      <div className="bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800 text-white pt-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Hero Header */}
+      <div className="relative bg-gradient-to-br from-teal-900 via-slate-900 to-teal-950 pt-32 pb-24 overflow-hidden border-b border-teal-800/10 text-white">
+        {/* Background Image Overlay */}
+        {course.thumbnail_path ? (
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-35 mix-blend-overlay pointer-events-none"
+            style={{ backgroundImage: `url('${course.thumbnail_path}')` }}
+          />
+        ) : (
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-35 mix-blend-overlay pointer-events-none"
+            style={{ backgroundImage: "url('/courses_banner_bg.png')" }}
+          />
+        )}
+        {/* Glowing Gradient Highlights */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(20,184,166,0.12),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(13,148,136,0.18),transparent_60%)]" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
-          <div className="mb-6 flex items-center gap-2 text-sm text-teal-100">
+          <div className="mb-6 flex items-center gap-2 text-sm text-teal-300/80 font-semibold">
             <Link href="/" className="hover:text-white transition-colors">Ana Sayfa</Link>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
             <Link href="/courses" className="hover:text-white transition-colors">Kurslar</Link>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
             <span className="text-white font-medium truncate max-w-xs">{course.title}</span>
@@ -320,27 +341,52 @@ export default function CourseDetailPage() {
           {/* Ana İçerik */}
           <div className="lg:col-span-2 space-y-8">
 
-            {/* Video Önizleme */}
+            {/* Video Önizleme veya Kapak Görseli */}
             {(() => {
               const previewLesson = course.lessons.find((l) => l.is_preview);
-              if (!previewLesson) return null;
+              const hasVideo = previewLesson && (previewLesson.video_url || previewLesson.content_url);
 
-              return (
-                <div className="bg-white rounded-2xl overflow-hidden shadow-2xl border-2 border-gray-200">
-                  <div className="relative">
-                    <div className="absolute top-4 left-4 z-10">
-                      <div className="bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-md font-semibold shadow-lg">
-                        Önizleme
+              if (previewLesson && hasVideo) {
+                return (
+                  <div className="bg-white rounded-2xl overflow-hidden shadow-2xl border-2 border-gray-200">
+                    <div className="relative">
+                      <div className="absolute top-4 left-4 z-10">
+                        <div className="bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-md font-semibold shadow-lg">
+                          Önizleme
+                        </div>
                       </div>
+                      <ContentRenderer
+                        lesson={previewLesson}
+                        watchedSeconds={0}
+                        className="rounded-2xl"
+                      />
                     </div>
-                    <ContentRenderer
-                      lesson={previewLesson}
-                      watchedSeconds={0}
-                      className="rounded-2xl"
-                    />
                   </div>
-                </div>
-              );
+                );
+              }
+
+              // Tanıtım videosu yoksa, kurs kapak görselini göster
+              if (course.thumbnail_path) {
+                return (
+                  <div className="bg-white rounded-2xl overflow-hidden shadow-2xl border-2 border-gray-200 aspect-video relative group">
+                    <img
+                      src={course.thumbnail_path}
+                      alt={course.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="absolute bottom-6 left-6 right-6 text-white z-10">
+                      <span className="bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow-lg uppercase tracking-wider mb-2 inline-flex items-center gap-1.5">
+                        <span className="w-2 h-2 bg-white rounded-full animate-ping" />
+                        Eğitim Tanıtımı
+                      </span>
+                      <h3 className="text-xl md:text-2xl font-black tracking-tight">{course.title}</h3>
+                    </div>
+                  </div>
+                );
+              }
+
+              return null;
             })()}
 
             {/* Kurs Açıklaması */}
@@ -762,18 +808,47 @@ export default function CourseDetailPage() {
               {/* Sosyal Paylaşım */}
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                 <p className="text-sm font-semibold text-gray-700 mb-3">Bu kursu paylaş</p>
-                <div className="flex items-center gap-3">
-                  <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors text-sm font-semibold">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <div className="grid grid-cols-2 gap-3">
+                  <button 
+                    onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(courseUrl)}`, '_blank')}
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors text-xs font-bold"
+                  >
+                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                     </svg>
                     Facebook
                   </button>
-                  <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-colors text-sm font-semibold">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <button 
+                    onClick={() => window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + " " + courseUrl)}`, '_blank')}
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-colors text-xs font-bold"
+                  >
+                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
                     </svg>
                     WhatsApp
+                  </button>
+                  <button 
+                    onClick={() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(courseUrl)}&text=${encodeURIComponent(shareText)}`, '_blank')}
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-black hover:bg-neutral-900 text-white rounded-xl transition-colors text-xs font-bold"
+                  >
+                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    X (Twitter)
+                  </button>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(courseUrl);
+                      toast.success("Kurs linki kopyalandı! Instagram'da paylaşabilirsiniz.");
+                    }}
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 hover:opacity-90 text-white rounded-xl transition-all text-xs font-bold"
+                  >
+                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path fillRule="evenodd" d="M12.315 2c2.43 0 2.784.01 3.71.054.97.046 1.624.2 2.08.375a3.59 3.59 0 0 1 1.3 2.2c.176.456.33 1.11.375 2.08.045.926.054 1.252.054 3.71s-.01 2.784-.054 3.71c-.046.97-.2 1.624-.375 2.08a3.59 3.59 0 0 1-2.2 1.3c-.456.175-1.11.33-2.08.375-.926.045-1.252.054-3.71.054s-2.784-.01-3.71-.054c-.97-.046-1.624-.2-2.08-.375a3.59 3.59 0 0 1-1.3-2.2c-.175-.456-.33-1.11-.375-2.08-.045-.926-.054-1.252-.054-3.71s.01-2.784.054-3.71c.046-.97.2-1.624.375-2.08a3.59 3.59 0 0 1 2.2-1.3c.456-.175 1.11-.33 2.08-.375.926-.045 1.252-.054 3.71-.054m0-2C9.837 0 9.53.01 8.56.055 7.592.1 6.88.258 6.27.495a5.59 5.59 0 0 0-2 1.3 5.59 5.59 0 0 0-1.3 2C2.72 4.41 2.56 5.12 2.51 6.086 2.464 7.052 2.45 7.377 2.45 10c0 2.622.014 2.947.06 3.914.047.967.207 1.68.445 2.29a5.59 5.59 0 0 0 1.3 2 5.59 5.59 0 0 0 2 1.3c.61.238 1.321.396 2.29.44 1.05.047 1.353.06 3.914.06 2.56 0 2.863-.013 3.914-.06.967-.044 1.68-.202 2.29-.44a5.59 5.59 0 0 0 2-1.3 5.59 5.59 0 0 0 1.3-2c.238-.61.396-1.321.44-2.29.047-1.05.06-1.353.06-3.914 0-2.56-.013-2.863-.06-3.914-.044-.967-.202-1.68-.44-2.29a5.59 5.59 0 0 0-1.3-2 5.59 5.59 0 0 0-2-1.3c-.61-.238-1.321-.396-2.29-.44C14.47.014 14.145 0 11.53 0z" />
+                      <path fillRule="evenodd" d="M12.315 4.865a5.135 5.135 0 1 0 0 10.27 5.135 5.135 0 0 0 0-10.27m0 8.27a3.135 3.135 0 1 1 0-6.27 3.135 3.135 0 0 1 0 6.27" />
+                      <path d="M17.653 5.9a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0" />
+                    </svg>
+                    Instagram
                   </button>
                 </div>
               </div>

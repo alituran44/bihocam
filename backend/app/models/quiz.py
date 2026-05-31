@@ -29,6 +29,7 @@ class Quiz(Base):
     
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    pdf_path: Mapped[str | None] = mapped_column(String(500), nullable=True)  # Sınav kağıdı/PDF'i
     
     # Settings
     passing_score: Mapped[int] = mapped_column(Integer, default=70)  # Geçme notu (0-100)

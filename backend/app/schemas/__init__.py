@@ -87,6 +87,7 @@ from app.schemas.messaging import (
     UserBlockCreate,
     MessageReportCreate,
 )
+from app.schemas.education_program import EducationProgramCreate, EducationProgramUpdate, EducationProgramResponse
 
 __all__ = [
     "UserCreate", "UserUpdate", "UserResponse", "Token", "TokenPayload",
@@ -117,4 +118,5 @@ __all__ = [
     "MessageCreate", "MessageResponse", "MessageListResponse",
     "MessageRecipient", "UnreadCountResponse",
     "UserBlockCreate", "MessageReportCreate",
+    "EducationProgramCreate", "EducationProgramUpdate", "EducationProgramResponse",
 ]

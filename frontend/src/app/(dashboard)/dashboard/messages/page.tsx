@@ -42,6 +42,36 @@ export default function MessagesPage() {
   const conversations = conversationsData?.conversations || [];
   const unreadCount = unreadCountData?.unread_count || 0;
 
+  // Automatically open or create conversation when recipient_id is passed in query
+  useEffect(() => {
+    if (typeof window !== "undefined" && conversations.length > 0) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const recipientId = urlParams.get("recipient_id");
+      if (recipientId) {
+        // Clear query param so it doesn't trigger repeatedly
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+
+        const existing = conversations.find(
+          (c) => c.other_participant_id === recipientId
+        );
+        if (existing) {
+          setSelectedConversationId(existing.id);
+          markAsReadMutation.mutate(existing.id);
+        } else {
+          messagesApi.createConversation({ recipient_id: recipientId })
+            .then((newConv) => {
+              queryClient.invalidateQueries({ queryKey: ["conversations"] });
+              setSelectedConversationId(newConv.id);
+            })
+            .catch((err) => {
+              console.error("Konuşma başlatılamadı:", err);
+            });
+        }
+      }
+    }
+  }, [conversations, queryClient]);
+
   // Filter conversations
   const filteredConversations = conversations.filter((conv) => {
     if (filter === "unread" && conv.unread_count === 0) return false;
