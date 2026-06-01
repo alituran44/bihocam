@@ -9,7 +9,8 @@ import {
   EducationProgram, 
   CurriculumSection, 
   FAQ, 
-  Review 
+  Review,
+  siteSettingsApi
 } from "@/lib/api";
 
 const CATEGORIES = ["TYT", "AYT", "YKS", "LGS", "YDT", "Diğer"];
@@ -51,6 +52,42 @@ function AdminEduContent() {
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState("Tümü");
 
+  // Dynamic Categories Reordering state & methods
+  const [categories, setCategories] = useState<string[]>(CATEGORIES);
+  const [savingCategories, setSavingCategories] = useState(false);
+
+  const moveCategory = (index: number, direction: "up" | "down") => {
+    const newCategories = [...categories];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    
+    if (targetIndex < 0 || targetIndex >= categories.length) return;
+    
+    const temp = newCategories[index];
+    newCategories[index] = newCategories[targetIndex];
+    newCategories[targetIndex] = temp;
+    
+    setCategories(newCategories);
+  };
+
+  const handleSaveCategoriesOrder = async () => {
+    setSavingCategories(true);
+    try {
+      const settings = await siteSettingsApi.get();
+      await siteSettingsApi.update({
+        general: {
+          ...(settings?.general || {}),
+          categories_order: categories
+        }
+      });
+      toast.success("Kategori sıralaması başarıyla kaydedildi!");
+    } catch (err) {
+      toast.error("Kategori sıralaması kaydedilemedi.");
+      console.error(err);
+    } finally {
+      setSavingCategories(false);
+    }
+  };
+
   // Rich Content Builder State
   const [builderTab, setBuilderTab] = useState<BuilderTab>("general");
   const [editingProgram, setEditingProgram] = useState<EducationProgram | null>(null);
@@ -91,6 +128,30 @@ function AdminEduContent() {
 
   useEffect(() => {
     fetchPrograms();
+  }, []);
+
+  // Synchronize activeTab state when URL search param tab changes
+  useEffect(() => {
+    if (tabParam && validTabs.includes(tabParam)) {
+      setActiveTab(tabParam);
+    } else {
+      setActiveTab("programs");
+    }
+  }, [tabParam]);
+
+  // Load custom categories order from settings on load
+  useEffect(() => {
+    const loadCategoriesOrder = async () => {
+      try {
+        const settings = await siteSettingsApi.get();
+        if (settings?.general?.categories_order) {
+          setCategories(settings.general.categories_order as string[]);
+        }
+      } catch (err) {
+        console.warn("Kategori sıralaması yüklenirken hata, varsayılan sıra kullanılıyor.");
+      }
+    };
+    loadCategoriesOrder();
   }, []);
 
   // Update URL tab when activeTab changes
@@ -1101,24 +1162,72 @@ function AdminEduContent() {
         </div>
       )}
 
-      {/* ── 3. MAIN TAB: CATEGORIES (PLACEHOLDER ORDER) ── */}
+      {/* ── 3. MAIN TAB: CATEGORIES (DYNAMIC REORDERING) ── */}
       {activeTab === "categories" && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-2">Kategori Sırası</h2>
-          <p className="text-xs text-gray-400 mb-6 font-medium">Bu ekranda kategorilerin anasayfa ve portal üzerindeki listelenme sırasını sürükleyip bırakarak veya düğmeler yardımıyla yönetebilirsiniz.</p>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6 animate-fadeIn">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 mb-1">Kategori Sıralaması</h2>
+            <p className="text-xs text-gray-500 font-medium">Kategorilerin anasayfa ve portal üzerindeki listelenme sırasını ok düğmeleriyle kolayca değiştirebilirsiniz.</p>
+          </div>
           
-          <div className="space-y-2">
-            {CATEGORIES.map((cat, i) => (
-              <div key={cat} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-200/50 shadow-inner">
-                <span className="w-8 h-8 bg-teal-100 text-teal-700 rounded-xl flex items-center justify-center text-xs font-bold shadow-sm">
-                  {i + 1}
-                </span>
-                <span className="font-bold text-gray-900 flex-1">{cat}</span>
-                <span className="text-xs text-gray-400 font-bold bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
-                  {programs.filter(p => p.category === cat && p.active).length} Aktif Program
-                </span>
+          <div className="space-y-3">
+            {categories.map((cat, i) => (
+              <div key={cat} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-200/50 shadow-sm hover:shadow-md transition-all duration-200">
+                <div className="flex items-center gap-4">
+                  <span className="w-8 h-8 bg-teal-50 text-teal-700 rounded-xl flex items-center justify-center text-xs font-black shadow-sm border border-teal-100">
+                    {i + 1}
+                  </span>
+                  <span className="font-bold text-gray-900">{cat}</span>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <span className="text-xs text-gray-400 font-bold bg-white px-3 py-1.5 rounded-xl border border-gray-100 shadow-sm">
+                    {programs.filter(p => p.category === cat && p.active).length} Aktif Program
+                  </span>
+                  
+                  {/* Reordering Controls */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={i === 0}
+                      onClick={() => moveCategory(i, "up")}
+                      className="p-2 bg-white hover:bg-teal-50 text-gray-500 hover:text-teal-600 rounded-xl border border-gray-200 disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-gray-500 transition-all shadow-sm cursor-pointer"
+                      title="Yukarı Taşı"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={i === categories.length - 1}
+                      onClick={() => moveCategory(i, "down")}
+                      className="p-2 bg-white hover:bg-teal-50 text-gray-500 hover:text-teal-600 rounded-xl border border-gray-200 disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-gray-500 transition-all shadow-sm cursor-pointer"
+                      title="Aşağı Taşı"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
             ))}
+          </div>
+
+          {/* Action Footer */}
+          <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+            <button
+              onClick={handleSaveCategoriesOrder}
+              disabled={savingCategories}
+              className="px-6 py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-xs font-bold rounded-xl shadow-lg hover:shadow-teal-500/20 hover:-translate-y-0.5 transition-all disabled:opacity-70 flex items-center gap-2 cursor-pointer"
+            >
+              {savingCategories ? (
+                <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Kaydediliyor...</>
+              ) : (
+                <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Kategori Sıralamasını Kaydet</></>
+              )}
+            </button>
           </div>
         </div>
       )}

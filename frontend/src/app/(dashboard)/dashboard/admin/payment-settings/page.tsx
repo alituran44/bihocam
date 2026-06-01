@@ -102,6 +102,15 @@ function PaymentSettingsContent() {
   const initialTab: Tab = tabParam && validTabs.includes(tabParam) ? tabParam : "banks";
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
 
+  // Synchronize activeTab state when URL search param tab changes
+  useEffect(() => {
+    if (tabParam && validTabs.includes(tabParam)) {
+      setActiveTab(tabParam);
+    } else {
+      setActiveTab("banks");
+    }
+  }, [tabParam]);
+
   // Fetch settings from database using React Query
   const { data: settings, isLoading } = useQuery({
     queryKey: ["site-settings"],

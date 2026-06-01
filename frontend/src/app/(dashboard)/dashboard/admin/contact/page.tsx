@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 interface ContactInfo {
@@ -69,6 +69,16 @@ function AdminContactContent() {
   const validTabs: Tab[] = ["info", "faq", "messages"];
   const initialTab: Tab = tabParam && validTabs.includes(tabParam) ? tabParam : "info";
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
+
+  // Synchronize activeTab state when URL search param tab changes
+  useEffect(() => {
+    if (tabParam && validTabs.includes(tabParam)) {
+      setActiveTab(tabParam);
+    } else {
+      setActiveTab("info");
+    }
+  }, [tabParam]);
+
   const [info, setInfo] = useState<ContactInfo>(initialContactInfo);
   const [faqs, setFaqs] = useState<FaqItem[]>(initialFaqs);
   const [savingInfo, setSavingInfo] = useState(false);
