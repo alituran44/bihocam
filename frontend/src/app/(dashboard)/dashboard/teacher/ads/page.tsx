@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -98,6 +99,15 @@ export default function TeacherAdsPage() {
   const [courseFilter, setCourseFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
+  const searchParams = useSearchParams();
+  const placementCode = searchParams.get("placement_code");
+
+  useEffect(() => {
+    if (placementCode) {
+      setShowForm(true);
+    }
+  }, [placementCode]);
+
   const { data: campaigns, isLoading } = useQuery<AdCampaignListResponse[]>({
     queryKey: ["teacher-ads", statusFilter, placementFilter, courseFilter],
     queryFn: () =>
@@ -173,13 +183,18 @@ export default function TeacherAdsPage() {
 
   const handleSave = async (data: any) => {
     if (editingCampaign) {
-      await adCampaignsApi.update(editingCampaign.id, data);
+      const result = await adCampaignsApi.update(editingCampaign.id, data);
       toast.success("Kampanya güncellendi");
+      setShowForm(false);
+      setEditingCampaign(null);
+      return result;
     } else {
-      await createMutation.mutateAsync(data);
+      const result = await createMutation.mutateAsync(data);
+      if (!result.payment_iframe_url) {
+        setShowForm(false);
+      }
+      return result;
     }
-    setShowForm(false);
-    setEditingCampaign(null);
   };
 
   const filteredCampaigns = campaigns?.filter((c) => {

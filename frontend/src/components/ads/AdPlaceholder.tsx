@@ -190,33 +190,47 @@ export default function AdPlaceholder({
         )}
 
         {/* Pricing Info */}
-        {!isCompact && !isSidebar && pricing && (
+        {pricing && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="mb-4 flex flex-wrap items-center justify-center gap-3"
+            className={`flex flex-wrap items-center justify-center ${
+              isInline ? "gap-1.5 my-1" : isCompact ? "gap-2 my-1.5" : isSidebar ? "gap-2 my-2" : "gap-3 mb-4"
+            }`}
           >
             {pricing.fixed_daily && (
-              <div className="px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-teal-200">
-                <span className="text-xs text-gray-500">Günlük:</span>
-                <span className="ml-1 text-sm font-bold text-teal-600">
+              <div className={`bg-white/80 backdrop-blur-sm rounded-lg border border-teal-200 flex items-center ${
+                isInline ? "px-2 py-0.5" : isCompact || isSidebar ? "px-2.5 py-1" : "px-3 py-1.5"
+              }`}>
+                <span className="text-[10px] text-gray-500">Günlük:</span>
+                <span className={`ml-1 font-extrabold text-teal-600 ${
+                  isInline ? "text-[11px]" : isCompact || isSidebar ? "text-xs" : "text-sm"
+                }`}>
                   ₺{Number(pricing.fixed_daily).toFixed(2)}
                 </span>
               </div>
             )}
             {pricing.per_impression && (
-              <div className="px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-teal-200">
-                <span className="text-xs text-gray-500">Gösterim:</span>
-                <span className="ml-1 text-sm font-bold text-teal-600">
+              <div className={`bg-white/80 backdrop-blur-sm rounded-lg border border-teal-200 flex items-center ${
+                isInline ? "px-2 py-0.5" : isCompact || isSidebar ? "px-2.5 py-1" : "px-3 py-1.5"
+              }`}>
+                <span className="text-[10px] text-gray-500">Gösterim:</span>
+                <span className={`ml-1 font-extrabold text-teal-600 ${
+                  isInline ? "text-[11px]" : isCompact || isSidebar ? "text-xs" : "text-sm"
+                }`}>
                   ₺{Number(pricing.per_impression).toFixed(3)}
                 </span>
               </div>
             )}
             {pricing.per_click && (
-              <div className="px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-teal-200">
-                <span className="text-xs text-gray-500">Tıklama:</span>
-                <span className="ml-1 text-sm font-bold text-teal-600">
+              <div className={`bg-white/80 backdrop-blur-sm rounded-lg border border-teal-200 flex items-center ${
+                isInline ? "px-2 py-0.5" : isCompact || isSidebar ? "px-2.5 py-1" : "px-3 py-1.5"
+              }`}>
+                <span className="text-[10px] text-gray-500">Tıklama:</span>
+                <span className={`ml-1 font-extrabold text-teal-600 ${
+                  isInline ? "text-[11px]" : isCompact || isSidebar ? "text-xs" : "text-sm"
+                }`}>
                   ₺{Number(pricing.per_click).toFixed(2)}
                 </span>
               </div>
@@ -235,7 +249,7 @@ export default function AdPlaceholder({
               href={
                 user?.role === "admin"
                   ? "/dashboard/admin/ads/campaigns"
-                  : "/dashboard/teacher/ads"
+                  : `/dashboard/teacher/ads?placement_code=${placementCode}`
               }
               className={`group inline-flex items-center gap-2 ${
                 isInline

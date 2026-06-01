@@ -35,6 +35,9 @@ from app.services.ad_campaign_service import (
     calculate_campaign_cost,
     calculate_teacher_balance_with_pending_ads,
 )
+from app.core.config import settings
+from app.core.paytr import get_iframe_token, _build_user_basket, _amount_to_int, PAYTR_IFRAME_BASE
+from app.api.v1.endpoints.payments import _get_client_ip
 from app.services.ad_placement_service import get_active_placements, get_placement_with_pricing
 from app.services.ad_pricing_service import (
     get_active_pricing_for_placement,
@@ -178,6 +181,7 @@ def require_teacher(current_user: User = Depends(get_current_user)) -> User:
 )
 async def create_campaign(
     campaign_data: AdCampaignCreate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_teacher),
 ):
@@ -193,6 +197,38 @@ async def create_campaign(
         
         # Build response dict
         response_data = _build_campaign_response(campaign)
+        
+        # If payment method is credit card, generate PayTR token
+        if getattr(campaign_data, "payment_method", "balance") == "credit_card":
+            # 1. Build basket
+            basket_items = [
+                {"name": f"Reklam Kampanyası: {campaign.name}", "price": campaign.total_budget, "quantity": 1}
+            ]
+            user_basket = _build_user_basket(basket_items)
+            
+            # 2. Get IP
+            client_ip = _get_client_ip(request)
+            
+            # 3. Call PayTR
+            paytr_result = await get_iframe_token(
+                user_ip=client_ip,
+                merchant_oid=f"AD-{campaign.id}",
+                email=current_user.email,
+                payment_amount=_amount_to_int(campaign.total_budget),
+                user_basket=user_basket,
+                user_name=current_user.full_name or "Eğitmen",
+                user_phone=getattr(current_user, "phone", None) or "05000000000",
+                user_address="Türkiye",
+                merchant_ok_url=f"{settings.FRONTEND_URL}/dashboard/teacher/ads?payment=success",
+                merchant_fail_url=f"{settings.FRONTEND_URL}/dashboard/teacher/ads?payment=fail",
+            )
+            
+            if paytr_result.get("status") == "success":
+                response_data["payment_token"] = paytr_result["token"]
+                response_data["payment_iframe_url"] = f"{PAYTR_IFRAME_BASE}/{paytr_result['token']}"
+            else:
+                logging.error(f"PayTR token failed for ad campaign {campaign.id}: {paytr_result}")
+                
         return AdCampaignResponse.model_validate(response_data)
     except ValueError as e:
         logging.error(f"ValueError in create_campaign: {str(e)}")

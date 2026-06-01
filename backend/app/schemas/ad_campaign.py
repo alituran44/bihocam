@@ -91,7 +91,7 @@ class AdCampaignBase(BaseModel):
 class AdCampaignCreate(AdCampaignBase):
     """Kampanya oluşturma için schema"""
 
-    pass
+    payment_method: str = "balance"  # balance veya credit_card
 
 
 class AdCampaignUpdate(BaseModel):
@@ -155,6 +155,9 @@ class AdCampaignResponse(AdCampaignBase):
     payment_transaction_id: str | None
     created_at: datetime
     updated_at: datetime
+
+    payment_iframe_url: str | None = None
+    payment_token: str | None = None
 
     # Relationships (optional, loaded with selectinload)
     teacher: dict | None = None  # User summary

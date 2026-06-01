@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AdBanner from "@/components/ads/AdBanner";
 import { educationProgramsApi, EducationProgram } from "@/lib/api";
 
 // ─── Demo Data Fallback ────────────────────────────────────────────────────────
@@ -166,6 +167,9 @@ export default function EgitimProgramlariPage() {
 
         {/* Programs Grid */}
         <section className="max-w-7xl mx-auto px-4 py-10">
+          {/* Ad Banner placement */}
+          <AdBanner placementCode="education_programs_banner" className="mb-8" />
+
           <div className="flex items-center justify-between mb-6">
             <p className="text-sm text-gray-500 font-medium">
               Toplam <span className="font-bold text-gray-900">{filtered.length}</span> program gösteriliyor

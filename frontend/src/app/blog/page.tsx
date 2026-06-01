@@ -29,6 +29,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { SEOHead } from "@/components/blog/SEOHead";
+import AdBanner from "@/components/ads/AdBanner";
 
 export default function BlogListPage() {
   const router = useRouter();
@@ -272,6 +273,8 @@ export default function BlogListPage() {
               </div>
 
             </div>
+
+            <AdBanner placementCode="blog_page_banner" className="mb-12" />
 
             {postsLoading ? (
               <div className="bg-white rounded-[2rem] border border-slate-100 p-20 text-center shadow-sm">

@@ -26,6 +26,7 @@ import { TextContent } from "@/components/content/TextContent";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AdBanner from "@/components/ads/AdBanner";
 
 export default function BlogPostDetailPage() {
   const params = useParams();
@@ -148,8 +149,9 @@ export default function BlogPostDetailPage() {
           </div>
 
           {/* Article Main Frame */}
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 relative z-20">
-            <motion.article
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-8">
+              <motion.article
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -286,6 +288,12 @@ export default function BlogPostDetailPage() {
               </div>
             </motion.article>
           </div>
+
+          <aside className="lg:col-span-4">
+            <div className="sticky top-36">
+              <AdBanner placementCode="sidebar_blog" />
+            </div>
+          </aside>
         </div>
 
         {/* Global Footer */}

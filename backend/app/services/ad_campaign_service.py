@@ -291,14 +291,16 @@ async def create_ad_campaign(
             f"total_budget ({campaign_data.total_budget}) must be >= calculated cost ({calculated_cost})"
         )
 
-    # Check teacher balance
-    available_balance, pending_amounts = (
-        await calculate_teacher_balance_with_pending_ads(teacher_id, db)
-    )
-    if available_balance < campaign_data.total_budget:
-        raise ValueError(
-            f"Insufficient balance. Available: {available_balance:.2f} TRY, Required: {campaign_data.total_budget:.2f} TRY"
+    # Check teacher balance & create transaction only for balance payment
+    payment_method = getattr(campaign_data, "payment_method", "balance")
+    if payment_method == "balance":
+        available_balance, pending_amounts = (
+            await calculate_teacher_balance_with_pending_ads(teacher_id, db)
         )
+        if available_balance < campaign_data.total_budget:
+            raise ValueError(
+                f"Insufficient balance. Available: {available_balance:.2f} TRY, Required: {campaign_data.total_budget:.2f} TRY"
+            )
 
     # Create campaign
     campaign = AdCampaign(
@@ -329,17 +331,18 @@ async def create_ad_campaign(
     db.add(campaign)
     await db.flush()
 
-    # Create pending TeacherEarning record (AD_SPEND, negative, pending)
-    earning = TeacherEarning(
-        teacher_id=teacher_id,
-        amount=-campaign_data.total_budget,  # Negatif tutar
-        currency="TRY",
-        type=EarningType.AD_SPEND,
-        description=f"Reklam kampanyası: {campaign_data.name} (Beklemede)",
-        ad_campaign_id=campaign.id,
-        reference_id=campaign.id,
-    )
-    db.add(earning)
+    # Create pending TeacherEarning record only for balance payment
+    if payment_method == "balance":
+        earning = TeacherEarning(
+            teacher_id=teacher_id,
+            amount=-campaign_data.total_budget,  # Negatif tutar
+            currency="TRY",
+            type=EarningType.AD_SPEND,
+            description=f"Reklam kampanyası: {campaign_data.name} (Beklemede)",
+            ad_campaign_id=campaign.id,
+            reference_id=campaign.id,
+        )
+        db.add(earning)
 
     await db.commit()
     await db.refresh(campaign)

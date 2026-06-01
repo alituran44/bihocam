@@ -29,7 +29,7 @@ import { toast } from "sonner";
 
 interface AdCampaignFormProps {
   campaign?: AdCampaign | null;
-  onSave: (data: AdCampaignCreate) => Promise<void>;
+  onSave: (data: AdCampaignCreate) => Promise<any>;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -60,8 +60,10 @@ export default function AdCampaignForm({
     target_categories: campaign?.target_categories || [],
     target_tags: campaign?.target_tags || [],
     is_targeted: campaign?.is_targeted || false,
+    payment_method: "balance",
   });
 
+  const [paytrIframeUrl, setPaytrIframeUrl] = useState<string | null>(null);
   const [placements, setPlacements] = useState<AdPlacement[]>([]);
   const [courses, setCourses] = useState<Array<{ id: string; title: string; slug: string }>>([]);
   const [selectedPlacement, setSelectedPlacement] = useState<AdPlacement | null>(null);
@@ -177,7 +179,7 @@ export default function AdCampaignForm({
     if (form.total_budget <= 0) {
       newErrors.total_budget = "Toplam bütçe 0'dan büyük olmalıdır";
     }
-    if (balance && form.total_budget > Number(balance.available_balance)) {
+    if (form.payment_method === "balance" && balance && form.total_budget > Number(balance.available_balance)) {
       newErrors.total_budget = `Yetersiz bakiye. Mevcut: ${Number(balance.available_balance).toFixed(2)} TRY`;
     }
 
@@ -204,7 +206,14 @@ export default function AdCampaignForm({
     };
 
     console.log("Submitting campaign data:", submitData);
-    await onSave(submitData);
+    try {
+      const result = await onSave(submitData);
+      if (result && result.payment_iframe_url) {
+        setPaytrIframeUrl(result.payment_iframe_url);
+      }
+    } catch (error) {
+      console.error("Form submit error:", error);
+    }
   };
 
   const days = form.start_date && form.end_date
@@ -213,6 +222,44 @@ export default function AdCampaignForm({
           (1000 * 60 * 60 * 24)
       ) + 1
     : 0;
+
+  if (paytrIframeUrl) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-350"
+        >
+          {/* Header */}
+          <div className="bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500 p-6 text-white flex justify-between items-center flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <Sparkles className="w-6 h-6 animate-pulse text-yellow-300" />
+              <span className="text-xl font-bold">PayTR Güvenli Ödeme</span>
+            </div>
+            <button
+              onClick={() => {
+                setPaytrIframeUrl(null);
+                onCancel();
+              }}
+              className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+          </div>
+          
+          {/* Iframe */}
+          <div className="flex-1 min-h-[600px] bg-slate-50 relative p-4">
+            <iframe
+              src={paytrIframeUrl}
+              className="w-full h-full min-h-[580px] border-0 rounded-2xl bg-white shadow-inner"
+              sandbox="allow-same-origin allow-scripts allow-top-navigation allow-forms"
+            />
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -527,6 +574,62 @@ export default function AdCampaignForm({
               </div>
             </motion.div>
           )}
+
+          {/* Payment Method Selector */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-3">
+              Ödeme Yöntemi <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, payment_method: "balance" })}
+                className={`relative p-5 rounded-2xl border-2 transition-all flex flex-col items-start gap-2 cursor-pointer ${
+                  form.payment_method === "balance"
+                    ? "border-teal-500 bg-teal-50 shadow-md"
+                    : "border-gray-200 bg-white hover:border-gray-300"
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-bold text-gray-900">Kullanılabilir Bakiye</span>
+                  <input
+                    type="radio"
+                    checked={form.payment_method === "balance"}
+                    onChange={() => {}}
+                    className="w-4 h-4 text-teal-600 focus:ring-teal-500"
+                  />
+                </div>
+                <p className="text-xs text-gray-600 text-left">Kampanya bedeli kazanç bakiyenizden düşülür.</p>
+                {balance && (
+                  <p className="text-xs font-bold text-teal-700 mt-1 bg-teal-100/50 px-2.5 py-1 rounded-lg">
+                    Mevcut Bakiye: ₺{Number(balance.available_balance).toFixed(2)}
+                  </p>
+                )}
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, payment_method: "credit_card" })}
+                className={`relative p-5 rounded-2xl border-2 transition-all flex flex-col items-start gap-2 cursor-pointer ${
+                  form.payment_method === "credit_card"
+                    ? "border-teal-500 bg-teal-50 shadow-md"
+                    : "border-gray-200 bg-white hover:border-gray-300"
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-bold text-gray-900">Kredi Kartı</span>
+                  <input
+                    type="radio"
+                    checked={form.payment_method === "credit_card"}
+                    onChange={() => {}}
+                    className="w-4 h-4 text-teal-600 focus:ring-teal-500"
+                  />
+                </div>
+                <p className="text-xs text-gray-600 text-left">PayTR güvenli ödeme altyapısı ile kartınızla ödeyin.</p>
+                <p className="text-[10px] text-gray-500 mt-1 font-semibold">Tüm kartlar ile güvenli taksit imkanı</p>
+              </button>
+            </div>
+          </div>
 
           {/* Budget */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -9,7 +9,7 @@ import Footer from "@/components/Footer";
 import PopupAnnouncement from "@/components/PopupAnnouncement";
 import AdBanner from "@/components/ads/AdBanner";
 import FeaturedCourses from "@/components/ads/FeaturedCourses";
-import { coursesApi, publicApi } from "@/lib/api";
+import { coursesApi, publicApi, educationProgramsApi, EducationProgram, blogPublicApi, BlogPost } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import { usePopupAnnouncement } from "@/hooks/usePopupAnnouncement";
 
@@ -22,6 +22,53 @@ interface Course {
   discount_price: number | null;
   teacher?: { id: string; full_name: string } | null;
 }
+
+// Visual helpers for education program banners
+const getGradientBySlug = (slug: string) => {
+  if (slug.includes("tyt")) return "from-[#2D211F] via-[#211614] to-[#170E0D]"; // Dark brown/maroon gradient
+  if (slug.includes("yks")) return "from-[#3B0054] via-[#2D0040] to-[#1C0028]"; // Purple gradient
+  if (slug.includes("ayt")) return "from-[#001D75] via-[#001350] to-[#000A30]"; // Blue/navy gradient
+  return "from-teal-950 via-teal-900 to-emerald-950";
+};
+
+const getBannerContent = (slug: string, title: string) => {
+  if (slug === "tyt-tum-dersler") {
+    return (
+      <div className="text-center font-sans">
+        <p className="text-4xl font-extrabold tracking-widest text-white leading-none">TYT</p>
+        <p className="text-sm font-black tracking-widest text-white/95 mt-1.5">TÜM DERSLER</p>
+        <p className="text-sm font-black tracking-widest text-white/90">EĞİTİM PROGRAMI</p>
+      </div>
+    );
+  }
+  if (slug === "yks-tum-dersler") {
+    return (
+      <div className="text-center font-sans">
+        <p className="text-4xl font-extrabold tracking-widest text-white leading-none">YKS</p>
+        <p className="text-[10px] sm:text-xs font-black tracking-widest text-white/95 mt-1.5">TYT + AYT TÜM DERSLER</p>
+        <p className="text-sm font-black tracking-widest text-white/90">EĞİTİM PROGRAMI</p>
+      </div>
+    );
+  }
+  if (slug === "ayt-tum-dersler") {
+    return (
+      <div className="text-center font-sans">
+        <p className="text-4xl font-extrabold tracking-widest text-white leading-none">AYT</p>
+        <p className="text-sm font-black tracking-widest text-white/95 mt-1.5">TÜM DERSLER</p>
+        <p className="text-sm font-black tracking-widest text-white/90">EĞİTİM PROGRAMI</p>
+      </div>
+    );
+  }
+  return (
+    <div className="text-center px-4 font-sans">
+      <p className="text-base font-extrabold tracking-wider text-white uppercase">{title}</p>
+    </div>
+  );
+};
+
+const formatProgramPrice = (p: number) => {
+  return (p / 100).toLocaleString("tr-TR", { minimumFractionDigits: 2 }) + " TL";
+};
 
 export default function Home() {
   const router = useRouter();
@@ -69,6 +116,22 @@ export default function Home() {
     queryKey: ["courses", "fallback"],
     queryFn: () => coursesApi.list(0, 8),
     enabled: (!featuredCourses || featuredCourses.length === 0) && (!maintenanceMode || user?.role === "admin"),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Get active education programs
+  const { data: educationPrograms } = useQuery<EducationProgram[]>({
+    queryKey: ["education-programs-public"],
+    queryFn: () => educationProgramsApi.list({ include_inactive: false }),
+    enabled: !maintenanceMode || user?.role === "admin",
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Get latest 3 blog posts
+  const { data: blogPosts } = useQuery<BlogPost[]>( {
+    queryKey: ["public-blog-posts"],
+    queryFn: () => blogPublicApi.list({ limit: 3 }),
+    enabled: !maintenanceMode || user?.role === "admin",
     staleTime: 5 * 60 * 1000,
   });
 
@@ -549,6 +612,80 @@ export default function Home() {
         </section>
       )}
 
+      {/* Popular Education Programs list */}
+      {educationPrograms && educationPrograms.length > 0 && (
+        <section className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-black text-gray-900 tracking-tight">Popüler Eğitim Programları</h2>
+                <p className="text-gray-500 font-semibold text-sm">
+                  Geleceğinizi şekillendiren kapsamlı hazırlık paketlerimiz
+                </p>
+              </div>
+              <Link
+                href="/egitim-programlari"
+                className="text-teal-600 hover:text-teal-700 font-bold text-sm inline-flex items-center gap-1 group"
+              >
+                Tümünü Keşfet <span className="group-hover:translate-x-1 transition-transform">→</span>
+              </Link>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {educationPrograms.slice(0, 3).map((rp) => {
+                const cardGradient = getGradientBySlug(rp.slug);
+                return (
+                  <Link key={rp.slug} href={`/egitim-programlari/${rp.slug}`} className="group flex flex-col h-full">
+                    <div className="bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full">
+                      <div>
+                        {/* Banner */}
+                        <div className={`h-40 bg-gradient-to-br ${cardGradient} flex items-center justify-center p-4 relative`}>
+                          {getBannerContent(rp.slug, rp.title)}
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="p-6">
+                          <h3 className="font-extrabold text-gray-900 text-lg mb-2 group-hover:text-teal-600 transition-colors leading-tight line-clamp-1">
+                            {rp.title}
+                          </h3>
+                          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4">
+                            {rp.short_description || "BiHocam uzman kadrosuyla hazırlanan LGS ve YKS programları; canlı ders, deneme ve rehberlik desteğiyle tek platformda kolaylaşıyor."}
+                          </p>
+                          
+                          <div className="flex items-center gap-1 text-sm font-bold text-gray-700 mb-2">
+                            <span className="text-yellow-500 text-base">★</span>
+                            <span>{rp.rating || 4.8}</span>
+                            <span className="text-gray-400 font-semibold text-xs">({rp.review_count || 84})</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer Info */}
+                      <div className="px-6 pb-6 pt-4 flex items-center justify-between border-t border-gray-50 bg-slate-50/20">
+                        <div>
+                          <p className="text-rose-500 font-black text-xl">{formatProgramPrice(rp.price)}</p>
+                          <p className="text-[8px] text-gray-400 font-extrabold uppercase tracking-widest">+ KDV</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="bg-rose-50 text-rose-500 text-[10px] font-extrabold px-2.5 py-1 rounded-lg border border-rose-100">
+                            %95
+                          </span>
+                          <span 
+                            className="px-5 py-2.5 bg-rose-500 text-white text-xs font-bold rounded-xl hover:bg-rose-600 transition-colors shadow-sm hover:shadow cursor-pointer"
+                          >
+                            Detay
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Become an Instructor Dedicated Promo Section (dersheryerde.com Vibe) */}
       <section className="py-24 bg-white relative overflow-hidden">
         <div className="absolute -top-32 -right-32 w-[30rem] h-[30rem] bg-indigo-50 rounded-full blur-3xl -z-10"></div>
@@ -600,6 +737,110 @@ export default function Home() {
                 />
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Blog Posts Section */}
+      {blogPosts && blogPosts.length > 0 && (
+        <section className="py-20 bg-slate-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-black text-gray-900 tracking-tight">Son Yazılarımız</h2>
+                <p className="text-gray-500 font-semibold text-sm">
+                  Eğitim dünyasındaki güncel gelişmeler, çalışma taktikleri ve rehberlik içeriklerimiz
+                </p>
+              </div>
+              <Link
+                href="/blog"
+                className="text-teal-600 hover:text-teal-700 font-bold text-sm inline-flex items-center gap-1 group"
+              >
+                Tüm Blog Yazıları <span className="group-hover:translate-x-1 transition-transform">→</span>
+              </Link>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {blogPosts.slice(0, 3).map((post) => (
+                <Link key={post.slug} href={`/blog/${post.slug}`} className="group flex flex-col h-full">
+                  <div className="bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full">
+                    <div>
+                      {/* Featured Image */}
+                      <div className="aspect-video bg-gradient-to-br from-teal-500 to-indigo-600 relative overflow-hidden">
+                        {post.featured_image_url ? (
+                          <img
+                            src={post.featured_image_url}
+                            alt={post.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-white/50 text-5xl font-black">✍️</div>
+                        )}
+                        {post.categories && post.categories.length > 0 && (
+                          <span className="absolute top-3 left-3 px-2.5 py-1 bg-teal-500 text-white text-[10px] font-bold rounded-lg shadow-md uppercase tracking-wider">
+                            {post.categories[0].name}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Card Body */}
+                      <div className="p-6 space-y-3">
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                          {post.published_at
+                            ? new Date(post.published_at).toLocaleDateString("tr-TR", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })
+                            : ""}
+                        </p>
+                        <h3 className="font-extrabold text-gray-900 group-hover:text-teal-600 transition-colors leading-snug line-clamp-2 text-lg">
+                          {post.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 line-clamp-3 leading-relaxed">
+                          {post.excerpt || "BiHocam rehberlik ekibinin en güncel analizlerini ve eğitim tavsiyelerini hemen inceleyin."}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Card Footer */}
+                    <div className="p-6 border-t border-gray-100 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 font-bold text-xs shadow-inner flex-shrink-0">
+                        {post.author?.avatar_url ? (
+                          <img src={post.author.avatar_url} alt={post.author.full_name} className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          <span>{post.author?.full_name ? post.author.full_name[0] : "B"}</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-900 leading-none">{post.author?.full_name || "BiHocam Yazar"}</p>
+                        <p className="text-[9px] text-gray-400 font-semibold mt-0.5">Yazar</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Teal/Emerald Registration CTA Banner Section */}
+      <section className="py-12 bg-gradient-to-r from-teal-600 to-emerald-600 border-y border-teal-700/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+          <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-none">
+            Eğitim Yolculuğunuza Bugün Başlayın
+          </h2>
+          <p className="text-white/90 font-medium text-sm md:text-base max-w-xl mx-auto">
+            Binlerce öğrenci ile birlikte öğrenmeye başlayın
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/register"
+              className="inline-flex px-8 py-3.5 bg-white text-teal-600 hover:text-teal-700 font-bold rounded-full hover:shadow-xl hover:shadow-teal-950/20 transform hover:-translate-y-0.5 hover:scale-[1.03] transition-all text-sm"
+            >
+              Ücretsiz Kayıt Ol →
+            </Link>
           </div>
         </div>
       </section>

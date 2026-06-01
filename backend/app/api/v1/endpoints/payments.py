@@ -296,6 +296,34 @@ async def payment_callback(
         logger.error(f"PayTR callback HASH MISMATCH for {merchant_oid}")
         return Response(content="PAYTR notification failed: bad hash", media_type="text/plain")
 
+    # Check if this is an ad campaign payment (prefixed with "AD-")
+    if merchant_oid.startswith("AD-"):
+        campaign_id = merchant_oid.split("-")[1]
+        from app.models.ad_campaign import AdCampaign, PaymentStatus
+        
+        result = await db.execute(
+            select(AdCampaign).where(AdCampaign.id == campaign_id)
+        )
+        campaign = result.scalar_one_or_none()
+        
+        if not campaign:
+            logger.error(f"PayTR callback: Ad campaign not found: {campaign_id}")
+            return Response(content="OK", media_type="text/plain")
+            
+        if campaign.payment_status == PaymentStatus.PAID:
+            logger.info(f"PayTR callback: Ad campaign {campaign_id} already marked PAID")
+            return Response(content="OK", media_type="text/plain")
+            
+        if status == "success":
+            campaign.payment_status = PaymentStatus.PAID
+            campaign.payment_transaction_id = merchant_oid
+            await db.commit()
+            logger.info(f"PayTR callback: Ad campaign {campaign_id} marked PAID successfully")
+        elif status == "failed":
+            logger.warning(f"PayTR callback: Ad campaign {campaign_id} payment failed: {failed_reason_msg}")
+            
+        return Response(content="OK", media_type="text/plain")
+
     # 2. Siparişi bul (order_number = merchant_oid)
     result = await db.execute(
         select(Order).where(Order.order_number == merchant_oid)
