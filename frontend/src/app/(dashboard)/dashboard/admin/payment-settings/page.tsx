@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { siteSettingsApi, type SiteSettingsData } from "@/lib/api";
 
 interface BankAccount {
   id: number;
@@ -93,17 +95,35 @@ export default function AdminPaymentSettingsPage() {
 }
 
 function PaymentSettingsContent() {
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab") as Tab | null;
   const validTabs: Tab[] = ["banks", "whatsapp", "aichat"];
   const initialTab: Tab = tabParam && validTabs.includes(tabParam) ? tabParam : "banks";
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
+
+  // Fetch settings from database using React Query
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ["site-settings"],
+    queryFn: () => siteSettingsApi.get(),
+  });
+
   const [banks, setBanks] = useState<BankAccount[]>(initialBankAccounts);
   const [chatSettings, setChatSettings] = useState<ChatSettings>(initialChatSettings);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showAddBank, setShowAddBank] = useState(false);
   const [editingBankId, setEditingBankId] = useState<number | null>(null);
+
+  // PayTR Credentials & Toggle state
+  const [paytrActive, setPaytrActive] = useState(false);
+  const [paytrMerchantId, setPaytrMerchantId] = useState("");
+  const [paytrMerchantKey, setPaytrMerchantKey] = useState("");
+  const [paytrMerchantSalt, setPaytrMerchantSalt] = useState("");
+  const [paytrTestMode, setPaytrTestMode] = useState(true);
+
+  // Bank Wire Switch state
+  const [bankActive, setBankActive] = useState(false);
 
   const [newBank, setNewBank] = useState<Omit<BankAccount, "id" | "active">>({
     bank: "",
@@ -114,12 +134,103 @@ function PaymentSettingsContent() {
     branch: "",
   });
 
+  // Populate form states from settings API on load
+  useEffect(() => {
+    if (settings) {
+      const general = settings.general || {};
+
+      // Load PayTR
+      if (general.paytr) {
+        const paytr = general.paytr as any;
+        setPaytrActive(paytr.active ?? false);
+        setPaytrMerchantId(paytr.merchant_id ?? "");
+        setPaytrMerchantKey(paytr.merchant_key ?? "");
+        setPaytrMerchantSalt(paytr.merchant_salt ?? "");
+        setPaytrTestMode(paytr.test_mode ?? true);
+      }
+
+      // Load Bank Wire Switch
+      if (general.bank_wire) {
+        const bankWire = general.bank_wire as any;
+        setBankActive(bankWire.active ?? false);
+      }
+
+      // Load Bank Accounts
+      if (general.bank_accounts) {
+        setBanks(general.bank_accounts as BankAccount[]);
+      } else {
+        setBanks(initialBankAccounts);
+      }
+
+      // Load WhatsApp & AI Live Chat
+      if (general.whatsapp || general.aichat) {
+        setChatSettings({
+          whatsappEnabled: general.whatsapp?.enabled ?? initialChatSettings.whatsappEnabled,
+          whatsappNumber: general.whatsapp?.number ?? initialChatSettings.whatsappNumber,
+          whatsappMessage: general.whatsapp?.message ?? initialChatSettings.whatsappMessage,
+          aiChatEnabled: general.aichat?.enabled ?? initialChatSettings.aiChatEnabled,
+          aiChatName: general.aichat?.name ?? initialChatSettings.aiChatName,
+          aiChatAvatar: general.aichat?.avatar ?? initialChatSettings.aiChatAvatar,
+          aiChatWelcomeMessage: general.aichat?.welcome_message ?? initialChatSettings.aiChatWelcomeMessage,
+          aiChatOfflineMessage: general.aichat?.offline_message ?? initialChatSettings.aiChatOfflineMessage,
+          aiOnlineHours: general.aichat?.online_hours ?? initialChatSettings.aiOnlineHours,
+          primaryColor: general.aichat?.primary_color ?? initialChatSettings.primaryColor,
+        });
+      } else {
+        setChatSettings(initialChatSettings);
+      }
+    }
+  }, [settings]);
+
+  // Define mutation for updating settings
+  const updateMutation = useMutation({
+    mutationFn: (payload: Partial<SiteSettingsData>) => siteSettingsApi.update(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["site-settings"] });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    },
+  });
+
   const handleSave = async () => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    try {
+      const payload: Partial<SiteSettingsData> = {
+        general: {
+          ...(settings?.general || {}),
+          paytr: {
+            active: paytrActive,
+            merchant_id: paytrMerchantId,
+            merchant_key: paytrMerchantKey,
+            merchant_salt: paytrMerchantSalt,
+            test_mode: paytrTestMode,
+          },
+          bank_wire: {
+            active: bankActive,
+          },
+          bank_accounts: banks,
+          whatsapp: {
+            enabled: chatSettings.whatsappEnabled,
+            number: chatSettings.whatsappNumber,
+            message: chatSettings.whatsappMessage,
+          },
+          aichat: {
+            enabled: chatSettings.aiChatEnabled,
+            name: chatSettings.aiChatName,
+            avatar: chatSettings.aiChatAvatar,
+            welcome_message: chatSettings.aiChatWelcomeMessage,
+            offline_message: chatSettings.aiChatOfflineMessage,
+            online_hours: chatSettings.aiOnlineHours,
+            primary_color: chatSettings.primaryColor,
+          },
+        },
+      };
+      await updateMutation.mutateAsync(payload);
+    } catch (e) {
+      console.error("Ödeme ayarları güncellenemedi:", e);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAddBank = () => {
@@ -149,6 +260,14 @@ function PaymentSettingsContent() {
     { id: "whatsapp", label: "WhatsApp", icon: "💬" },
     { id: "aichat", label: "AI Canlı Destek", icon: "🤖" },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="p-6 max-w-4xl flex items-center justify-center min-h-[400px]">
+        <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-4xl">
@@ -206,177 +325,302 @@ function PaymentSettingsContent() {
 
       {/* ─── TAB: BANK ACCOUNTS ─── */}
       {activeTab === "banks" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">Havale / EFT Banka Hesapları</h2>
-              <p className="text-sm text-gray-500 mt-0.5">Ödeme sayfasında gösterilecek banka hesaplarını yönetin</p>
+        <div className="space-y-6">
+          
+          {/* Card 1: PayTR Entegrasyonu */}
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-6 transition-all duration-300">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-2xl shadow-sm">
+                  💳
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Kredi Kartı (PayTR) Entegrasyonu</h3>
+                  <p className="text-sm text-gray-500">PayTR API parametrelerini dinamik olarak yapılandırın</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPaytrActive(!paytrActive)}
+                className={`relative w-14 h-7 rounded-full transition-colors duration-200 focus:outline-none ${
+                  paytrActive ? "bg-teal-500" : "bg-gray-300"
+                }`}
+              >
+                <div
+                  className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all duration-200 ${
+                    paytrActive ? "left-7" : "left-0.5"
+                  }`}
+                />
+              </button>
             </div>
-            <button
-              onClick={() => setShowAddBank(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-teal-500/20 transition-all"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Hesap Ekle
-            </button>
-          </div>
 
-          {/* Add Bank Form */}
-          {showAddBank && (
-            <div className="bg-teal-50 border border-teal-200 rounded-2xl p-5 space-y-4">
-              <h3 className="font-bold text-teal-800">Yeni Banka Hesabı</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { key: "bank", label: "Banka Adı", placeholder: "Ziraat Bankası" },
-                  { key: "accountName", label: "Hesap Adı", placeholder: "Şirket Adı A.Ş." },
-                  { key: "iban", label: "IBAN", placeholder: "TR00 0000 0000 0000 0000 0000 00" },
-                  { key: "accountNo", label: "Hesap No", placeholder: "1234567890" },
-                  { key: "branch", label: "Şube", placeholder: "İstanbul Şubesi" },
-                ].map(({ key, label, placeholder }) => (
-                  <div key={key}>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">{label}</label>
+            {paytrActive && (
+              <div className="border-t border-gray-100 pt-6 space-y-6 animate-fadeIn">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Mağaza Numarası (Merchant ID)</label>
                     <input
                       type="text"
-                      placeholder={placeholder}
-                      value={(newBank as any)[key]}
-                      onChange={(e) => setNewBank({ ...newBank, [key]: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-teal-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      value={paytrMerchantId}
+                      onChange={(e) => setPaytrMerchantId(e.target.value)}
+                      placeholder="Örn: 123456"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono text-sm"
                     />
                   </div>
-                ))}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Renk</label>
-                  <select
-                    value={newBank.color}
-                    onChange={(e) => setNewBank({ ...newBank, color: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-teal-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  >
-                    {bankColorOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button onClick={handleAddBank} className="px-5 py-2 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700">Ekle</button>
-                <button onClick={() => setShowAddBank(false)} className="px-5 py-2 border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50">İptal</button>
-              </div>
-            </div>
-          )}
-
-          {banks.map((bank) => (
-            <div key={bank.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className={`bg-gradient-to-r ${bank.color} px-5 py-3 flex items-center justify-between`}>
-                <div className="flex items-center gap-3">
-                  <svg className="w-5 h-5 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                  {editingBankId === bank.id ? (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Mağaza Anahtarı (Merchant Key)</label>
                     <input
-                      type="text"
-                      value={bank.bank}
-                      onChange={(e) => handleUpdateBank(bank.id, "bank", e.target.value)}
-                      className="bg-white/20 text-white placeholder-white/60 border border-white/30 rounded-lg px-3 py-1 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-white"
+                      type="password"
+                      value={paytrMerchantKey}
+                      onChange={(e) => setPaytrMerchantKey(e.target.value)}
+                      placeholder="••••••••••••••••"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono text-sm"
                     />
-                  ) : (
-                    <span className="font-bold text-white">{bank.bank}</span>
-                  )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Gizli Anahtar (Merchant Salt)</label>
+                    <input
+                      type="password"
+                      value={paytrMerchantSalt}
+                      onChange={(e) => setPaytrMerchantSalt(e.target.value)}
+                      placeholder="••••••••••••••••"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono text-sm"
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">⚙️</span>
+                    <div>
+                      <h4 className="font-semibold text-amber-900 text-sm">PayTR Test Modu</h4>
+                      <p className="text-xs text-amber-700">Test modunda gerçek ödeme tahsil edilmez, test kartları kullanılır.</p>
+                    </div>
+                  </div>
                   <button
-                    onClick={() => handleToggleBank(bank.id)}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
-                      bank.active ? "bg-white/20 text-white" : "bg-black/20 text-white/60"
+                    type="button"
+                    onClick={() => setPaytrTestMode(!paytrTestMode)}
+                    className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
+                      paytrTestMode ? "bg-amber-500" : "bg-gray-300"
                     }`}
                   >
-                    {bank.active ? "Aktif" : "Pasif"}
-                  </button>
-                  <button
-                    onClick={() => setEditingBankId(editingBankId === bank.id ? null : bank.id)}
-                    className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
-                  >
-                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleDeleteBank(bank.id)}
-                    className="p-1.5 bg-black/20 hover:bg-black/30 rounded-lg transition-colors"
-                  >
-                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    <div
+                      className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${
+                        paytrTestMode ? "left-6" : "left-0.5"
+                      }`}
+                    />
                   </button>
                 </div>
               </div>
-              {editingBankId === bank.id ? (
-                <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    { field: "accountName" as keyof BankAccount, label: "Hesap Adı" },
-                    { field: "iban" as keyof BankAccount, label: "IBAN" },
-                    { field: "accountNo" as keyof BankAccount, label: "Hesap No" },
-                    { field: "branch" as keyof BankAccount, label: "Şube" },
-                  ].map(({ field, label }) => (
-                    <div key={field}>
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{label}</label>
-                      <input
-                        type="text"
-                        value={bank[field] as string}
-                        onChange={(e) => handleUpdateBank(bank.id, field, e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                      />
-                    </div>
-                  ))}
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Renk</label>
-                    <select
-                      value={bank.color}
-                      onChange={(e) => handleUpdateBank(bank.id, "color", e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    >
-                      {bankColorOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="sm:col-span-2 flex gap-3">
-                    <button onClick={() => setEditingBankId(null)} className="px-5 py-2 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700">Kaydet</button>
-                    <button onClick={() => setEditingBankId(null)} className="px-5 py-2 border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50">İptal</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-5 grid grid-cols-2 gap-3">
-                  {[
-                    { label: "Hesap Adı", value: bank.accountName },
-                    { label: "IBAN", value: bank.iban },
-                    { label: "Hesap No", value: bank.accountNo },
-                    { label: "Şube", value: bank.branch },
-                  ].map((row) => (
-                    <div key={row.label}>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{row.label}</p>
-                      <p className="text-sm font-mono text-gray-800 mt-0.5">{row.value}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+            )}
+          </div>
 
-          <div className="flex items-center gap-3 pt-2">
+          {/* Card 2: Banka Havalesi / EFT Ayarları */}
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-6 transition-all duration-300">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-purple-50 border border-purple-100 rounded-2xl flex items-center justify-center text-2xl shadow-sm">
+                  🏛️
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Banka Havalesi / EFT Ayarları</h3>
+                  <p className="text-sm text-gray-500">Havale ile ödemeler için resmi banka hesap ayrıntıları</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBankActive(!bankActive)}
+                className={`relative w-14 h-7 rounded-full transition-colors duration-200 focus:outline-none ${
+                  bankActive ? "bg-teal-500" : "bg-gray-300"
+                }`}
+              >
+                <div
+                  className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all duration-200 ${
+                    bankActive ? "left-7" : "left-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {bankActive && (
+              <div className="border-t border-gray-100 pt-6 space-y-6 animate-fadeIn">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-base font-bold text-gray-800">Havale İçin Gösterilecek Banka Hesapları</h3>
+                    <p className="text-xs text-gray-500">Ödeme adımında listelenecek şirket IBAN bilgilerini yönetin</p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddBank(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-xs font-semibold rounded-xl hover:shadow-md transition-all"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Hesap Ekle
+                  </button>
+                </div>
+
+                {/* Add Bank Form */}
+                {showAddBank && (
+                  <div className="bg-teal-50/50 border border-teal-100 rounded-2xl p-5 space-y-4 animate-slideDown">
+                    <h4 className="font-bold text-teal-800 text-sm">Yeni Banka Hesabı Ekle</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {[
+                        { key: "bank", label: "Banka Adı", placeholder: "Ziraat Bankası" },
+                        { key: "accountName", label: "Hesap Sahibi (Unvan)", placeholder: "BiHocam Eğitim Teknolojileri A.Ş." },
+                        { key: "iban", label: "IBAN", placeholder: "TR00 0000 0000 0000 0000 0000 00" },
+                        { key: "accountNo", label: "Hesap No", placeholder: "1234567890" },
+                        { key: "branch", label: "Şube Adı / Kodu", placeholder: "İstanbul Şubesi (1234)" },
+                      ].map(({ key, label, placeholder }) => (
+                        <div key={key}>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1.5">{label}</label>
+                          <input
+                            type="text"
+                            placeholder={placeholder}
+                            value={(newBank as any)[key]}
+                            onChange={(e) => setNewBank({ ...newBank, [key]: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl border border-teal-100 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                          />
+                        </div>
+                      ))}
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Kart Tema Rengi</label>
+                        <select
+                          value={newBank.color}
+                          onChange={(e) => setNewBank({ ...newBank, color: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl border border-teal-100 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        >
+                          {bankColorOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 pt-2">
+                      <button onClick={handleAddBank} className="px-4 py-2 bg-teal-600 text-white text-xs font-semibold rounded-xl hover:bg-teal-700">Hesabı Ekle</button>
+                      <button onClick={() => setShowAddBank(false)} className="px-4 py-2 border border-gray-200 text-gray-600 text-xs font-semibold rounded-xl hover:bg-gray-50">İptal</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bank accounts list */}
+                <div className="space-y-4">
+                  {banks.map((bank) => (
+                    <div key={bank.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
+                      <div className={`bg-gradient-to-r ${bank.color} px-5 py-3.5 flex items-center justify-between`}>
+                        <div className="flex items-center gap-3">
+                          <svg className="w-5 h-5 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                          </svg>
+                          {editingBankId === bank.id ? (
+                            <input
+                              type="text"
+                              value={bank.bank}
+                              onChange={(e) => handleUpdateBank(bank.id, "bank", e.target.value)}
+                              className="bg-white/20 text-white placeholder-white/60 border border-white/30 rounded-lg px-3 py-1 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-white"
+                            />
+                          ) : (
+                            <span className="font-bold text-white text-sm">{bank.bank}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleToggleBank(bank.id)}
+                            className={`px-3 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-colors ${
+                              bank.active ? "bg-white/20 text-white" : "bg-black/20 text-white/60"
+                            }`}
+                          >
+                            {bank.active ? "Aktif" : "Pasif"}
+                          </button>
+                          <button
+                            onClick={() => setEditingBankId(editingBankId === bank.id ? null : bank.id)}
+                            className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+                          >
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBank(bank.id)}
+                            className="p-1.5 bg-black/20 hover:bg-black/30 rounded-lg transition-colors"
+                          >
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      {editingBankId === bank.id ? (
+                        <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50/50">
+                          {[
+                            { field: "accountName" as keyof BankAccount, label: "Hesap Adı" },
+                            { field: "iban" as keyof BankAccount, label: "IBAN" },
+                            { field: "accountNo" as keyof BankAccount, label: "Hesap No" },
+                            { field: "branch" as keyof BankAccount, label: "Şube" },
+                          ].map(({ field, label }) => (
+                            <div key={field}>
+                              <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{label}</label>
+                              <input
+                                type="text"
+                                value={bank[field] as string}
+                                onChange={(e) => handleUpdateBank(bank.id, field, e.target.value)}
+                                className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              />
+                            </div>
+                          ))}
+                          <div className="sm:col-span-2">
+                            <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Kart Tema Rengi</label>
+                            <select
+                              value={bank.color}
+                              onChange={(e) => handleUpdateBank(bank.id, "color", e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            >
+                              {bankColorOptions.map((opt) => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="sm:col-span-2 flex gap-3 mt-2">
+                            <button onClick={() => setEditingBankId(null)} className="px-4 py-2 bg-teal-600 text-white text-xs font-semibold rounded-xl hover:bg-teal-700">Değişiklikleri Kaydet</button>
+                            <button onClick={() => setEditingBankId(null)} className="px-4 py-2 border border-gray-200 text-gray-600 text-xs font-semibold rounded-xl hover:bg-gray-50">İptal</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-5 grid grid-cols-2 gap-4 bg-gray-50/20">
+                          {[
+                            { label: "Hesap Adı", value: bank.accountName },
+                            { label: "IBAN", value: bank.iban },
+                            { label: "Hesap No", value: bank.accountNo },
+                            { label: "Şube", value: bank.branch },
+                          ].map((row) => (
+                            <div key={row.label}>
+                              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{row.label}</p>
+                              <p className="text-xs font-mono text-gray-800 mt-0.5">{row.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Action Footer */}
+          <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-8 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-teal-500/20 transition-all disabled:opacity-70 flex items-center gap-2"
+              className="px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 transition-all disabled:opacity-70 flex items-center gap-2 hover:scale-[1.02]"
             >
               {saving ? (
                 <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Kaydediliyor...</>
               ) : (
-                <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Kaydet</>
+                <><svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>Ödeme Ayarlarını Kaydet</>
               )}
             </button>
-            {saved && <span className="text-sm text-teal-600 font-medium flex items-center gap-1">✓ Kaydedildi!</span>}
+            {saved && <span className="text-sm text-emerald-600 font-bold flex items-center gap-1 animate-pulse">✓ Ayarlar Başarıyla Kaydedildi!</span>}
           </div>
         </div>
       )}

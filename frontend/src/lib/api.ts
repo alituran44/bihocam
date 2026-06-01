@@ -4160,10 +4160,14 @@ export interface EducationProgram {
   id: string;
   slug: string;
   title: string;
+  subtitle?: string;
+  short_description?: string;
   category: string;
   gradient: string;
   price: number;
   original_price?: number;
+  kontenjan?: number;
+  start_date?: string;
   rating: number;
   review_count: number;
   students: number;
@@ -4172,6 +4176,7 @@ export interface EducationProgram {
   badge?: string;
   description: string;
   what_you_learn: string[];
+  curriculum_intro?: string;
   curriculum: CurriculumSection[];
   faqs: FAQ[];
   reviews: Review[];

@@ -74,6 +74,49 @@ function formatPrice(p: number) {
   return (p / 100).toLocaleString("tr-TR", { minimumFractionDigits: 2 });
 }
 
+// Visual helpers for related programs matching the screenshot colors/typography
+const getGradientBySlug = (slug: string) => {
+  if (slug.includes("tyt")) return "from-[#2D211F] via-[#211614] to-[#170E0D]"; // Dark brown/maroon gradient
+  if (slug.includes("yks")) return "from-[#3B0054] via-[#2D0040] to-[#1C0028]"; // Purple gradient
+  if (slug.includes("ayt")) return "from-[#001D75] via-[#001350] to-[#000A30]"; // Blue/navy gradient
+  return "from-teal-950 via-teal-900 to-emerald-950";
+};
+
+const getBannerContent = (slug: string, title: string) => {
+  if (slug === "tyt-tum-dersler") {
+    return (
+      <div className="text-center font-sans">
+        <p className="text-4xl font-extrabold tracking-widest text-white leading-none">TYT</p>
+        <p className="text-sm font-black tracking-widest text-white/95 mt-1.5">TÜM DERSLER</p>
+        <p className="text-sm font-black tracking-widest text-white/90">EĞİTİM PROGRAMI</p>
+      </div>
+    );
+  }
+  if (slug === "yks-tum-dersler") {
+    return (
+      <div className="text-center font-sans">
+        <p className="text-4xl font-extrabold tracking-widest text-white leading-none">YKS</p>
+        <p className="text-[10px] sm:text-xs font-black tracking-widest text-white/95 mt-1.5">TYT + AYT TÜM DERSLER</p>
+        <p className="text-sm font-black tracking-widest text-white/90">EĞİTİM PROGRAMI</p>
+      </div>
+    );
+  }
+  if (slug === "ayt-tum-dersler") {
+    return (
+      <div className="text-center font-sans">
+        <p className="text-4xl font-extrabold tracking-widest text-white leading-none">AYT</p>
+        <p className="text-sm font-black tracking-widest text-white/95 mt-1.5">TÜM DERSLER</p>
+        <p className="text-sm font-black tracking-widest text-white/90">EĞİTİM PROGRAMI</p>
+      </div>
+    );
+  }
+  return (
+    <div className="text-center px-4 font-sans">
+      <p className="text-base font-extrabold tracking-wider text-white uppercase">{title}</p>
+    </div>
+  );
+};
+
 export default function ProgramDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
@@ -83,8 +126,9 @@ export default function ProgramDetailPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [openSection, setOpenSection] = useState<number | null>(0);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [relatedProgs, setRelatedProgs] = useState<EducationProgram[]>([]);
 
-  // Fetch Program
+  // Fetch Program details
   useEffect(() => {
     const fetchDetail = async () => {
       try {
@@ -106,6 +150,50 @@ export default function ProgramDetailPage() {
 
     if (slug) {
       fetchDetail();
+    }
+  }, [slug]);
+
+  // Fetch Related Programs (excluding the currently active one)
+  useEffect(() => {
+    const fetchRelated = async () => {
+      try {
+        const allProgs = await educationProgramsApi.list();
+        const filtered = allProgs.filter(p => p.slug !== slug && p.active);
+        setRelatedProgs(filtered.slice(0, 3));
+      } catch (error) {
+        console.warn("İlgili programlar yüklenemedi, fallback listesi atanıyor.");
+        const fallbackRelated = [
+          {
+            slug: "tyt-tum-dersler",
+            title: "TYT Tüm Dersler Eğitim Programı",
+            short_description: "dersheryerde.com uzman kadrosuyla hazırlanan LGS ve YKS programları; canlı ders, deneme ve rehberlik desteğiyle tek platformda kolaylaşıyor.",
+            price: 6499900,
+            original_price: 8999900,
+            active: true
+          },
+          {
+            slug: "yks-tum-dersler",
+            title: "YKS Tüm Dersler TYT+AYT Eğitim Programı",
+            short_description: "dersheryerde.com uzman kadrosuyla hazırlanan LGS ve YKS programları; canlı ders, deneme ve rehberlik desteğiyle tek platformda kolaylaşıyor.",
+            price: 7999900,
+            original_price: 10999900,
+            active: true
+          },
+          {
+            slug: "ayt-tum-dersler",
+            title: "AYT Tüm Dersler Eğitim Programı",
+            short_description: "dersheryerde.com uzman kadrosuyla hazırlanan LGS ve YKS programları; canlı ders, deneme ve rehberlik desteğiyle tek platformda kolaylaşıyor.",
+            price: 5999900,
+            original_price: 7999900,
+            active: true
+          }
+        ].filter(p => p.slug !== slug);
+        setRelatedProgs(fallbackRelated as any[]);
+      }
+    };
+
+    if (slug) {
+      fetchRelated();
     }
   }, [slug]);
 
@@ -140,14 +228,26 @@ export default function ProgramDetailPage() {
     <div className="min-h-screen bg-white flex flex-col">
       <Header />
 
-      {/* Breadcrumb */}
+      {/* Breadcrumb & Navigation Back Button */}
       <div className="bg-gray-50 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-2 text-sm text-gray-500">
-          <Link href="/" className="hover:text-teal-600 transition-colors">Ana Sayfa</Link>
-          <span>/</span>
-          <Link href="/egitim-programlari" className="hover:text-teal-600 transition-colors">Eğitim Programları</Link>
-          <span>/</span>
-          <span className="text-gray-900 font-medium truncate">{prog.title}</span>
+        <div className="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Link href="/" className="hover:text-teal-600 transition-colors">Ana Sayfa</Link>
+            <span>/</span>
+            <Link href="/egitim-programlari" className="hover:text-teal-600 transition-colors">Eğitim Programları</Link>
+            <span>/</span>
+            <span className="text-gray-900 font-medium truncate max-w-[200px] sm:max-w-xs">{prog.title}</span>
+          </div>
+          
+          <Link 
+            href="/egitim-programlari" 
+            className="inline-flex items-center gap-2 text-xs font-bold text-teal-600 hover:text-teal-700 transition-colors bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm hover:shadow hover:-translate-x-0.5 transition-all duration-200"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Geri Dön
+          </Link>
         </div>
       </div>
 
@@ -242,7 +342,7 @@ export default function ProgramDetailPage() {
                   <div className="space-y-3 pt-2">
                     <Link
                       href={`/checkout?program=${prog.slug}`}
-                      className="w-full flex items-center justify-center gap-2 py-3.5 bg-rose-500 text-white font-bold rounded-2xl hover:bg-rose-600 transition-all text-sm cursor-pointer shadow-md hover:shadow-lg"
+                      className="w-full flex items-center justify-center gap-2 py-3.5 bg-rose-500 text-white font-bold rounded-2xl hover:bg-rose-600 transition-all text-sm cursor-pointer shadow-md hover:shadow-lg animate-pulse"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                       Satın Al
@@ -489,6 +589,57 @@ export default function ProgramDetailPage() {
                     <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-semibold">{rev.text}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* 6. İlgili Programlar Section */}
+          {relatedProgs && relatedProgs.length > 0 && (
+            <div className="pt-8 border-t border-gray-200/50">
+              <h2 className="text-2xl font-black text-gray-900 mb-6 tracking-tight">İlgili Programlar</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {relatedProgs.map((rp) => {
+                  const cardGradient = getGradientBySlug(rp.slug);
+                  return (
+                    <div key={rp.slug} className="bg-white rounded-3xl border border-gray-150 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col justify-between group">
+                      <div>
+                        {/* Banner */}
+                        <div className={`h-40 bg-gradient-to-br ${cardGradient} flex items-center justify-center p-4 relative`}>
+                          {getBannerContent(rp.slug, rp.title)}
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="p-6">
+                          <h3 className="font-extrabold text-gray-900 text-sm mb-2 group-hover:text-teal-600 transition-colors">
+                            {rp.title}
+                          </h3>
+                          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4">
+                            {rp.short_description || "dersheryerde.com uzman kadrosuyla hazırlanan LGS ve YKS programları; canlı ders, deneme ve rehberlik desteğiyle tek platformda kolaylaşıyor."}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Footer Info */}
+                      <div className="px-6 pb-6 pt-2 flex items-center justify-between border-t border-gray-50 bg-slate-50/20">
+                        <div>
+                          <p className="text-rose-500 font-black text-sm">{formatPrice(rp.price)} TL</p>
+                          <p className="text-[8px] text-gray-400 font-extrabold uppercase tracking-widest">+ KDV</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="bg-rose-50 text-rose-500 text-[10px] font-extrabold px-2.5 py-0.5 rounded-lg border border-rose-100">
+                            95%
+                          </span>
+                          <Link 
+                            href={`/egitim-programlari/${rp.slug}`}
+                            className="px-5 py-2 bg-rose-500 text-white text-[11px] font-bold rounded-full hover:bg-rose-600 transition-colors shadow-sm hover:shadow cursor-pointer"
+                          >
+                            Detay
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
