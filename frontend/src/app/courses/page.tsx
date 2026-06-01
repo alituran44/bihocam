@@ -166,7 +166,7 @@ export default function CoursesPage() {
       )}
 
       {/* Hero Header */}
-      <div className="relative bg-gradient-to-br from-teal-900 via-slate-900 to-teal-950 pt-32 pb-24 overflow-hidden border-b border-teal-800/10">
+      <div className="relative bg-gradient-to-br from-teal-900 via-slate-900 to-teal-950 pt-32 pb-20 min-h-[420px] flex items-center overflow-hidden border-b border-teal-800/10">
         {/* Background Image Overlay */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-35 mix-blend-overlay pointer-events-none"
@@ -176,7 +176,7 @@ export default function CoursesPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(20,184,166,0.12),transparent_60%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(13,148,136,0.18),transparent_60%)]" />
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
           <div className="mb-4 flex items-center gap-2 text-sm text-teal-300/80 font-semibold">
             <Link href="/" className="hover:text-white transition-colors">
@@ -206,7 +206,12 @@ export default function CoursesPage() {
           <h1 className="text-4xl md:text-5xl font-black text-white mb-3 tracking-tight">
             {currentCategory ? currentCategory.name : "Tüm Kurslar"}
           </h1>
-          <p className="text-teal-100/90 text-lg font-semibold">
+          <p className="text-teal-100/80 text-base md:text-lg font-medium max-w-2xl mb-4 leading-relaxed">
+            {currentCategory
+              ? `${currentCategory.name} alanında uzman eğitmenlerden birebir ve grup dersleri. Kendi hızında öğren, hedefine ulaş.`
+              : "Türkiye'nin en seçkin eğitmenlerinden YKS, LGS, lise ve üniversite derslerinde birebir canlı dersler al. Seviyene ve hedefine uygun kursu hemen bul."}
+          </p>
+          <p className="text-teal-300/90 text-sm font-semibold">
             {isLoading ? "Yükleniyor..." : `${filtered.length} kurs mevcut`}
           </p>
         </div>

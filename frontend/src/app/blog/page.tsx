@@ -133,7 +133,7 @@ export default function BlogListPage() {
           <Header />
 
           {/* Hero Section */}
-          <div className="relative bg-slate-950 text-white pt-32 pb-24 overflow-hidden border-b border-white/5">
+          <div className="relative bg-slate-950 text-white pt-32 pb-20 min-h-[420px] flex items-center overflow-hidden border-b border-white/5">
             {/* Background Image with custom blend and scaling */}
             <div 
               className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-screen transform scale-105"
@@ -150,7 +150,7 @@ export default function BlogListPage() {
             <div className="absolute -top-12 left-1/4 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
             <div className="absolute -bottom-12 right-1/4 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none"></div>
 
-            <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+            <div className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
               <motion.div
                 initial={{ opacity: 0, y: 25 }}
                 animate={{ opacity: 1, y: 0 }}

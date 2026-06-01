@@ -428,45 +428,12 @@ export default function SettingsPage() {
               {user?.role === "teacher" && (
                 <div className="space-y-8">
                   
-                  {/* 1. Profile Avatar Upload */}
-                  <div className="bg-slate-50 border border-gray-200 rounded-2xl p-6 space-y-4">
-                    <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                      <span>📸</span> Profil Fotoğrafı
-                    </h4>
-                    <div className="flex items-center gap-4">
-                      <div className="relative group w-20 h-20 rounded-full overflow-hidden border-2 border-teal-500 flex-shrink-0 bg-teal-50 flex items-center justify-center">
-                        {avatarUrl ? (
-                          <img
-                            src={mediaApi.getAvatarUrl(avatarUrl)}
-                            className="w-full h-full object-cover"
-                            alt="Profile"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-teal-50 flex items-center justify-center text-teal-600 text-2xl font-bold">
-                            {fullName?.charAt(0)?.toUpperCase() || "?"}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          id="settings-avatar-input"
-                          className="hidden"
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              handleAvatarUpload(e.target.files[0]);
-                            }
-                          }}
-                        />
-                        <label
-                          htmlFor="settings-avatar-input"
-                          className="inline-block px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold hover:border-teal-500 hover:text-teal-600 cursor-pointer shadow-sm transition-all"
-                        >
-                          {isUploadingAvatar ? "Yükleniyor..." : "Fotoğraf Seç ve Yükle"}
-                        </label>
-                        <p className="text-[10px] text-gray-400">Önerilen: Kare biçiminde, maksimum 5MB (JPG, PNG)</p>
-                      </div>
+                  {/* Profil fotoğrafı artık Profil ve Finans sayfasında yönetilmektedir */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-start gap-3">
+                    <span className="text-blue-500 text-xl mt-0.5">📸</span>
+                    <div>
+                      <p className="text-sm font-bold text-blue-800">Profil Fotoğrafı</p>
+                      <p className="text-xs text-blue-600 mt-1">Profil fotoğrafınızı <a href="/dashboard/teacher/profile" className="underline font-semibold hover:text-blue-800">Profil ve Finans</a> sayfasından yönetebilirsiniz.</p>
                     </div>
                   </div>
 

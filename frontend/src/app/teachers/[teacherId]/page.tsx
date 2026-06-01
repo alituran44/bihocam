@@ -533,7 +533,11 @@ export default function TeacherProfilePage() {
                             <div className="flex items-center justify-between pt-2 border-t border-slate-50 text-xs font-bold text-teal-600">
                               <span>Detayları İncele →</span>
                               <span className="text-slate-800 text-sm">
-                                {course.price === 0 ? "Ücretsiz" : `₺${course.price?.toFixed(0)}`}
+                                {Number(course.price) === 0
+                                  ? "Ücretsiz"
+                                  : course.discount_price
+                                  ? `₺${Number(course.discount_price).toFixed(0)}`
+                                  : `₺${Number(course.price).toFixed(0)}`}
                               </span>
                             </div>
                           </div>

@@ -81,7 +81,7 @@ export default function EgitimProgramlariPage() {
 
       <main className="flex-1">
         {/* Hero Banner */}
-        <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-teal-950 pt-32 pb-24 overflow-hidden border-b border-teal-900/10">
+        <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-teal-950 pt-32 pb-20 min-h-[420px] flex items-center overflow-hidden border-b border-teal-900/10">
           {/* Background Image Overlay */}
           <div 
             className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-25 mix-blend-overlay pointer-events-none"
@@ -91,7 +91,7 @@ export default function EgitimProgramlariPage() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(20,184,166,0.18),transparent_70%)]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(13,148,136,0.12),transparent_60%)]" />
           
-          <div className="relative max-w-7xl mx-auto px-4 text-center">
+          <div className="relative w-full max-w-7xl mx-auto px-4 text-center">
             <div className="inline-flex items-center gap-2 bg-teal-500/20 border border-teal-400/30 rounded-full px-4 py-1.5 mb-6">
               <span className="w-2 h-2 bg-teal-400 rounded-full animate-pulse" />
               <span className="text-teal-300 text-sm font-semibold">BiHocam Başarı Odaklı Hazırlık</span>

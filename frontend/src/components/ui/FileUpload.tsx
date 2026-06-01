@@ -248,12 +248,16 @@ export function FileUpload({
       )}
 
       {/* Dropzone */}
-      <div
+      <label
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => !disabled && !displayFile && fileInputRef.current?.click()}
+        onClick={(e) => {
+          if (disabled || displayFile) {
+            e.preventDefault();
+          }
+        }}
         onKeyDown={(e) => {
           if ((e.key === "Enter" || e.key === " ") && !disabled && !displayFile) {
             e.preventDefault();
@@ -267,7 +271,7 @@ export function FileUpload({
         aria-busy={state === "uploading"}
         aria-live="polite"
         className={cn(
-          "relative border-2 border-dashed rounded-xl transition-all duration-200",
+          "block cursor-pointer relative border-2 border-dashed rounded-xl transition-all duration-200",
           "focus-within:outline-none focus-within:ring-2 focus-within:ring-teal-500 focus-within:ring-offset-2",
           isDragging && !disabled
             ? "border-teal-500 bg-teal-50/50 scale-[1.02]"
@@ -440,7 +444,7 @@ export function FileUpload({
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </label>
     </div>
   );
 }

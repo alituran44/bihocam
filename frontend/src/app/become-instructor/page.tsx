@@ -226,7 +226,7 @@ export default function BecomeInstructorPage() {
 
       {/* Hero Section */}
       <div 
-        className="relative pt-32 pb-24 text-center md:text-left overflow-hidden bg-slate-950 border-b border-white/5"
+        className="relative pt-32 pb-20 text-center md:text-left min-h-[420px] flex items-center overflow-hidden bg-slate-950 border-b border-white/5"
       >
         {/* Background Image with mix-blend-mode */}
         <div 
@@ -244,7 +244,7 @@ export default function BecomeInstructorPage() {
         <div className="absolute top-12 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
         <div className="absolute -bottom-10 left-10 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
             <div className="space-y-6 max-w-3xl">
               {/* Premium Badge */}
@@ -702,7 +702,7 @@ export default function BecomeInstructorPage() {
                     <h3 className="text-xl font-bold text-gray-900">Evrak Yükleme (İsteğe Bağlı)</h3>
                   </div>
                   <p className="text-xs text-blue-800 font-semibold leading-normal">
-                    Evrak yüklemek ilk aşamada zorunlu değildir. Ancak hesabınızın onaylanabilmesi için daha sonra profilinizden bu belgeleri yüklemeniz gerekecektir.
+                    Evrak yüklemek isteğe bağlıdır. Şimdi yükleyebilir ya da daha sonra profilinizden ekleyebilirsiniz. Belgeler hesabınızın onaylanmasını hızlandırır.
                   </p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -715,9 +715,8 @@ export default function BecomeInstructorPage() {
                         onUpload={(file) => handleFileUpload(file, "cv_path")}
                         onRemove={() => setFormData(prev => ({ ...prev, cv_path: "" }))}
                         currentFile={formData.cv_path ? { name: formData.cv_path.split("/").pop() || "Özgeçmiş.pdf", size: 0 } : undefined}
-                        disabled={!isAuthenticated}
                       />
-                      {!isAuthenticated && <p className="text-[10px] text-orange-600 font-semibold">Kayıt olduktan sonra yükleyebilirsiniz</p>}
+                      {!formData.cv_path && <p className="text-[10px] text-gray-400 font-semibold">İsteğe bağlı — şimdi veya sonra yükleyebilirsiniz</p>}
                     </div>
 
                     {/* Mezuniyet Belgesi */}
@@ -729,9 +728,8 @@ export default function BecomeInstructorPage() {
                         onUpload={(file) => handleFileUpload(file, "graduation_cert_path")}
                         onRemove={() => setFormData(prev => ({ ...prev, graduation_cert_path: "" }))}
                         currentFile={formData.graduation_cert_path ? { name: formData.graduation_cert_path.split("/").pop() || "Mezuniyet_Belgesi.pdf", size: 0 } : undefined}
-                        disabled={!isAuthenticated}
                       />
-                      {!isAuthenticated && <p className="text-[10px] text-orange-600 font-semibold">Kayıt olduktan sonra yükleyebilirsiniz</p>}
+                      {!formData.graduation_cert_path && <p className="text-[10px] text-gray-400 font-semibold">İsteğe bağlı — şimdi veya sonra yükleyebilirsiniz</p>}
                     </div>
 
                     {/* Adli Sicil Belgesi */}
@@ -743,9 +741,8 @@ export default function BecomeInstructorPage() {
                         onUpload={(file) => handleFileUpload(file, "criminal_record_path")}
                         onRemove={() => setFormData(prev => ({ ...prev, criminal_record_path: "" }))}
                         currentFile={formData.criminal_record_path ? { name: formData.criminal_record_path.split("/").pop() || "Adli_Sicil_Belgesi.pdf", size: 0 } : undefined}
-                        disabled={!isAuthenticated}
                       />
-                      {!isAuthenticated && <p className="text-[10px] text-orange-600 font-semibold">Kayıt olduktan sonra yükleyebilirsiniz</p>}
+                      {!formData.criminal_record_path && <p className="text-[10px] text-gray-400 font-semibold">İsteğe bağlı — şimdi veya sonra yükleyebilirsiniz</p>}
                     </div>
                   </div>
                 </div>
