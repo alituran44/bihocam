@@ -85,6 +85,30 @@ DEFAULT_PLACEMENTS = [
         "is_active": True,
         "priority": 95,
     },
+    {
+        "name": "Eğitmen Ol Sayfası Banner",
+        "code": "become_instructor_banner",
+        "description": "Eğitmen başvuru sayfasında üst kısımda görünen banner reklam alanı",
+        "placement_type": PlacementType.BANNER,
+        "location": "Eğitmen Ol Sayfası",
+        "width": 1200,
+        "height": 250,
+        "max_ads": 1,
+        "is_active": True,
+        "priority": 90,
+    },
+    {
+        "name": "Eğitmenler Sayfası Banner",
+        "code": "teachers_banner",
+        "description": "Eğitmen listeleme sayfasında üst kısımda görünen banner reklam alanı",
+        "placement_type": PlacementType.BANNER,
+        "location": "Eğitmenler Sayfası",
+        "width": 1200,
+        "height": 250,
+        "max_ads": 1,
+        "is_active": True,
+        "priority": 85,
+    },
 ]
 
 # Default pricing configuration (TRY)
@@ -118,6 +142,16 @@ DEFAULT_PRICING = {
         "fixed_daily": 200.00,
         "per_impression": 0.08,
         "per_click": 3.00,
+    },
+    "become_instructor_banner": {
+        "fixed_daily": 90.00,
+        "per_impression": 0.030,
+        "per_click": 1.80,
+    },
+    "teachers_banner": {
+        "fixed_daily": 85.00,
+        "per_impression": 0.028,
+        "per_click": 1.70,
     },
 }
 

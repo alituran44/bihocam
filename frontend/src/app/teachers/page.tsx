@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Avatar from "@/components/Avatar";
 import { teachersApi } from "@/lib/api";
+import AdBanner from "@/components/ads/AdBanner";
 
 type TeacherListItem = {
   id: string;
@@ -104,6 +105,9 @@ export default function TeachersPage() {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 -mt-8 relative z-20">
+        
+        <AdBanner placementCode="teachers_banner" className="mb-8" />
+
         {isLoading ? (
           <div className="space-y-6">
             {[...Array(3)].map((_, i) => (

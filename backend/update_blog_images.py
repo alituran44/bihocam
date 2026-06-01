@@ -1,36 +1,36 @@
-import asyncio
-import sys
+import sqlite3
 
-# Ensure app modules are importable
-sys.path.insert(0, ".")
+conn = sqlite3.connect('bihocam.db')
+cursor = conn.cursor()
 
-from sqlalchemy import select
-from app.db.session import AsyncSessionLocal
-from app.models.blog_post import BlogPost
+# Define image mapping
+mappings = {
+    "YKS'de Son 3 Ay: Netlerinizi Artıracak Altın Kurallar": "/yks_study.png",
+    "Verimli Çalışma Saatleri: Sabah mı, Gece mi Çalışmalı?": "/time_management.png",
+    "LGS Matematik Soruları Nasıl Çözülür? Sıfırdan Başlayanlar İçin": "/math_study.png",
+    "Sınav Stresiyle Baş Etmenin 5 Bilimsel Yolu": "/calm_student.png",
+    "Online Eğitimde Odaklanma Problemini Çözmenin Yollarından": "/online_learning.png",
+    "Online Eğitimde Odaklanma Problemini Çözmenin Yolları": "/online_learning.png",
+    "TYT Türkçe Dil Bilgisi Konularını Bitirme Rehberi": "/calm_student.png",
+    "Pomodoro Tekniği ile Ders Çalışma Veriminizi 2 Katına Çıkarın": "/time_management.png",
+    "LGS'de Fen Bilimleri Konu Dağılımı ve Sınav İpuçları": "/math_study.png",
+    "Hedef Belirleme ve İçsel Motivasyon: Başarının Gizli Anahtarı": "/yks_study.png",
+    "Yapay Zeka Destekli Bireysel Öğrenim Sistemlerinin Faydaları": "/ai_study.png",
+    "AYT Sayısal Konular İçin Çalışma Programı Nasıl Hazırlanır?": "/math_study.png",
+    "AYT Sayısal Konuları İçin Çalışma Programı Nasıl Hazırlanır?": "/math_study.png",
+    "Feynman Tekniği Nedir? Öğrendiklerinizi Bir Daha Unutmayın": "/time_management.png",
+    "LGS Paragraf Sorularında Hız Kazanmanın 4 Püf Noktası": "/calm_student.png",
+    "Akran Baskısı ve Sınav Döneminde Sosyal Çevre Yönetimi": "/calm_student.png",
+    "Evden Ders Çalışırken Odaklanmayı Artıran 5 Masa Düzeni İpucu": "/time_management.png"
+}
 
-async def update_images():
-    async with AsyncSessionLocal() as db:
-        print("Blog yazısı resimleri güncelleniyor...")
-        
-        updates = {
-            "yks-son-3-ay-netleri-artiracak-altin-kurallar": "/yks_study.png",
-            "sinav-stresiyle-bas-etmenin-5-bilimsel-yolu": "/calm_student.png",
-            "yapay-zeka-destekli-bireysel-ogrenim-sistemleri": "/ai_study.png"
-        }
+updated_count = 0
+for title, img in mappings.items():
+    cursor.execute("UPDATE blog_posts SET featured_image_url = ? WHERE title LIKE ?", (img, f"%{title}%"))
+    if cursor.rowcount > 0:
+        updated_count += 1
+        print(f"Updated: '{title}' -> {img}")
 
-        updated_count = 0
-        for slug, img_url in updates.items():
-            res = await db.execute(select(BlogPost).filter(BlogPost.slug == slug))
-            post = res.scalar_one_or_none()
-            if post:
-                post.featured_image_url = img_url
-                updated_count += 1
-                print(f"Resim güncellendi: {post.title} -> {img_url}")
-            else:
-                print(f"UYARI: Slug bulunamadı: {slug}")
-
-        await db.commit()
-        print(f"\nGüncelleme tamamlandı: {updated_count} blog yazısı resmi veritabanında güncellendi.")
-
-if __name__ == "__main__":
-    asyncio.run(update_images())
+conn.commit()
+conn.close()
+print(f"Successfully updated {updated_count} blog post image mappings!")

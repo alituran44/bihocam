@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import { useAuthStore } from "@/lib/store";
 import { teacherApplicationsApi, authApi, type TeacherApplicationCreate } from "@/lib/api";
 import { FileUpload } from "@/components/ui/FileUpload";
+import AdBanner from "@/components/ads/AdBanner";
 
 const BRANCH_OPTIONS = [
   "Matematik", "Fizik", "Kimya", "Biyoloji", "Yazılım", "Coğrafya", 
@@ -226,6 +227,8 @@ export default function BecomeInstructorPage() {
       <main className="flex-grow pt-32 pb-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           
+          <AdBanner placementCode="become_instructor_banner" className="mb-6" />
+
           {/* Benefit Cards Banner */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="relative overflow-hidden bg-gradient-to-br from-pink-500 via-pink-600 to-rose-600 rounded-[2rem] p-8 text-white shadow-xl flex flex-col justify-between group hover:scale-[1.02] transition-all duration-300">
