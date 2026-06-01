@@ -224,7 +224,66 @@ export default function BecomeInstructorPage() {
     <div className="min-h-screen bg-slate-50/50 flex flex-col">
       <Header />
 
-      <main className="flex-grow pt-32 pb-24">
+      {/* Hero Section */}
+      <div 
+        className="relative pt-32 pb-24 text-center md:text-left overflow-hidden bg-slate-950 border-b border-white/5"
+      >
+        {/* Background Image with mix-blend-mode */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-35 mix-blend-luminosity transform scale-105"
+          style={{ backgroundImage: "url('/teachers_banner_bg.png')" }}
+        ></div>
+        
+        {/* Modern dark radial gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-transparent"></div>
+        
+        {/* Dotted pattern overlay */}
+        <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.03)_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-40"></div>
+
+        {/* Colorful glows */}
+        <div className="absolute top-12 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
+        <div className="absolute -bottom-10 left-10 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
+            <div className="space-y-6 max-w-3xl">
+              {/* Premium Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-teal-300 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
+                <span>🚀</span> BiHocam Eğitmen Topluluğu
+              </div>
+              
+              <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">
+                Bilginizi Paylaşın, <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-indigo-400">Geleceği Şekillendirin</span>
+              </h1>
+              
+              <p className="text-slate-300 text-base md:text-lg max-w-2xl font-medium leading-relaxed">
+                BiHocam ailesine katılarak uzman olduğunuz konularda binlerce öğrenciye ulaşın, kendi kurslarınızı oluşturun ve kazanç elde etmeye başlayın.
+              </p>
+            </div>
+            
+            {/* Quick platform highlights on the right side */}
+            <div className="hidden lg:flex flex-col gap-4 w-80 bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-md shadow-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center text-teal-300 font-bold">✓</div>
+                <div>
+                  <h4 className="text-white text-sm font-bold">Esnek Çalışma Saatleri</h4>
+                  <p className="text-slate-400 text-xs font-medium">Kendi programınızı ve derslerinizi belirleyin</p>
+                </div>
+              </div>
+              <div className="border-t border-white/5 my-1"></div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-300 font-bold">✓</div>
+                <div>
+                  <h4 className="text-white text-sm font-bold">Yüksek Kazanç Oranı</h4>
+                  <p className="text-slate-400 text-xs font-medium">Platformun düşük komisyon oranıyla daha çok kazanın</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <main className="flex-grow py-12 -mt-8 relative z-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           
           <AdBanner placementCode="become_instructor_banner" className="mb-6" />
