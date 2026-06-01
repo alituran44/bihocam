@@ -295,6 +295,7 @@ export default function BlogPostDetailPage() {
             </div>
           </aside>
         </div>
+      </div>
 
         {/* Global Footer */}
         <Footer />
