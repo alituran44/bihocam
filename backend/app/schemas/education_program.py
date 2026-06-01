@@ -37,6 +37,14 @@ class EducationProgramBase(BaseModel):
     lessons: int = 0
     badge: Optional[str] = None
     description: str
+    
+    # Yeni premium alanlar
+    subtitle: Optional[str] = None
+    short_description: Optional[str] = None
+    curriculum_intro: Optional[str] = None
+    kontenjan: int = 20
+    start_date: Optional[str] = None
+    
     what_you_learn: List[str] = []
     curriculum: List[CurriculumSectionSchema] = []
     faqs: List[FAQSchema] = []
@@ -62,6 +70,14 @@ class EducationProgramUpdate(BaseModel):
     lessons: Optional[int] = None
     badge: Optional[str] = None
     description: Optional[str] = None
+    
+    # Yeni premium alanlar
+    subtitle: Optional[str] = None
+    short_description: Optional[str] = None
+    curriculum_intro: Optional[str] = None
+    kontenjan: Optional[int] = None
+    start_date: Optional[str] = None
+    
     what_you_learn: Optional[List[str]] = None
     curriculum: Optional[List[CurriculumSectionSchema]] = None
     faqs: Optional[List[FAQSchema]] = None

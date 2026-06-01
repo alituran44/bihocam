@@ -107,24 +107,66 @@ export default function AdminSettingsAdvancedPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Platform Komisyon Oranı (%)
+                  Kurs Satış Komisyonu (%) *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={platformData.course_commission_rate !== undefined ? (Number(platformData.course_commission_rate) * 100).toFixed(0) : ""}
+                  onChange={(e) =>
+                    setPlatformData({
+                      ...platformData,
+                      course_commission_rate: e.target.value ? parseFloat(e.target.value) / 100 : 0,
+                    })
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-semibold"
+                  placeholder="20"
+                />
+                <p className="text-xs text-gray-500 mt-1">Eğitmenlerin sattığı video kurslardan alınacak komisyon (örn: 20 = %20)</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Canlı Ders Komisyonu (%) *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={platformData.live_class_commission_rate !== undefined ? (Number(platformData.live_class_commission_rate) * 100).toFixed(0) : ""}
+                  onChange={(e) =>
+                    setPlatformData({
+                      ...platformData,
+                      live_class_commission_rate: e.target.value ? parseFloat(e.target.value) / 100 : 0,
+                    })
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-semibold"
+                  placeholder="15"
+                />
+                <p className="text-xs text-gray-500 mt-1">Eğitmenlerin canlı derslerinden alınacak komisyon (örn: 15 = %15)</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Platform Genel Komisyon Oranı (%)
                 </label>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
                   max="100"
-                  value={platformData.platform_commission_rate ? (Number(platformData.platform_commission_rate) * 100).toFixed(2) : ""}
+                  value={platformData.platform_commission_rate ? (Number(platformData.platform_commission_rate) * 100).toFixed(0) : ""}
                   onChange={(e) =>
                     setPlatformData({
                       ...platformData,
                       platform_commission_rate: e.target.value ? parseFloat(e.target.value) / 100 : 0,
                     })
                   }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-semibold"
                   placeholder="35"
                 />
-                <p className="text-xs text-gray-500 mt-1">Örn: 35 = %35 komisyon</p>
+                <p className="text-xs text-gray-500 mt-1">ÖSYM/MEB genel sistemi fallback komisyon oranı (örn: 35 = %35)</p>
               </div>
 
               <div>
@@ -134,7 +176,7 @@ export default function AdminSettingsAdvancedPage() {
                 <select
                   value={(platformData.currency as string) || "TRY"}
                   onChange={(e) => setPlatformData({ ...platformData, currency: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-semibold"
                 >
                   <option value="TRY">TRY (₺)</option>
                   <option value="USD">USD ($)</option>
@@ -151,14 +193,14 @@ export default function AdminSettingsAdvancedPage() {
                   step="0.01"
                   min="0"
                   max="100"
-                  value={platformData.tax_rate ? (Number(platformData.tax_rate) * 100).toFixed(2) : ""}
+                  value={platformData.tax_rate ? (Number(platformData.tax_rate) * 100).toFixed(0) : ""}
                   onChange={(e) =>
                     setPlatformData({
                       ...platformData,
                       tax_rate: e.target.value ? parseFloat(e.target.value) / 100 : null,
                     })
                   }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-semibold"
                   placeholder="20"
                 />
                 <p className="text-xs text-gray-500 mt-1">Örn: 20 = %20 KDV</p>

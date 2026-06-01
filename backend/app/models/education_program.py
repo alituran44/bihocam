@@ -30,6 +30,13 @@ class EducationProgram(Base):
     
     description: Mapped[str] = mapped_column(Text, nullable=False)
     
+    # Yeni eklenen premium alanlar
+    subtitle: Mapped[str] = mapped_column(String(255), nullable=True)
+    short_description: Mapped[str] = mapped_column(Text, nullable=True)
+    curriculum_intro: Mapped[str] = mapped_column(Text, nullable=True)
+    kontenjan: Mapped[int] = mapped_column(Integer, default=20, nullable=False)
+    start_date: Mapped[str] = mapped_column(String(100), nullable=True)
+    
     # Zengin İçerik JSON Alanları
     what_you_learn: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     curriculum: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
@@ -40,3 +47,4 @@ class EducationProgram(Base):
     
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
