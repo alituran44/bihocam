@@ -8,7 +8,9 @@ import {
   teacherEarningsApi,
   withdrawalsApi,
   mediaApi,
+  teacherApplicationsApi,
   api,
+  API_URL,
   type TeacherProfile,
   type TeacherProfileUpdate,
   type BankAccount,
@@ -122,6 +124,73 @@ export default function TeacherProfilePage() {
     },
   });
 
+  // Document upload state
+  const [cvPath, setCvPath] = useState("");
+  const [gradCertPath, setGradCertPath] = useState("");
+  const [crimRecordPath, setCrimRecordPath] = useState("");
+  const [isUploadingDoc, setIsUploadingDoc] = useState<Record<string, boolean>>({});
+  const [docMsg, setDocMsg] = useState<string | null>(null);
+  const [docErr, setDocErr] = useState<string | null>(null);
+
+  // Fetch teacher application (for document status)
+  const { data: application, refetch: refetchApplication } = useQuery({
+    queryKey: ["my-teacher-application"],
+    queryFn: async () => {
+      try { return await teacherApplicationsApi.getMyApplication(); }
+      catch (e: any) { if (e.response?.status === 404) return null; throw e; }
+    },
+  });
+
+  // Sync document paths when application loads
+  useEffect(() => {
+    if (application) {
+      setCvPath(application.cv_path || "");
+      setGradCertPath(application.graduation_cert_path || "");
+      setCrimRecordPath(application.criminal_record_path || "");
+    }
+  }, [application]);
+
+  // Document upload handler
+  const handleDocumentUpload = async (docType: "cv" | "graduation" | "criminal", file: File) => {
+    setIsUploadingDoc((prev) => ({ ...prev, [docType]: true }));
+    setDocMsg(null);
+    setDocErr(null);
+    try {
+      const uploadResult = await teacherApplicationsApi.uploadDocument(file);
+      const docsUpdate: Record<string, string> = {};
+      if (docType === "cv") { setCvPath(uploadResult.path); docsUpdate.cv_path = uploadResult.path; }
+      else if (docType === "graduation") { setGradCertPath(uploadResult.path); docsUpdate.graduation_cert_path = uploadResult.path; }
+      else if (docType === "criminal") { setCrimRecordPath(uploadResult.path); docsUpdate.criminal_record_path = uploadResult.path; }
+
+      if (!application) {
+        // Create a minimal application if none exists
+        await teacherApplicationsApi.submitApplication({
+          full_name: accFullName || profile?.full_name || "",
+          phone: accPhone || profile?.phone || "0000000000",
+          address: "Profil sayfasından yüklendi",
+          birth_date: "1990-01-01",
+          gender: "Belirtilmemiş",
+          branches: ["Genel"],
+          levels: ["Genel"],
+          experience_years: 1,
+          bio: accBio || profile?.bio || "Eğitmen profili",
+          heard_from: "Sistem",
+          cv_path: docType === "cv" ? uploadResult.path : "",
+          graduation_cert_path: docType === "graduation" ? uploadResult.path : "",
+          criminal_record_path: docType === "criminal" ? uploadResult.path : "",
+        });
+      } else {
+        await api.patch("/teacher-applications/me/documents", docsUpdate);
+      }
+      setDocMsg("Belge başarıyla yüklendi! Admin onayı bekleniyor.");
+      refetchApplication();
+    } catch (e: any) {
+      setDocErr("Belge yüklenirken hata oluştu: " + (e.response?.data?.detail || e.message));
+    } finally {
+      setIsUploadingDoc((prev) => ({ ...prev, [docType]: false }));
+    }
+  };
+
   // Fetch withdrawals
   const { data: withdrawals, isLoading: withdrawalsLoading } = useQuery({
     queryKey: ["my-withdrawals"],
@@ -234,7 +303,7 @@ export default function TeacherProfilePage() {
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "profile", label: "Profil", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
-    { id: "account-info", label: "Hesap Bilgileri", icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" },
+    { id: "account-info", label: "Evraklar", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
     { id: "change-password", label: "Şifre Değiştir", icon: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" },
     { id: "bank-accounts", label: "Banka Hesapları", icon: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" },
     { id: "earnings", label: "Kazançlar", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
@@ -315,68 +384,121 @@ export default function TeacherProfilePage() {
                 />
               )}
 
-          {/* Account Info Tab */}
+          {/* Evraklar Tab */}
           {activeTab === "account-info" && (
-            <div className="max-w-2xl space-y-6">
-              {accMsg && <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-700 text-sm font-medium">{accMsg}</div>}
-              {accErr && <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm font-medium">{accErr}</div>}
-
+            <div className="max-w-2xl">
+              {/* Documents Section */}
               <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-5">
-                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center text-white text-sm">✏️</span>
-                  Temel Bilgiler
-                </h3>
-
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-1 block">Ad Soyad</label>
-                  <input
-                    type="text"
-                    value={accFullName}
-                    onChange={(e) => setAccFullName(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
-                  />
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center text-white text-sm">📄</span>
+                    Eğitmen Evrakları
+                  </h3>
+                  {/* Verification status badge */}
+                  {profile.is_verified ? (
+                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold flex items-center gap-1">
+                      ✅ Onaylanmış Eğitmen
+                    </span>
+                  ) : application?.status === "pending" ? (
+                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold flex items-center gap-1">
+                      ⏳ İnceleme Bekliyor
+                    </span>
+                  ) : application?.status === "rejected" ? (
+                    <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold flex items-center gap-1">
+                      ❌ Reddedildi — Belgeleri Güncelleyin
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">
+                      Belge Bekleniyor
+                    </span>
+                  )}
                 </div>
 
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-1 block">E-posta</label>
-                  <input
-                    type="email"
-                    value={profile.email || ""}
-                    disabled
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 text-sm cursor-not-allowed"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">E-posta adresi değiştirilemez</p>
+                {application?.admin_note && application.status === "rejected" && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                    <p className="text-xs font-bold text-red-700 mb-1">📝 Admin Notu:</p>
+                    <p className="text-xs text-red-600">{application.admin_note}</p>
+                  </div>
+                )}
+
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  {profile.is_verified
+                    ? "Onaylanmış eğitmen olarak evraklarınızı görüntüleyebilir ve güncelleyebilirsiniz."
+                    : "Kurs ve ders oluşturabilmek için aşağıdaki belgelerin admin tarafından onaylanması gerekmektedir. Belgelerinizi yükleyin, ekibimiz en kısa sürede inceleyecektir."}
+                </p>
+
+                {docMsg && <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-emerald-700 text-xs font-medium">{docMsg}</div>}
+                {docErr && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 text-xs font-medium">{docErr}</div>}
+
+                <div className="space-y-3">
+                  {[
+                    { key: "cv" as const, label: "Özgeçmiş (CV)", accept: ".pdf,.doc,.docx", path: cvPath, icon: "📄", hint: "PDF veya Word formatında" },
+                    { key: "graduation" as const, label: "Mezuniyet Belgesi / Diploma", accept: ".pdf,.png,.jpg,.jpeg", path: gradCertPath, icon: "🎓", hint: "PDF veya görsel formatında" },
+                    { key: "criminal" as const, label: "Adli Sicil Kayıt Belgesi", accept: ".pdf", path: crimRecordPath, icon: "🛡️", hint: "Sadece PDF formatında" },
+                  ].map((doc) => (
+                    <div key={doc.key} className="border border-gray-200 bg-gray-50 rounded-xl p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                            {doc.icon} {doc.label}
+                          </span>
+                          <span className="text-[10px] text-gray-400 ml-6">{doc.hint}</span>
+                        </div>
+                        {doc.path ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              ✔ Yüklendi
+                            </span>
+                            <a
+                              href={doc.path.startsWith("http") ? doc.path : `${API_URL.replace("/api/v1", "")}/${doc.path}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-teal-600 font-bold hover:underline flex items-center gap-1"
+                            >
+                              Görüntüle 👁️
+                            </a>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                            ✗ Eksik
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        accept={doc.accept}
+                        id={`doc-upload-${doc.key}`}
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleDocumentUpload(doc.key, e.target.files[0]);
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`doc-upload-${doc.key}`}
+                        className="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed border-gray-300 hover:border-teal-500 text-gray-500 hover:text-teal-600 cursor-pointer bg-white rounded-xl text-xs font-bold transition-colors"
+                      >
+                        {isUploadingDoc[doc.key] ? (
+                          <>
+                            <span className="inline-block w-3 h-3 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+                            Yükleniyor...
+                          </>
+                        ) : doc.path ? (
+                          "🔄 Güncelle"
+                        ) : (
+                          "📤 Yükle"
+                        )}
+                      </label>
+                    </div>
+                  ))}
                 </div>
 
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-1 block">Telefon</label>
-                  <input
-                    type="tel"
-                    value={accPhone}
-                    onChange={(e) => setAccPhone(e.target.value)}
-                    placeholder="+90 5XX XXX XX XX"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-1 block">Hakkında</label>
-                  <textarea
-                    value={accBio}
-                    onChange={(e) => setAccBio(e.target.value)}
-                    rows={4}
-                    placeholder="Kendinizi kısaca tanıtın..."
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm resize-none"
-                  />
-                </div>
-
-                <button
-                  onClick={() => updateAccountInfoMutation.mutate()}
-                  disabled={updateAccountInfoMutation.isPending}
-                  className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-teal-700 hover:to-emerald-700 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl text-sm"
-                >
-                  {updateAccountInfoMutation.isPending ? "Kaydediliyor..." : "Değişiklikleri Kaydet"}
-                </button>
+                {!profile.is_verified && (
+                  <p className="text-[10px] text-gray-400 text-center">
+                    ⚠️ Belgeleriniz onaylanana kadar kurs ve ders oluşturma özelliği devre dışı kalacaktır.
+                  </p>
+                )}
               </div>
             </div>
           )}

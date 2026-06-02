@@ -85,45 +85,80 @@ export default function MyCoursesPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-1">Eğitimlerim</h1>
           <p className="text-gray-600">Oluşturduğun kursları buradan yönetebilirsin.</p>
         </div>
-        <Link
-          href="/dashboard/my-courses/new"
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-teal-500 to-teal-600 hover:shadow-lg hover:shadow-teal-500/30 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Yeni Kurs
-        </Link>
+        {user?.is_verified ? (
+          <Link
+            href="/dashboard/my-courses/new"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-teal-500 to-teal-600 hover:shadow-lg hover:shadow-teal-500/30 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Yeni Kurs
+          </Link>
+        ) : (
+          <button
+            disabled
+            title="Kurs oluşturabilmek için belgelerinizin onaylanması gerekmektedir."
+            className="inline-flex items-center gap-2 bg-gray-200 text-gray-400 px-5 py-2.5 rounded-xl font-semibold text-sm cursor-not-allowed"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Yeni Kurs
+          </button>
+        )}
       </div>
+
+      {/* Unverified Warning Banner */}
+      {!user?.is_verified && (
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-start gap-4">
+          <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0 text-amber-600 text-xl">
+            ⚠️
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-amber-800 mb-1">Hesabınız Henüz Onaylanmadı</p>
+            <p className="text-xs text-amber-700 leading-relaxed">
+              Kurs ve ders oluşturabilmek için eğitmen belgelerinizin (CV, mezuniyet belgesi, adli sicil kaydı) admin tarafından onaylanması gerekmektedir.
+            </p>
+            <Link
+              href="/dashboard/teacher/profile?tab=account-info"
+              className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-amber-700 hover:text-amber-900 underline"
+            >
+              Belgeleri yüklemek için tıklayın →
+            </Link>
+          </div>
+        </div>
+      )}
 
       {!myCourses || myCourses.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-10 text-center shadow-sm">
-          <svg
-            className="w-16 h-16 text-gray-300 mx-auto mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-            />
+          <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Henüz kursun yok</h2>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            İlk kursunu oluşturarak bilgini paylaşabilir ve gelir elde edebilirsin.
+            {user?.is_verified
+              ? "İlk kursunu oluşturarak bilgini paylaşabilir ve gelir elde edebilirsin."
+              : "Kurs oluşturmak için önce eğitmen belgelerinizin onaylanması gerekmektedir."}
           </p>
-          <Link
-            href="/dashboard/my-courses/new"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-teal-500 to-teal-600 hover:shadow-lg hover:shadow-teal-500/30 text-white px-6 py-3 rounded-xl font-semibold transition-all"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            İlk Kursunu Oluştur
-          </Link>
+          {user?.is_verified ? (
+            <Link
+              href="/dashboard/my-courses/new"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-teal-500 to-teal-600 hover:shadow-lg hover:shadow-teal-500/30 text-white px-6 py-3 rounded-xl font-semibold transition-all"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              İlk Kursunu Oluştur
+            </Link>
+          ) : (
+            <Link
+              href="/dashboard/teacher/profile?tab=account-info"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:shadow-lg text-white px-6 py-3 rounded-xl font-semibold transition-all"
+            >
+              Belgelerimi Yükle →
+            </Link>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
