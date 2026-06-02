@@ -8,6 +8,7 @@ import {
   teacherEarningsApi,
   withdrawalsApi,
   mediaApi,
+  api,
   type TeacherProfile,
   type TeacherProfileUpdate,
   type BankAccount,
@@ -20,11 +21,25 @@ import {
 import Avatar from "@/components/Avatar";
 import { getAvatarUrl } from "@/lib/utils/avatar";
 
-type Tab = "profile" | "bank-accounts" | "earnings" | "withdrawals";
+type Tab = "profile" | "bank-accounts" | "earnings" | "withdrawals" | "account-info" | "change-password";
 
 export default function TeacherProfilePage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<Tab>("profile");
+
+  // Account Info state
+  const [accFullName, setAccFullName] = useState("");
+  const [accPhone, setAccPhone] = useState("");
+  const [accBio, setAccBio] = useState("");
+  const [accMsg, setAccMsg] = useState<string | null>(null);
+  const [accErr, setAccErr] = useState<string | null>(null);
+
+  // Change Password state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwMsg, setPwMsg] = useState<string | null>(null);
+  const [pwErr, setPwErr] = useState<string | null>(null);
 
   // Fetch teacher profile
   const { data: profile, isLoading: profileLoading } = useQuery({
@@ -51,6 +66,60 @@ export default function TeacherProfilePage() {
     queryKey: ["my-earnings"],
     queryFn: () => teacherEarningsApi.listMyEarnings({ limit: 50 }),
     enabled: activeTab === "earnings",
+  });
+
+  // Sync account info state when profile loads
+  useEffect(() => {
+    if (profile) {
+      setAccFullName(profile.full_name || "");
+      setAccPhone(profile.phone || "");
+      setAccBio(profile.bio || "");
+    }
+  }, [profile]);
+
+  // Update account info mutation
+  const updateAccountInfoMutation = useMutation({
+    mutationFn: async () => {
+      return teacherProfileApi.updateMyProfile({
+        full_name: accFullName,
+        phone: accPhone || undefined,
+        bio: accBio || undefined,
+      });
+    },
+    onSuccess: () => {
+      setAccMsg("Profil bilgileri başarıyla güncellendi!");
+      setAccErr(null);
+      queryClient.invalidateQueries({ queryKey: ["my-teacher-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+    onError: (e: any) => {
+      setAccErr(e.response?.data?.detail || "Güncelleme sırasında hata oluştu.");
+      setAccMsg(null);
+    },
+  });
+
+  // Change password mutation
+  const changePasswordMutation = useMutation({
+    mutationFn: async () => {
+      if (newPassword !== confirmPassword) throw new Error("Şifreler eşleşmiyor");
+      if (newPassword.length < 8) throw new Error("Şifre en az 8 karakter olmalıdır");
+      const { data } = await api.put("/auth/me/password", {
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
+      return data;
+    },
+    onSuccess: () => {
+      setPwMsg("Şifre başarıyla değiştirildi!");
+      setPwErr(null);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    },
+    onError: (e: any) => {
+      setPwErr(e.message || "Şifre değiştirilirken hata oluştu.");
+      setPwMsg(null);
+    },
   });
 
   // Fetch withdrawals
@@ -165,6 +234,8 @@ export default function TeacherProfilePage() {
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "profile", label: "Profil", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
+    { id: "account-info", label: "Hesap Bilgileri", icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" },
+    { id: "change-password", label: "Şifre Değiştir", icon: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" },
     { id: "bank-accounts", label: "Banka Hesapları", icon: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" },
     { id: "earnings", label: "Kazançlar", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
     { id: "withdrawals", label: "Çekim Talepleri", icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" },
@@ -243,6 +314,129 @@ export default function TeacherProfilePage() {
                   queryClient={queryClient}
                 />
               )}
+
+          {/* Account Info Tab */}
+          {activeTab === "account-info" && (
+            <div className="max-w-2xl space-y-6">
+              {accMsg && <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-700 text-sm font-medium">{accMsg}</div>}
+              {accErr && <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm font-medium">{accErr}</div>}
+
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-5">
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center text-white text-sm">✏️</span>
+                  Temel Bilgiler
+                </h3>
+
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-1 block">Ad Soyad</label>
+                  <input
+                    type="text"
+                    value={accFullName}
+                    onChange={(e) => setAccFullName(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-1 block">E-posta</label>
+                  <input
+                    type="email"
+                    value={profile.email || ""}
+                    disabled
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 text-sm cursor-not-allowed"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">E-posta adresi değiştirilemez</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-1 block">Telefon</label>
+                  <input
+                    type="tel"
+                    value={accPhone}
+                    onChange={(e) => setAccPhone(e.target.value)}
+                    placeholder="+90 5XX XXX XX XX"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-1 block">Hakkında</label>
+                  <textarea
+                    value={accBio}
+                    onChange={(e) => setAccBio(e.target.value)}
+                    rows={4}
+                    placeholder="Kendinizi kısaca tanıtın..."
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm resize-none"
+                  />
+                </div>
+
+                <button
+                  onClick={() => updateAccountInfoMutation.mutate()}
+                  disabled={updateAccountInfoMutation.isPending}
+                  className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-teal-700 hover:to-emerald-700 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl text-sm"
+                >
+                  {updateAccountInfoMutation.isPending ? "Kaydediliyor..." : "Değişiklikleri Kaydet"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Change Password Tab */}
+          {activeTab === "change-password" && (
+            <div className="max-w-2xl space-y-6">
+              {pwMsg && <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-700 text-sm font-medium">{pwMsg}</div>}
+              {pwErr && <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm font-medium">{pwErr}</div>}
+
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-5">
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center text-white text-sm">🔒</span>
+                  Şifre Değiştir
+                </h3>
+
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-1 block">Mevcut Şifre</label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-1 block">Yeni Şifre</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">En az 8 karakter</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-1 block">Yeni Şifre (Tekrar)</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                  />
+                  {confirmPassword && newPassword !== confirmPassword && (
+                    <p className="text-xs text-red-500 mt-1 font-medium">Şifreler eşleşmiyor</p>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => changePasswordMutation.mutate()}
+                  disabled={!currentPassword || !newPassword || !confirmPassword || changePasswordMutation.isPending}
+                  className="px-6 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl text-sm"
+                >
+                  {changePasswordMutation.isPending ? "Değiştiriliyor..." : "Şifreyi Değiştir"}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Bank Accounts Tab */}
           {activeTab === "bank-accounts" && (
