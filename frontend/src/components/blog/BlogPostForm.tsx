@@ -145,13 +145,13 @@ export function BlogPostForm({
     if (!post && form.title && !form.seo_meta_title) {
       setForm((prev) => ({
         ...prev,
-        seo_meta_title: form.title.length > 60 ? form.title.substring(0, 57) + "..." : form.title,
+        seo_meta_title: (form.title || "").length > 60 ? (form.title || "").substring(0, 57) + "..." : form.title,
       }));
     }
     if (!post && form.excerpt && !form.seo_meta_description) {
       setForm((prev) => ({
         ...prev,
-        seo_meta_description: form.excerpt.length > 160 ? form.excerpt.substring(0, 157) + "..." : form.excerpt,
+        seo_meta_description: (form.excerpt || "").length > 160 ? (form.excerpt || "").substring(0, 157) + "..." : form.excerpt,
       }));
     }
   }, [form.title, form.excerpt, post]);
@@ -173,19 +173,19 @@ export function BlogPostForm({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!form.title.trim()) {
+    if (!(form.title || "").trim()) {
       newErrors.title = "Başlık gereklidir";
-    } else if (form.title.length < 3) {
+    } else if ((form.title || "").length < 3) {
       newErrors.title = "Başlık en az 3 karakter olmalıdır";
     }
 
-    if (!form.slug.trim()) {
+    if (!(form.slug || "").trim()) {
       newErrors.slug = "Slug gereklidir";
     }
 
-    if (!form.content.trim()) {
+    if (!(form.content || "").trim()) {
       newErrors.content = "İçerik gereklidir";
-    } else if (form.content.length < 100) {
+    } else if ((form.content || "").length < 100) {
       newErrors.content = "İçerik en az 100 karakter olmalıdır";
     }
 
@@ -240,10 +240,11 @@ export function BlogPostForm({
   };
 
   const addTag = (tagId: string) => {
-    if (!form.tag_ids.includes(tagId)) {
+    const currentTags = form.tag_ids || [];
+    if (!currentTags.includes(tagId)) {
       setForm((prev) => ({
         ...prev,
-        tag_ids: [...prev.tag_ids, tagId],
+        tag_ids: [...(prev.tag_ids || []), tagId],
       }));
     }
     setTagSearch("");
@@ -252,7 +253,7 @@ export function BlogPostForm({
   const removeTag = (tagId: string) => {
     setForm((prev) => ({
       ...prev,
-      tag_ids: prev.tag_ids.filter((id) => id !== tagId),
+      tag_ids: (prev.tag_ids || []).filter((id) => id !== tagId),
     }));
   };
 
@@ -379,7 +380,7 @@ export function BlogPostForm({
                 Özet
               </label>
               <textarea
-                value={form.excerpt}
+                value={form.excerpt || ""}
                 onChange={(e) => setForm((prev) => ({ ...prev, excerpt: e.target.value }))}
                 rows={3}
                 maxLength={500}
@@ -467,20 +468,21 @@ export function BlogPostForm({
                     key={cat.id}
                     type="button"
                     onClick={() => {
-                      if (form.category_ids.includes(cat.id)) {
+                      const currentCategories = form.category_ids || [];
+                      if (currentCategories.includes(cat.id)) {
                         setForm((prev) => ({
                           ...prev,
-                          category_ids: prev.category_ids.filter((id) => id !== cat.id),
+                          category_ids: (prev.category_ids || []).filter((id) => id !== cat.id),
                         }));
                       } else {
                         setForm((prev) => ({
                           ...prev,
-                          category_ids: [...prev.category_ids, cat.id],
+                          category_ids: [...(prev.category_ids || []), cat.id],
                         }));
                       }
                     }}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                      form.category_ids.includes(cat.id)
+                      (form.category_ids || []).includes(cat.id)
                         ? "bg-teal-100 text-teal-700 border-2 border-teal-300"
                         : "bg-gray-100 text-gray-700 border-2 border-gray-300 hover:bg-gray-200"
                     }`}
@@ -520,7 +522,7 @@ export function BlogPostForm({
                 />
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
-                {form.tag_ids.map((tagId) => {
+                {(form.tag_ids || []).map((tagId) => {
                   const tag = tags.find((t) => t.id === tagId);
                   if (!tag) return null;
                   return (
@@ -549,9 +551,9 @@ export function BlogPostForm({
                         key={tag.id}
                         type="button"
                         onClick={() => addTag(tag.id)}
-                        disabled={form.tag_ids.includes(tag.id)}
+                        disabled={(form.tag_ids || []).includes(tag.id)}
                         className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                          form.tag_ids.includes(tag.id)
+                          (form.tag_ids || []).includes(tag.id)
                             ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
@@ -691,7 +693,7 @@ export function BlogPostForm({
                         </label>
                         <input
                           type="text"
-                          value={form.seo_meta_title}
+                          value={form.seo_meta_title || ""}
                           onChange={(e) => setForm((prev) => ({ ...prev, seo_meta_title: e.target.value }))}
                           maxLength={60}
                           className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
@@ -716,7 +718,7 @@ export function BlogPostForm({
                           Meta Description
                         </label>
                         <textarea
-                          value={form.seo_meta_description}
+                          value={form.seo_meta_description || ""}
                           onChange={(e) => setForm((prev) => ({ ...prev, seo_meta_description: e.target.value }))}
                           maxLength={160}
                           rows={3}
@@ -744,7 +746,7 @@ export function BlogPostForm({
                       </label>
                       <input
                         type="text"
-                        value={form.seo_meta_keywords}
+                        value={form.seo_meta_keywords || ""}
                         onChange={(e) => setForm((prev) => ({ ...prev, seo_meta_keywords: e.target.value }))}
                         className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         placeholder="keyword1, keyword2, keyword3"
@@ -757,7 +759,7 @@ export function BlogPostForm({
                         </label>
                         <input
                           type="text"
-                          value={form.seo_og_title}
+                          value={form.seo_og_title || ""}
                           onChange={(e) => setForm((prev) => ({ ...prev, seo_og_title: e.target.value }))}
                           className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                           placeholder="Open Graph başlığı"
@@ -768,7 +770,7 @@ export function BlogPostForm({
                           OG Description
                         </label>
                         <textarea
-                          value={form.seo_og_description}
+                          value={form.seo_og_description || ""}
                           onChange={(e) => setForm((prev) => ({ ...prev, seo_og_description: e.target.value }))}
                           rows={3}
                           className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
@@ -782,7 +784,7 @@ export function BlogPostForm({
                       </label>
                       <input
                         type="url"
-                        value={form.seo_og_image_url}
+                        value={form.seo_og_image_url || ""}
                         onChange={(e) => setForm((prev) => ({ ...prev, seo_og_image_url: e.target.value }))}
                         className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         placeholder="https://..."
@@ -794,7 +796,7 @@ export function BlogPostForm({
                           Twitter Card Type
                         </label>
                         <select
-                          value={form.seo_twitter_card}
+                          value={form.seo_twitter_card || ""}
                           onChange={(e) => setForm((prev) => ({ ...prev, seo_twitter_card: e.target.value }))}
                           className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         >
@@ -808,7 +810,7 @@ export function BlogPostForm({
                         </label>
                         <input
                           type="url"
-                          value={form.seo_canonical_url}
+                          value={form.seo_canonical_url || ""}
                           onChange={(e) => setForm((prev) => ({ ...prev, seo_canonical_url: e.target.value }))}
                           className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                           placeholder="https://..."

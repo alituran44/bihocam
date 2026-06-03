@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import PopupAnnouncement from "@/components/PopupAnnouncement";
 import AdBanner from "@/components/ads/AdBanner";
 import FeaturedCourses from "@/components/ads/FeaturedCourses";
+import { motion, AnimatePresence } from "framer-motion";
 import { coursesApi, publicApi, educationProgramsApi, EducationProgram, blogPublicApi, BlogPost } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import { usePopupAnnouncement } from "@/hooks/usePopupAnnouncement";
@@ -68,6 +69,23 @@ const getBannerContent = (slug: string, title: string) => {
 
 const formatProgramPrice = (p: number) => {
   return (p / 100).toLocaleString("tr-TR", { minimumFractionDigits: 2 }) + " TL";
+};
+
+
+// Animation variants
+const fadeUpVariants: any = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+};
+
+const staggerContainer: any = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2
+    }
+  }
 };
 
 export default function Home() {
@@ -234,7 +252,7 @@ export default function Home() {
       <Header />
 
       {/* Modern Sleek Hero (DersHerYerde Vibe) */}
-      <section className="relative pt-32 pb-24 md:pt-40 md:pb-36 bg-gradient-to-b from-teal-500/10 via-white to-transparent overflow-hidden">
+      <motion.section initial="hidden" animate="visible" variants={staggerContainer} className="relative pt-32 pb-24 md:pt-40 md:pb-36 bg-gradient-to-b from-teal-500/10 via-white to-transparent overflow-hidden">
         {/* Glow Spheres */}
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-teal-200/30 rounded-full filter blur-3xl -z-10"></div>
         <div className="absolute top-1/3 right-1/4 w-[25rem] h-[25rem] bg-indigo-200/20 rounded-full filter blur-3xl -z-10"></div>
@@ -272,19 +290,26 @@ export default function Home() {
                 >
                   Eğitmen Olmak İstiyorum
                 </Link>
+                <Link
+                  href="/tanisma-dersi"
+                  className="px-8 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-600/30 hover:bg-blue-700 transform hover:-translate-y-0.5 transition-all text-base"
+                >
+                  Tanışma Dersi Al
+                </Link>
               </div>
 
-              {/* Mini Stats Banner */}
-              <div className="pt-8 grid grid-cols-2 sm:grid-cols-4 gap-6 border-t border-gray-200/60 max-w-lg mx-auto lg:mx-0">
+              {/* Mini Stats Banner with Icons */}
+              <div className="pt-8 grid grid-cols-2 sm:grid-cols-4 gap-6 border-t border-gray-200/60 max-w-2xl mx-auto lg:mx-0">
                 {[
-                  { value: "15K+", label: "Aktif Öğrenci" },
-                  { value: "500+", label: "Premium Ders" },
-                  { value: "100+", label: "Seçkin Eğitmen" },
-                  { value: "4.9", label: "Ort. Puan" },
+                  { value: "15K+", label: "Aktif Öğrenci", icon: <svg className="w-6 h-6 text-teal-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg> },
+                  { value: "500+", label: "Premium Ders", icon: <svg className="w-6 h-6 text-indigo-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg> },
+                  { value: "100+", label: "Seçkin Eğitmen", icon: <svg className="w-6 h-6 text-rose-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6" /></svg> },
+                  { value: "4.9", label: "Ort. Puan", icon: <svg className="w-6 h-6 text-yellow-500 mb-2" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg> },
                 ].map((stat) => (
-                  <div key={stat.label} className="text-center lg:text-left">
-                    <div className="text-2xl font-black text-gray-900 tracking-tight">{stat.value}</div>
-                    <div className="text-xs font-semibold text-gray-500">{stat.label}</div>
+                  <div key={stat.label} className="text-center lg:text-left flex flex-col items-center lg:items-start group">
+                    {stat.icon}
+                    <div className="text-2xl font-black text-gray-900 tracking-tight group-hover:text-teal-600 transition-colors">{stat.value}</div>
+                    <div className="text-xs font-bold text-gray-500 mt-1">{stat.label}</div>
                   </div>
                 ))}
               </div>
@@ -304,10 +329,108 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+      </motion.section>
+
+
+
+      {/* Marquee Ticker */}
+      <div className="bg-teal-600 text-white py-3 overflow-hidden whitespace-nowrap border-y border-teal-700/50 relative shadow-inner">
+        <div className="absolute inset-0 bg-gradient-to-r from-teal-600 via-transparent to-teal-600 z-10 w-full pointer-events-none"></div>
+        <motion.div 
+          className="inline-block"
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
+        >
+          <div className="inline-flex gap-12 px-6 text-sm md:text-base font-semibold tracking-wide">
+            <span className="flex items-center gap-2">🚀 15.000+ Aktif Öğrenci</span>
+            <span className="flex items-center gap-2">⭐ 4.9 Ortalama Memnuniyet</span>
+            <span className="flex items-center gap-2">👨‍🏫 100+ Seçkin Eğitmen</span>
+            <span className="flex items-center gap-2">🎯 YKS'de Yüksek Başarı</span>
+            <span className="flex items-center gap-2">💻 Kişiselleştirilmiş Eğitim</span>
+            {/* Duplicate for seamless looping */}
+            <span className="flex items-center gap-2">🚀 15.000+ Aktif Öğrenci</span>
+            <span className="flex items-center gap-2">⭐ 4.9 Ortalama Memnuniyet</span>
+            <span className="flex items-center gap-2">👨‍🏫 100+ Seçkin Eğitmen</span>
+            <span className="flex items-center gap-2">🎯 YKS'de Yüksek Başarı</span>
+            <span className="flex items-center gap-2">💻 Kişiselleştirilmiş Eğitim</span>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* KATEGORİLER */}
+      <section className="py-20 bg-slate-50/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-4">Eğitim Kategorileri</h2>
+            <p className="text-slate-600 font-medium max-w-2xl mx-auto text-lg">
+              Size en uygun eğitimi seçin ve hemen başarıya adım atın. 
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              { id: 'ilkokul', title: 'İlkokul', desc: 'Takviye dersler ve bursluluk sınavı hazırlığı', bg: 'bg-[#ff69b4]' },
+              { id: 'ortaokul', title: 'Ortaokul', desc: 'LGS hazırlık ve takviye dersler', bg: 'bg-[#ffeb3b]' },
+              { id: 'lise', title: 'Lise', desc: 'YKS hazırlık ve takviye dersler', bg: 'bg-[#20c997]' },
+              { id: 'yabanci-dil', title: 'Yabancı Dil', desc: 'Sınav hazırlığı ve dil becerileri', bg: 'bg-[#ff4d4f]' },
+              { id: 'kocluk', title: 'Koçluk', desc: 'Eğitim ve öğrenci koçluğu', bg: 'bg-[#0050ff]' },
+              { id: 'beceri', title: 'Beceri', desc: 'Hızlı okuma, robotik kodlama, müzik, vb', bg: 'bg-[#d946ef]' }
+            ].map(cat => (
+              <Link 
+                href={`/tanisma-dersi?category=${cat.id}`} 
+                key={cat.id} 
+                className="group flex flex-col bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl border border-slate-100 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+              >
+                <div className={`h-48 w-full ${cat.bg} relative overflow-hidden flex items-end justify-center`}>
+                   {/* Decorative Circles */}
+                   <div className="absolute top-0 right-0 w-48 h-48 bg-white/20 rounded-full -mr-20 -mt-20"></div>
+                   <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/20 rounded-full -ml-16 -mb-16"></div>
+                   
+                   {/* Minimalist 3D-like Icon Avatar Placeholder */}
+                   <div className="w-28 h-28 bg-white/20 backdrop-blur-md rounded-t-full rounded-b-xl border-t-2 border-l-2 border-r-2 border-white/40 shadow-inner flex items-center justify-center translate-y-6 group-hover:translate-y-2 transition-transform duration-300">
+                     <span className="text-5xl drop-shadow-md">🎓</span>
+                   </div>
+                </div>
+                <div className="p-8 text-center bg-white flex-1 flex flex-col items-center justify-center pt-10">
+                  <h3 className="text-[1.7rem] font-black text-[#1e1b4b] mb-3">{cat.title}</h3>
+                  <p className="text-slate-500 text-[15px] font-semibold leading-relaxed">{cat.desc}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
       </section>
 
+      {/* SİZİ ARAYABİLİRİZ */}
+      <motion.section 
+        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={fadeUpVariants}
+        className="py-12 bg-slate-50"
+      >
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-gray-200/50 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row gap-8 items-center justify-between">
+            <div className="space-y-4 md:w-1/2">
+               <div className="text-blue-600 font-bold uppercase tracking-wider text-sm">SİZİ ARAYABİLİRİZ</div>
+               <h3 className="text-3xl font-black text-slate-900">Numaranızı bırakabilirsiniz.</h3>
+               <p className="text-slate-700 text-sm font-medium">
+                 Size aşağıdaki kurumsal iletişim hattımızdan ulaşacağız: <br />
+                 <span className="font-bold text-slate-900">+90 (850) 840 55 43</span>
+               </p>
+            </div>
+            <div className="w-full md:w-1/2 space-y-4">
+               <input type="text" placeholder="Adınız ve soyadınız" className="w-full px-5 py-4 rounded-xl border border-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+               <input type="tel" placeholder="Telefon 5xx xxx xx xx" className="w-full px-5 py-4 rounded-xl border border-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+               <button className="w-full bg-orange-400 hover:bg-orange-500 text-white font-bold py-4 rounded-xl shadow-md transition-colors">
+                 Arama Talebi Oluştur
+               </button>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
       {/* Benefit Cards Section (From screenshot) */}
-      <section className="py-20 bg-white">
+
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
             <h2 className="text-4xl font-black text-gray-900 tracking-tight">Kariyerinizi ve Eğitiminizi Zirveye Taşıyın</h2>
@@ -367,17 +490,17 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Ads placements Banners */}
-      <section className="py-8 bg-slate-50">
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-8 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AdBanner placementCode="homepage_banner" />
         </div>
-      </section>
+      </motion.section>
 
       {/* "Seni Neler Bekliyor?" Section */}
-      <section className="py-20 bg-white relative overflow-hidden">
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-white relative overflow-hidden">
         {/* Decorative background glow */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-teal-500/5 rounded-full filter blur-3xl -z-10"></div>
         
@@ -480,10 +603,10 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Popular Categories Grid */}
-      <section className="py-20 bg-slate-50">
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
             <div className="space-y-2">
@@ -523,18 +646,18 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Featured Courses placements */}
-      <section className="py-20 bg-white">
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FeaturedCourses limit={6} showTitle={true} />
         </div>
-      </section>
+      </motion.section>
 
       {/* Popular Courses list */}
       {((featuredCourses && featuredCourses.length > 0) || (courses && courses.length > 0)) && (
-        <section className="py-20 bg-slate-50">
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-slate-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
               <div className="space-y-2">
@@ -609,12 +732,12 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </section>
+        </motion.section>
       )}
 
       {/* Popular Education Programs list */}
       {educationPrograms && educationPrograms.length > 0 && (
-        <section className="py-20 bg-white">
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
               <div className="space-y-2">
@@ -683,11 +806,11 @@ export default function Home() {
               })}
             </div>
           </div>
-        </section>
+        </motion.section>
       )}
 
       {/* Become an Instructor Dedicated Promo Section (dersheryerde.com Vibe) */}
-      <section className="py-24 bg-white relative overflow-hidden">
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-white relative overflow-hidden">
         <div className="absolute -top-32 -right-32 w-[30rem] h-[30rem] bg-indigo-50 rounded-full blur-3xl -z-10"></div>
         <div className="absolute -bottom-32 -left-32 w-[30rem] h-[30rem] bg-teal-50 rounded-full blur-3xl -z-10"></div>
         
@@ -739,11 +862,11 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Blog Posts Section */}
       {blogPosts && blogPosts.length > 0 && (
-        <section className="py-20 bg-slate-50">
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-slate-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
               <div className="space-y-2">
@@ -822,11 +945,11 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </section>
+        </motion.section>
       )}
 
       {/* Teal/Emerald Registration CTA Banner Section */}
-      <section className="py-12 bg-gradient-to-r from-teal-600 to-emerald-600 border-y border-teal-700/10">
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-12 bg-gradient-to-r from-teal-600 to-emerald-600 border-y border-teal-700/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
           <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-none">
             Eğitim Yolculuğunuza Bugün Başlayın
@@ -843,7 +966,7 @@ export default function Home() {
             </Link>
           </div>
         </div>
-      </section>
+      </motion.section>
 
 
       <Footer />

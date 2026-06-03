@@ -23,7 +23,7 @@ import {
 import Avatar from "@/components/Avatar";
 import { getAvatarUrl } from "@/lib/utils/avatar";
 
-type Tab = "profile" | "bank-accounts" | "earnings" | "withdrawals" | "account-info" | "change-password";
+type Tab = "profile" | "tax-info" | "bank-accounts" | "earnings" | "withdrawals" | "account-info" | "change-password";
 
 export default function TeacherProfilePage() {
   const queryClient = useQueryClient();
@@ -303,6 +303,7 @@ export default function TeacherProfilePage() {
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "profile", label: "Profil", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
+    { id: "tax-info", label: "Vergi & Kimlik", icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
     { id: "account-info", label: "Evraklar", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
     { id: "change-password", label: "Şifre Değiştir", icon: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" },
     { id: "bank-accounts", label: "Banka Hesapları", icon: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" },
@@ -381,6 +382,14 @@ export default function TeacherProfilePage() {
                   onUpdate={(data) => updateProfileMutation.mutate(data)}
                   isUpdating={updateProfileMutation.isPending}
                   queryClient={queryClient}
+                />
+              )}
+
+              {activeTab === "tax-info" && (
+                <TaxInfoTab
+                  profile={profile}
+                  onUpdate={(data) => updateProfileMutation.mutate(data)}
+                  isUpdating={updateProfileMutation.isPending}
                 />
               )}
 
@@ -628,10 +637,15 @@ function ProfileTab({
       website: profile.social_links?.website || "",
     },
     avatar_url: profile.avatar_url || "",
+    promo_images: profile.promo_images || [],
+    promo_video: profile.promo_video || "",
   });
   const [tagInput, setTagInput] = useState("");
   const [urlErrors, setUrlErrors] = useState<Record<string, string>>({});
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingPromoImage, setIsUploadingPromoImage] = useState(false);
+  const [isUploadingPromoVideo, setIsUploadingPromoVideo] = useState(false);
+  const [promoVideoProgress, setPromoVideoProgress] = useState(0);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -651,6 +665,8 @@ function ProfileTab({
           website: profile.social_links?.website || "",
         },
         avatar_url: profile.avatar_url || "",
+        promo_images: profile.promo_images || [],
+        promo_video: profile.promo_video || "",
       });
     }
   }, [profile, isEditing]);
@@ -764,6 +780,8 @@ function ProfileTab({
         website: formData.social_links.website || undefined,
       },
       avatar_url: formData.avatar_url || undefined,
+      promo_images: formData.promo_images,
+      promo_video: formData.promo_video || undefined,
     };
     onUpdate(updateData);
     setIsEditing(false);
@@ -1004,6 +1022,148 @@ function ProfileTab({
                 </div>
                 <p className="text-xs text-gray-500">
                   {formData.expertise_tags ? formData.expertise_tags.split(", ").filter(Boolean).length : 0}/20 uzmanlık alanı
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Promo Media Card (Tanıtım Resimleri & Video) */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-8 shadow-xl border border-white/50 space-y-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center animate-pulse">
+                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Tanıtım Görselleri & Tanıtım Videosu</h3>
+            </div>
+            
+            <div className="space-y-6">
+              {/* Promo Video */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Tanıtım Videosu (YouTube Linki veya MP4 Yükle)
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* YouTube link input */}
+                  <div className="space-y-1">
+                    <span className="text-xs text-gray-500 font-semibold">YouTube Tanıtım Linki</span>
+                    <input
+                      type="text"
+                      placeholder="Örn: https://www.youtube.com/watch?v=..."
+                      value={formData.promo_video && (formData.promo_video.startsWith("http://") || formData.promo_video.startsWith("https://")) ? formData.promo_video : ""}
+                      onChange={(e) => setFormData({ ...formData, promo_video: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all text-sm font-medium text-gray-900 shadow-sm"
+                    />
+                  </div>
+                  
+                  {/* Local video file upload */}
+                  <div className="space-y-1">
+                    <span className="text-xs text-gray-500 font-semibold">Veya MP4 Video Dosyası Yükleyin (Maks. 100MB)</span>
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm,video/ogg"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setIsUploadingPromoVideo(true);
+                        setPromoVideoProgress(0);
+                        try {
+                          const res = await mediaApi.uploadPromoVideo(file, (progress) => {
+                            setPromoVideoProgress(progress);
+                          });
+                          setFormData({ ...formData, promo_video: res.file_path });
+                          toast.success("Tanıtım videosu başarıyla yüklendi.");
+                        } catch (err: any) {
+                          toast.error(err.response?.data?.detail || "Video yüklenirken hata oluştu.");
+                        } finally {
+                          setIsUploadingPromoVideo(false);
+                        }
+                      }}
+                      className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+                    />
+                    {isUploadingPromoVideo && (
+                      <p className="text-xs text-teal-600 font-bold mt-1 animate-pulse">Yükleniyor... %{promoVideoProgress}</p>
+                    )}
+                  </div>
+                </div>
+                {formData.promo_video && (
+                  <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between">
+                    <span className="text-xs text-slate-600 font-medium truncate max-w-md">
+                      Yüklü Video: {formData.promo_video}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, promo_video: "" })}
+                      className="text-xs text-red-500 hover:text-red-700 font-bold hover:underline"
+                    >
+                      Kaldır
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Promo Images */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Tanıtım Görselleri (Maks. 5 adet)
+                </label>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                  {formData.promo_images?.map((imgUrl, idx) => (
+                    <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border-2 border-gray-200 bg-gray-50 group shadow-sm">
+                      <img src={`http://localhost:8000/media/${imgUrl}`} alt={`Görsel ${idx + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updatedImgs = formData.promo_images.filter((_, i) => i !== idx);
+                          setFormData({ ...formData, promo_images: updatedImgs });
+                        }}
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold"
+                      >
+                        Kaldır
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {(!formData.promo_images || formData.promo_images.length < 5) && (
+                    <label className="border-2 border-dashed border-gray-300 rounded-xl aspect-video flex flex-col items-center justify-center cursor-pointer hover:border-teal-500 hover:bg-teal-50/20 transition-all shadow-sm">
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                        className="hidden"
+                        disabled={isUploadingPromoImage}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setIsUploadingPromoImage(true);
+                          try {
+                            const res = await mediaApi.uploadPromoImage(file);
+                            const updatedImgs = formData.promo_images ? [...formData.promo_images, res.file_path] : [res.file_path];
+                            setFormData({ ...formData, promo_images: updatedImgs });
+                            toast.success("Tanıtım görseli başarıyla eklendi.");
+                          } catch (err: any) {
+                            toast.error(err.response?.data?.detail || "Görsel yüklenirken hata oluştu.");
+                          } finally {
+                            setIsUploadingPromoImage(false);
+                          }
+                        }}
+                      />
+                      {isUploadingPromoImage ? (
+                        <span className="text-[10px] text-teal-600 font-bold animate-pulse">Yükleniyor...</span>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                          </svg>
+                          <span className="text-[10px] text-gray-500 font-semibold mt-1">Görsel Ekle</span>
+                        </>
+                      )}
+                    </label>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">
+                  {formData.promo_images?.length || 0}/5 adet tanıtım resmi
                 </p>
               </div>
             </div>
@@ -1320,6 +1480,68 @@ function ProfileTab({
                 ) : (
                   <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 text-center">
                     <p className="text-gray-400 italic">Henüz uzmanlık alanı eklenmemiş</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Promo Media Card (Display) */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-8 shadow-xl border border-white/50 space-y-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Tanıtım Görselleri & Tanıtım Videosu</h3>
+            </div>
+            
+            <div className="space-y-6">
+              {/* Promo Video */}
+              <div>
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Tanıtım Videosu</div>
+                {profile.promo_video ? (
+                  <div className="relative aspect-video w-full max-w-xl rounded-2xl overflow-hidden bg-slate-900 border border-slate-100 shadow-sm flex items-center justify-center">
+                    {profile.promo_video.includes("youtube.com") || profile.promo_video.includes("youtu.be") ? (
+                      <iframe
+                        src={`https://www.youtube.com/embed/${
+                          profile.promo_video.includes("youtu.be/")
+                            ? profile.promo_video.split("youtu.be/")[1]?.split("?")[0]
+                            : profile.promo_video.split("v=")[1]?.split("&")[0]
+                        }`}
+                        className="w-full h-full"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <video
+                        src={`http://localhost:8000/media/${profile.promo_video}`}
+                        controls
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 text-center">
+                    <p className="text-gray-400 italic">Henüz tanıtım videosu eklenmemiş</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Promo Images */}
+              <div>
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Tanıtım Resimleri</div>
+                {profile.promo_images && profile.promo_images.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                    {profile.promo_images.map((imgUrl, idx) => (
+                      <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-sm">
+                        <img src={`http://localhost:8000/media/${imgUrl}`} alt={`Görsel ${idx + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 text-center">
+                    <p className="text-gray-400 italic">Henüz tanıtım resmi eklenmemiş</p>
                   </div>
                 )}
               </div>
@@ -2240,6 +2462,178 @@ function WithdrawalsTab({
           </div>
         ))
       )}
+    </div>
+  );
+}
+
+function TaxInfoTab({ profile, onUpdate, isUpdating }: any) {
+  const [formData, setFormData] = useState(
+    profile.tax_info || {
+      iban: "",
+      company_type: "Bireysel (Şahıs)",
+      tc_kimlik: "",
+      address: "",
+      city: "",
+      district: "",
+      exemption_status: "Muafiyet Belgesi Yüklenmemiş (%20 Stopaj)",
+      document_barcode: "",
+    }
+  );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onUpdate({ tax_info: formData });
+  };
+
+  return (
+    <div className="max-w-4xl">
+      <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+        <div className="flex items-center gap-3 mb-8 pb-6 border-b border-gray-100">
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Vergi & Kimlik Bilgileri</h2>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Removed IBAN */}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* ŞİRKET / ALT ÜYE TİPİ */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">ŞİRKET / ALT ÜYE TİPİ</label>
+              <select 
+                value={formData.company_type || "Bireysel (Şahıs)"}
+                onChange={(e) => setFormData({ ...formData, company_type: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none appearance-none bg-white"
+              >
+                <option value="Bireysel (Şahıs)">Bireysel (Şahıs)</option>
+                <option value="Kurumsal (Anonim, Limited vb.)">Kurumsal (Anonim, Limited vb.)</option>
+              </select>
+            </div>
+
+            {/* T.C. KİMLİK NUMARASI VEYA VERGİ NUMARASI */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">
+                {formData.company_type === "Kurumsal (Anonim, Limited vb.)" ? "VERGİ NUMARASI" : "T.C. KİMLİK NUMARASI"}
+              </label>
+              <input 
+                type="text" 
+                placeholder={formData.company_type === "Kurumsal (Anonim, Limited vb.)" ? "10 haneli Vergi Numarası" : "11 haneli TCKN"}
+                value={formData.tc_kimlik || ""}
+                onChange={(e) => setFormData({ ...formData, tc_kimlik: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none"
+              />
+            </div>
+          </div>
+
+          {/* YASAL YERLEŞİM ADRESİ */}
+          <div>
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">YASAL YERLEŞİM ADRESİ</label>
+            <textarea 
+              rows={3}
+              placeholder="PayTR ödemeleri için zorunlu yasal adres..."
+              value={formData.address || ""}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* ŞEHİR / İL */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">ŞEHİR / İL</label>
+              <input 
+                type="text" 
+                placeholder="Seçiniz" 
+                value={formData.city || ""}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none"
+              />
+            </div>
+
+            {/* İLÇE */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">İLÇE</label>
+              <input 
+                type="text" 
+                placeholder="Seçiniz" 
+                value={formData.district || ""}
+                onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none"
+              />
+            </div>
+          </div>
+
+          {/* VERGİ MUAFİYET DURUMU */}
+          <div className="pt-2">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block">VERGİ MUAFİYET DURUMU</label>
+              <span className="px-2 py-1 bg-gray-100 text-gray-500 text-[9px] font-bold uppercase tracking-wider rounded-md">BELGE YÜKLENMEDİ</span>
+            </div>
+            <input 
+              type="text" 
+              readOnly
+              value={formData.exemption_status || "Muafiyet Belgesi Yüklenmemiş (%20 Stopaj)"}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold bg-gray-50 text-gray-500 outline-none"
+            />
+          </div>
+
+          {/* 20B İSTİSNA BELGESİ YÜKLE */}
+          <div className="mt-8 bg-indigo-50/50 border border-indigo-100 rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-bl-full -z-10"></div>
+            
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-gray-900">20B İSTİSNA BELGESİ YÜKLE</h4>
+                <p className="text-[10px] font-medium italic text-gray-500 mt-1">
+                  Kazançlarınızdan otomatik %15 vergi kesintisi yapılması ve yasal süreçlerin yönetilmesi için GİB'den aldığınız 20b istisna belgesini yükleyin.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">BELGE BARKOD NUMARASI</label>
+                <input 
+                  type="text" 
+                  placeholder="Belge üzerindeki doğrulama kodu" 
+                  value={formData.document_barcode || ""}
+                  onChange={(e) => setFormData({ ...formData, document_barcode: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">BELGE DOSYASI (PDF/GÖRSEL)</label>
+                <button 
+                  type="button"
+                  className="w-full border-2 border-dashed border-indigo-200 rounded-xl px-4 py-2.5 text-xs font-bold text-indigo-600 uppercase tracking-wider hover:bg-indigo-50 transition-colors bg-white flex items-center justify-center gap-2 h-[46px]"
+                >
+                  DOSYA SEÇİN
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 flex justify-end">
+            <button
+              type="submit"
+              disabled={isUpdating}
+              className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition-all text-xs tracking-wider uppercase disabled:opacity-50"
+            >
+              {isUpdating ? "KAYDEDİLİYOR..." : "KAYDET"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

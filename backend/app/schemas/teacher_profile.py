@@ -33,6 +33,8 @@ class TeacherProfileUpdate(BaseModel):
     live_class_price: Optional[float] = Field(None, ge=0.0)
     live_class_discount_price: Optional[float] = Field(None, ge=0.0)
     live_class_link: Optional[str] = Field(None, max_length=500)
+    promo_images: Optional[list[str]] = None
+    promo_video: Optional[str] = Field(None, max_length=500)
 
     @field_validator("bio")
     @classmethod
@@ -87,6 +89,8 @@ class TeacherProfileResponse(BaseModel):
     live_class_price: Optional[float] = None
     live_class_discount_price: Optional[float] = None
     live_class_link: Optional[str] = None
+    promo_images: Optional[list[str]] = None
+    promo_video: Optional[str] = None
     is_active: bool
     is_verified: bool
     created_at: datetime

@@ -16,7 +16,7 @@ const BRANCH_OPTIONS = [
   "Sosyal Bilgiler", "İspanyolca", "Rusça", "Felsefe"
 ];
 
-const LEVEL_OPTIONS = ["İlkokul", "Ortaokul", "Lise", "Üniversite"];
+const LEVEL_OPTIONS = ["İlkokul", "Ortaokul", "Lise", "Yabancı Dil", "Koçluk", "Beceri"];
 
 export default function BecomeInstructorPage() {
   const queryClient = useQueryClient();
@@ -175,7 +175,7 @@ export default function BecomeInstructorPage() {
       return;
     }
     if (selectedLevels.length === 0) {
-      alert("Lütfen en az bir Eğitim Kademesi seçin.");
+      alert("Lütfen en az bir Eğitim Kategorisi seçin.");
       return;
     }
 
@@ -615,7 +615,7 @@ export default function BecomeInstructorPage() {
 
                     {/* Levels Checklist */}
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-3">Kademe *</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-3">Kategori / Kademe *</label>
                       <div className="flex flex-wrap gap-3">
                         {LEVEL_OPTIONS.map((level) => (
                           <button

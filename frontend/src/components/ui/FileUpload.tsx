@@ -162,13 +162,13 @@ export function FileUpload({
   );
 
   // Handle drag events
-  const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => {
+  const handleDragEnter = useCallback((e: DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
     if (!disabled) setIsDragging(true);
   }, [disabled]);
 
-  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = useCallback((e: DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
     // Only set dragging to false if we're leaving the dropzone (not entering a child)
@@ -180,7 +180,7 @@ export function FileUpload({
     }
   }, []);
 
-  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
+  const handleDragOver = useCallback((e: DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
     if (!disabled && !isDragging) {
@@ -188,7 +188,7 @@ export function FileUpload({
     }
   }, [disabled, isDragging]);
 
-  const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
+  const handleDrop = useCallback((e: DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);

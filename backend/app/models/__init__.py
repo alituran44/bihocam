@@ -55,6 +55,7 @@ from app.models.exam import Exam, ExamQuestion, ExamAttempt, ExamAttemptAnswer
 from app.models.live_class import TeacherAvailability, LiveClassReservation
 from app.models.library import TeacherLibraryItem
 from app.models.education_program import EducationProgram
+from app.models.social import SocialPost, PostLike, SavedPost, UserFollow, MediaType
 
 __all__ = [
     "User",
@@ -144,4 +145,9 @@ __all__ = [
     "LiveClassReservation",
     "TeacherLibraryItem",
     "EducationProgram",
+    "SocialPost",
+    "PostLike",
+    "SavedPost",
+    "UserFollow",
+    "MediaType",
 ]

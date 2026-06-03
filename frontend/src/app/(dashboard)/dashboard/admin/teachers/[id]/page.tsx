@@ -17,9 +17,10 @@ import {
   type TeacherEarning,
   type WithdrawalRequest,
   type TeacherEarningSummary,
+  usersApi,
 } from "@/lib/api";
 
-type Tab = "profile" | "bank-accounts" | "earnings" | "withdrawals";
+type Tab = "profile" | "tax-info" | "bank-accounts" | "earnings" | "withdrawals";
 
 export default function AdminTeacherDetailPage() {
   const params = useParams();
@@ -115,6 +116,28 @@ export default function AdminTeacherDetailPage() {
     },
   });
 
+  const toggleVerificationMutation = useMutation({
+    mutationFn: (isVerified: boolean) => usersApi.update(teacherId, { is_verified: isVerified }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", teacherId] });
+      alert("Kullanıcı onay durumu güncellendi.");
+    },
+    onError: (error: any) => {
+      alert("Durum güncellenirken bir hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    },
+  });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: (isActive: boolean) => isActive ? usersApi.activate(teacherId) : usersApi.deactivate(teacherId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", teacherId] });
+      alert("Kullanıcı aktiflik durumu güncellendi.");
+    },
+    onError: (error: any) => {
+      alert("Durum güncellenirken bir hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    },
+  });
+
   // Bank account create mutation
   const createBankAccountMutation = useMutation({
     mutationFn: (accountData: BankAccountCreate) => bankAccountsApi.createForTeacher(teacherId, accountData),
@@ -151,6 +174,7 @@ export default function AdminTeacherDetailPage() {
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "profile", label: "Profil", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
+    { id: "tax-info", label: "Vergi & Kimlik", icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
     { id: "bank-accounts", label: "Banka Hesapları", icon: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" },
     { id: "earnings", label: "Kazançlar", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
     { id: "withdrawals", label: "Çekim Talepleri", icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" },
@@ -167,17 +191,11 @@ export default function AdminTeacherDetailPage() {
         <span className="text-gray-900 font-medium">{profile.full_name}</span>
       </nav>
 
-      {/* Header */}
-      <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl p-8 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
         <div className="flex items-center gap-6">
-          <Avatar
-            src={profile.avatar_url}
-            name={profile.full_name}
-            size="xl"
-            showBorder
-            borderColor="border-white/30"
-            className="bg-white/20 backdrop-blur-sm"
-          />
+          <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-3xl font-bold border-4 border-white/30 shrink-0">
+            {profile.full_name.charAt(0).toUpperCase()}
+          </div>
           <div className="flex-1">
             <h1 className="text-3xl font-bold mb-2">{profile.full_name}</h1>
             <div className="flex items-center gap-4 text-teal-100">
@@ -198,12 +216,24 @@ export default function AdminTeacherDetailPage() {
             </div>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <span className={`px-4 py-2 rounded-full text-sm font-medium ${profile.is_active ? "bg-emerald-500" : "bg-red-500"}`}>
-              {profile.is_active ? "Aktif" : "Pasif"}
-            </span>
-            {!profile.is_verified && (
-              <span className="px-4 py-2 rounded-full text-sm font-medium bg-amber-500">
-                Doğrulanmamış
+            <button
+              onClick={() => toggleActiveMutation.mutate(!profile.is_active)}
+              disabled={toggleActiveMutation.isPending}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-50 ${profile.is_active ? "bg-emerald-500" : "bg-red-500"}`}
+            >
+              {toggleActiveMutation.isPending ? "Bekleyiniz..." : profile.is_active ? "Aktif (Pasife Al)" : "Pasif (Aktife Al)"}
+            </button>
+            {!profile.is_verified ? (
+              <button
+                onClick={() => toggleVerificationMutation.mutate(true)}
+                disabled={toggleVerificationMutation.isPending}
+                className="px-4 py-2 rounded-full text-sm font-medium bg-amber-500 hover:bg-amber-600 transition-colors disabled:opacity-50"
+              >
+                {toggleVerificationMutation.isPending ? "Onaylanıyor..." : "Hesabı Doğrula / Onayla"}
+              </button>
+            ) : (
+              <span className="px-4 py-2 rounded-full text-sm font-medium bg-emerald-500/20 text-emerald-100 border border-emerald-500/30">
+                Doğrulanmış Hesap
               </span>
             )}
           </div>
@@ -241,6 +271,11 @@ export default function AdminTeacherDetailPage() {
               onUpdate={(data) => updateProfileMutation.mutate(data)}
               isUpdating={updateProfileMutation.isPending}
             />
+          )}
+
+          {/* Tax Info Tab */}
+          {activeTab === "tax-info" && (
+            <TaxInfoAdminTab profile={profile} />
           )}
 
           {/* Bank Accounts Tab */}
@@ -1214,6 +1249,99 @@ function WithdrawalsTab({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Tax Info Tab Component for Admin (Read-Only)
+function TaxInfoAdminTab({ profile }: { profile: TeacherProfile }) {
+  const taxInfo = profile.tax_info || {
+    company_type: "-",
+    tc_kimlik: "-",
+    address: "-",
+    city: "-",
+    district: "-",
+    exemption_status: "Belge Yüklenmedi",
+    document_barcode: "-",
+  };
+
+  return (
+    <div className="max-w-4xl space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+        <div className="flex items-center gap-3 mb-8 pb-6 border-b border-gray-100">
+          <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Vergi & Kimlik Bilgileri</h2>
+        </div>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">ŞİRKET / ALT ÜYE TİPİ</label>
+              <div className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold bg-gray-50 text-gray-800">
+                {taxInfo.company_type || "-"}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">
+                {taxInfo.company_type === "Kurumsal (Anonim, Limited vb.)" ? "VERGİ NUMARASI" : "T.C. KİMLİK NUMARASI"}
+              </label>
+              <div className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold bg-gray-50 text-gray-800">
+                {taxInfo.tc_kimlik || "-"}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">VERGİ MUAFİYET DURUMU</label>
+              <div className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold bg-gray-50 text-gray-800">
+                {taxInfo.exemption_status || "-"}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">YASAL YERLEŞİM ADRESİ</label>
+            <div className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold bg-gray-50 text-gray-800 whitespace-pre-wrap min-h-[80px]">
+              {taxInfo.address || "-"}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">ŞEHİR / İL</label>
+              <div className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold bg-gray-50 text-gray-800">
+                {taxInfo.city || "-"}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">İLÇE</label>
+              <div className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold bg-gray-50 text-gray-800">
+                {taxInfo.district || "-"}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 bg-gray-50 border border-gray-200 rounded-2xl p-6">
+            <h4 className="text-sm font-black text-gray-900 mb-4">20B İSTİSNA BELGESİ</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">BELGE BARKOD NUMARASI</label>
+                <div className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold bg-white text-gray-800">
+                  {taxInfo.document_barcode || "-"}
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">BELGE DOSYASI</label>
+                <div className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold bg-white text-gray-500 italic">
+                  Görüntülenecek belge yok
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

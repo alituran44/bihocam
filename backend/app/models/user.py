@@ -41,6 +41,8 @@ class User(Base):
     expertise_tags: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)  # Uzmanlık alanları
     social_links: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # Sosyal medya linkleri: {linkedin, twitter, instagram, website}
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)  # Profil resmi URL
+    promo_images: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)  # Tanıtım resimleri
+    promo_video: Mapped[str | None] = mapped_column(String(500), nullable=True)  # Tanıtım videosu
     
     # Live class fields
     live_class_price: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -100,6 +102,23 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    
+    # Social relationships
+    social_posts = relationship("SocialPost", back_populates="user", cascade="all, delete-orphan")
+    saved_posts = relationship("SavedPost", back_populates="user", cascade="all, delete-orphan")
+    followers = relationship(
+        "UserFollow",
+        foreign_keys="UserFollow.following_id",
+        back_populates="following",
+        cascade="all, delete-orphan",
+    )
+    following = relationship(
+        "UserFollow",
+        foreign_keys="UserFollow.follower_id",
+        back_populates="follower",
+        cascade="all, delete-orphan",
+    )
+
     blog_posts = relationship(
         "BlogPost",
         foreign_keys="BlogPost.author_id",

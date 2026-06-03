@@ -46,6 +46,7 @@ from app.api.v1.endpoints import (
     homeworks,
     exams,
     education_programs,
+    social,
 )
 
 api_router = APIRouter()
@@ -101,4 +102,5 @@ api_router.include_router(messages.router, prefix="/messages", tags=["Messages"]
 api_router.include_router(pages.router, prefix="/pages", tags=["Pages"])
 api_router.include_router(education_programs.router, prefix="/education-programs", tags=["Education Programs"])
 api_router.include_router(homeworks.router, prefix="/homeworks", tags=["Homeworks"])
-api_router.include_router(exams.router, prefix="/exams", tags=["Exams"])
+api_router.include_router(exams.router, prefix="/exams", tags=["Exams"])
+api_router.include_router(social.router, prefix="/social", tags=["Social"])

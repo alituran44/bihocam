@@ -1805,3 +1805,196 @@ async def get_conversion_status(
         raise HTTPException(status_code=404, detail="Task bulunamadı veya süresi dolmuş")
     
     return job_status
+
+
+@router.post("/teachers/me/upload-promo-image")
+async def upload_teacher_promo_image(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    storage: StorageBackend = Depends(get_storage),
+):
+    """
+    Eğitmenin profili için tanıtım görseli yükleme endpoint'i.
+    - 'teachers/promo_images' dizinine kaydeder.
+    """
+    if current_user.role != UserRole.TEACHER:
+        raise HTTPException(status_code=403, detail="Bu işlem sadece öğretmenler için geçerlidir")
+        
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Dosya adı belirtilmedi")
+        
+    file_ext = Path(file.filename).suffix.lower()
+    allowed_image_exts = {".png", ".jpg", ".jpeg", ".webp"}
+    if file_ext not in allowed_image_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Geçersiz görsel formatı. İzin verilen formatlar: PNG, JPG, JPEG, WEBP"
+        )
+        
+    file_content = await file.read()
+    max_image_size = 5 * 1024 * 1024  # 5MB
+    if len(file_content) > max_image_size:
+        raise HTTPException(
+            status_code=400,
+            detail="Görsel boyutu çok büyük. Maksimum 5MB olmalıdır."
+        )
+        
+    from datetime import datetime
+    import uuid
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_id = str(uuid.uuid4())[:8]
+    filename = f"promo_{current_user.id}_{timestamp}_{unique_id}{file_ext}"
+    destination_path = f"teachers/promo_images/{filename}"
+    
+    upload_result = await storage.upload(
+        file_content=file_content,
+        destination_path=destination_path,
+        content_type=f"image/{file_ext[1:] if file_ext != '.jpg' else 'jpeg'}",
+    )
+    
+    return {
+        "message": "Tanıtım görseli başarıyla yüklendi",
+        "file_path": upload_result.storage_key,
+        "access_url": upload_result.access_url,
+    }
+
+
+@router.post("/teachers/me/upload-promo-video")
+async def upload_teacher_promo_video(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    storage: StorageBackend = Depends(get_storage),
+):
+    """
+    Eğitmenin profili için tanıtım videosu yükleme endpoint'i.
+    - 'teachers/promo_videos' dizinine kaydeder.
+    """
+    if current_user.role != UserRole.TEACHER:
+        raise HTTPException(status_code=403, detail="Bu işlem sadece öğretmenler için geçerlidir")
+        
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Dosya adı belirtilmedi")
+        
+    file_ext = Path(file.filename).suffix.lower()
+    allowed_video_exts = {".mp4", ".webm", ".ogg"}
+    if file_ext not in allowed_video_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Geçersiz video formatı. İzin verilen formatlar: MP4, WEBM, OGG"
+        )
+        
+    file_content = await file.read()
+    max_video_size = 100 * 1024 * 1024  # 100MB
+    if len(file_content) > max_video_size:
+        raise HTTPException(
+            status_code=400,
+            detail="Video boyutu çok büyük. Maksimum 100MB olmalıdır."
+        )
+        
+    from datetime import datetime
+    import uuid
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_id = str(uuid.uuid4())[:8]
+    filename = f"promo_vid_{current_user.id}_{timestamp}_{unique_id}{file_ext}"
+    destination_path = f"teachers/promo_videos/{filename}"
+    
+    upload_result = await storage.upload(
+        file_content=file_content,
+        destination_path=destination_path,
+        content_type=f"video/{file_ext[1:]}",
+    )
+    
+    return {
+        "message": "Tanıtım videosu başarıyla yüklendi",
+        "file_path": upload_result.storage_key,
+        "access_url": upload_result.access_url,
+    }
+
+
+@router.get("/teachers/promo-images/{filename}")
+async def get_teacher_promo_image(
+    filename: str,
+    storage: StorageBackend = Depends(get_storage),
+):
+    """Tanıtım resmini döndür (Public)"""
+    storage_key = f"teachers/promo_images/{filename}"
+    try:
+        file_content = await storage.download(storage_key)
+    except StorageNotFoundError:
+        raise HTTPException(status_code=404, detail="Görsel bulunamadı")
+        
+    file_ext = Path(filename).suffix.lower()
+    content_type = f"image/{file_ext[1:] if file_ext != '.jpg' else 'jpeg'}"
+    
+    return StreamingResponse(
+        iter([file_content]),
+        media_type=content_type,
+    )
+
+
+@router.get("/teachers/promo-videos/{filename}")
+async def get_teacher_promo_video(
+    filename: str,
+    request: Request,
+    storage: StorageBackend = Depends(get_storage),
+):
+    """Tanıtım videosunu range stream ile döndür (Public)"""
+    storage_key = f"teachers/promo_videos/{filename}"
+    try:
+        # Check if file exists
+        if not await storage.exists(storage_key):
+            raise StorageNotFoundError()
+    except StorageNotFoundError:
+        raise HTTPException(status_code=404, detail="Video bulunamadı")
+        
+    try:
+        file_content = await storage.download(storage_key)
+    except StorageNotFoundError:
+        raise HTTPException(status_code=404, detail="Video bulunamadı")
+        
+    range_header = request.headers.get("Range")
+    
+    if range_header:
+        # Range request support
+        range_match = range_header.replace("bytes=", "").split("-")
+        start = int(range_match[0]) if range_match[0] else 0
+        end = int(range_match[1]) if range_match[1] else len(file_content) - 1
+        
+        if start < 0 or end >= len(file_content) or start > end:
+            raise HTTPException(status_code=416, detail="Range Not Satisfiable")
+        
+        chunk = file_content[start:end + 1]
+        content_length = len(file_content)
+        
+        content_type = "video/mp4"
+        if filename.endswith(".webm"):
+            content_type = "video/webm"
+        elif filename.endswith(".ogg"):
+            content_type = "video/ogg"
+        
+        return StreamingResponse(
+            iter([chunk]),
+            status_code=206,
+            media_type=content_type,
+            headers={
+                "Accept-Ranges": "bytes",
+                "Content-Range": f"bytes {start}-{end}/{content_length}",
+                "Content-Length": str(len(chunk)),
+            }
+        )
+    else:
+        # Normal streaming
+        def generate():
+            chunk_size = 8192
+            for i in range(0, len(file_content), chunk_size):
+                yield file_content[i:i + chunk_size]
+        
+        content_type = "video/mp4"
+        if filename.endswith(".webm"):
+            content_type = "video/webm"
+        elif filename.endswith(".ogg"):
+            content_type = "video/ogg"
+            
+        return StreamingResponse(generate(), media_type=content_type)

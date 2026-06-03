@@ -50,7 +50,7 @@ interface CourseStudent {
   email: string;
 }
 
-export default function TeacherHomeworksPage() {
+export default function AdminHomeworksPage() {
   const queryClient = useQueryClient();
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -60,7 +60,7 @@ export default function TeacherHomeworksPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [filePath, setFilePath] = useState<string | null>(null);
-  
+
   // New modal extra fields
   const [newAssignStudentId, setNewAssignStudentId] = useState<string>("");
   const [lessonTopic, setLessonTopic] = useState("");
@@ -81,13 +81,11 @@ export default function TeacherHomeworksPage() {
   const [gradeValue, setGradeValue] = useState<number>(100);
   const [feedbackValue, setFeedbackValue] = useState("");
 
-  // Fetch teacher's courses
-  const { data: coursesData } = useQuery({
-    queryKey: ["teacher-courses"],
-    queryFn: () => coursesApi.getMyCourses(),
+  // Fetch all courses for Admin
+  const { data: courses = [], isLoading: loadingCourses } = useQuery<Course[]>({
+    queryKey: ["admin-courses"],
+    queryFn: () => coursesApi.listAllAdmin(0, 1000),
   });
-
-  const courses: Course[] = coursesData?.courses || [];
 
   // Fetch enrolled students for target course
   const { data: students = [] } = useQuery<CourseStudent[]>({
@@ -259,27 +257,31 @@ export default function TeacherHomeworksPage() {
       {/* Header section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Ödev Yönetimi & Havuzu</h2>
+          <h2 className="text-2xl font-bold text-gray-900 font-sans">Ödev Yönetimi & Havuzu (Yönetici)</h2>
           <p className="text-gray-500 text-sm mt-1">
-            Ödev havuzunda ödevler hazırlayın, istediğiniz zaman öğrencilere gönderin (tanımlayın) ve teslimleri inceleyerek notlandırın.
+            Sistemdeki tüm kursların ödevlerini havuzda görebilir, öğrencilere ödev tanımlayabilir ve teslimleri değerlendirebilirsiniz.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <select
-            value={selectedCourseId}
-            onChange={(e) => setSelectedCourseId(e.target.value)}
-            className="px-4 py-2.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-xl font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all cursor-pointer"
-          >
-            {courses.length === 0 ? (
-              <option value="">Kurs Bulunmamaktadır</option>
-            ) : (
-              courses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
-                </option>
-              ))
-            )}
-          </select>
+          {loadingCourses ? (
+            <div className="w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            <select
+              value={selectedCourseId}
+              onChange={(e) => setSelectedCourseId(e.target.value)}
+              className="px-4 py-2.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-xl font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all cursor-pointer"
+            >
+              {courses.length === 0 ? (
+                <option value="">Kurs Bulunmamaktadır</option>
+              ) : (
+                courses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title}
+                  </option>
+                ))
+              )}
+            </select>
+          )}
 
           <button
             onClick={() => setShowAddForm(true)}
@@ -414,7 +416,7 @@ export default function TeacherHomeworksPage() {
         {/* Left 1/3 Homework list */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Ödev Havuzu & Listesi</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4 font-sans">Ödev Havuzu & Listesi</h3>
 
             {loadingHomeworks ? (
               <div className="flex justify-center py-8">

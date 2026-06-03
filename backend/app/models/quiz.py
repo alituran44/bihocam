@@ -25,7 +25,8 @@ class Quiz(Base):
     __tablename__ = "quizzes"
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid4()))
-    lesson_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("lessons.id"), nullable=False, unique=True)
+    lesson_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), ForeignKey("lessons.id"), nullable=True, unique=True)
+    teacher_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -37,6 +38,10 @@ class Quiz(Base):
     max_attempts: Mapped[int | None] = mapped_column(Integer, nullable=True)  # Maksimum deneme sayısı
     shuffle_questions: Mapped[bool] = mapped_column(Boolean, default=False)
     show_correct_answers: Mapped[bool] = mapped_column(Boolean, default=True)
+    number_of_options: Mapped[int | None] = mapped_column(Integer, default=4, nullable=True)
+    start_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    end_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    is_approved: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
@@ -44,8 +49,32 @@ class Quiz(Base):
 
     # Relationships
     lesson = relationship("Lesson", back_populates="quiz")
+    teacher = relationship("User", foreign_keys=[teacher_id])
     questions = relationship("QuizQuestion", back_populates="quiz", cascade="all, delete-orphan", order_by="QuizQuestion.order")
     attempts = relationship("QuizAttempt", back_populates="quiz", cascade="all, delete-orphan")
+    assignments = relationship("QuizAssignment", back_populates="quiz", cascade="all, delete-orphan")
+
+
+class QuizAssignment(Base):
+    __tablename__ = "quiz_assignments"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid4()))
+    quiz_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False, index=True)
+    teacher_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # Target can be a course or a student
+    course_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), ForeignKey("courses.id", ondelete="CASCADE"), nullable=True, index=True)
+    student_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    
+    due_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+
+    # Relationships
+    quiz = relationship("Quiz", back_populates="assignments")
+    teacher = relationship("User", foreign_keys=[teacher_id])
+    course = relationship("Course", foreign_keys=[course_id])
+    student = relationship("User", foreign_keys=[student_id])
+    attempts = relationship("QuizAttempt", back_populates="assignment", cascade="all, delete-orphan")
 
 
 class QuizQuestion(Base):
@@ -87,6 +116,7 @@ class QuizAttempt(Base):
     id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid4()))
     quiz_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("quizzes.id"), nullable=False, index=True)
     user_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=False, index=True)
+    assignment_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), ForeignKey("quiz_assignments.id", ondelete="SET NULL"), nullable=True, index=True)
     
     status: Mapped[QuizAttemptStatus] = mapped_column(String(50), default=QuizAttemptStatus.IN_PROGRESS)
     
@@ -109,6 +139,7 @@ class QuizAttempt(Base):
     # Relationships
     quiz = relationship("Quiz", back_populates="attempts")
     user = relationship("User", back_populates="quiz_attempts")
+    assignment = relationship("QuizAssignment", back_populates="attempts")
     answers = relationship("QuizAttemptAnswer", back_populates="attempt", cascade="all, delete-orphan")
 
 

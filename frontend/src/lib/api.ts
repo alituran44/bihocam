@@ -210,6 +210,34 @@ export interface UploadResponse {
 }
 
 // Courses API
+export interface Course {
+  id: string;
+  title: string;
+  slug: string;
+  description?: string | null;
+  short_description?: string | null;
+  thumbnail_path?: string | null;
+  price: number;
+  discount_price?: number | null;
+  is_free: boolean;
+  level?: string | null;
+  language?: string | null;
+  status: string;
+  is_featured: boolean;
+  teacher_id: string;
+  category_id?: string | null;
+  created_at: string;
+  updated_at: string;
+  rating?: number | null;
+  student_count?: number | null;
+  lesson_count?: number | null;
+  teacher?: {
+    id: string;
+    full_name: string;
+    avatar_url?: string;
+  };
+}
+
 export interface CourseStudent {
   id: string;
   email: string;
@@ -456,6 +484,29 @@ export const mediaApi = {
     const { data } = await api.post(`/media/lessons/${lessonId}/upload-document`, formData, config);
     return data;
   },
+
+  uploadGeneralDocument: async (file: File, onProgress?: (progress: number) => void): Promise<any> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    const config: any = {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    };
+    
+    if (onProgress) {
+      config.onUploadProgress = (progressEvent: any) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percentCompleted);
+        }
+      };
+    }
+    
+    const { data } = await api.post("/media/upload-document", formData, config);
+    return data;
+  },
   
   // EPIC-10: Unified Content Upload (EP10-BE-04)
   uploadContent: async (lessonId: string, file: File, onProgress?: (progress: number) => void): Promise<UploadResponse> => {
@@ -561,6 +612,35 @@ export const mediaApi = {
         "Content-Type": "multipart/form-data",
       },
     });
+    return data;
+  },
+  uploadPromoImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post("/media/teachers/me/upload-promo-image", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return data;
+  },
+  uploadPromoVideo: async (file: File, onProgress?: (p: number) => void) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const config: any = {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    };
+    if (onProgress) {
+      config.onUploadProgress = (progressEvent: any) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percentCompleted);
+        }
+      };
+    }
+    const { data } = await api.post("/media/teachers/me/upload-promo-video", formData, config);
     return data;
   },
   getAvatarUrl: (urlOrFilename: string): string => {
@@ -1540,25 +1620,35 @@ export const emailLogsApi = {
 // Quizzes API
 export interface Quiz {
   id: string;
-  lesson_id: string;
+  lesson_id?: string | null;
   title: string;
   description?: string | null;
+  pdf_path?: string | null;
   passing_score: number;
   time_limit_minutes?: number | null;
   max_attempts?: number | null;
   shuffle_questions: boolean;
   show_correct_answers: boolean;
+  number_of_options?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_approved: boolean;
   created_at: string;
   updated_at: string;
   questions?: QuizQuestion[];
+  course_id?: string | null;
 }
 
 export interface QuizListItem {
   id: string;
   title: string;
-  lesson_id: string;
+  lesson_id?: string | null;
   question_count: number;
   attempt_count: number;
+  number_of_options?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_approved: boolean;
   created_at: string;
 }
 
@@ -1580,6 +1670,7 @@ export interface QuizAttempt {
   id: string;
   quiz_id: string;
   user_id: string;
+  assignment_id?: string | null;
   status: "in_progress" | "completed" | "abandoned";
   total_questions: number;
   correct_answers: number;
@@ -1604,8 +1695,29 @@ export interface QuizAttemptAnswer {
   answered_at: string;
 }
 
+export interface QuizAssignmentCreate {
+  quiz_id: string;
+  course_id?: string | null;
+  student_id?: string | null;
+  due_date?: string | null;
+}
+
+export interface QuizAssignment {
+  id: string;
+  quiz_id: string;
+  teacher_id: string;
+  course_id?: string | null;
+  student_id?: string | null;
+  due_date?: string | null;
+  created_at: string;
+  quiz?: Quiz | null;
+  my_attempt?: QuizAttempt | null;
+  student?: { id: string; full_name: string; email: string } | null;
+}
+
 export interface QuizCreate {
-  lesson_id: string;
+  lesson_id?: string | null;
+  course_id?: string | null;
   title: string;
   description?: string | null;
   passing_score?: number;
@@ -1613,6 +1725,9 @@ export interface QuizCreate {
   max_attempts?: number | null;
   shuffle_questions?: boolean;
   show_correct_answers?: boolean;
+  number_of_options?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
 }
 
 export interface QuizUpdate {
@@ -1705,8 +1820,10 @@ export const quizzesApi = {
     });
     return data;
   },
-  startAttempt: async (quizId: string): Promise<QuizAttempt> => {
-    const { data } = await api.post(`/quizzes/${quizId}/attempt`);
+  startAttempt: async (quizId: string, assignmentId?: string): Promise<QuizAttempt> => {
+    const { data } = await api.post(`/quizzes/${quizId}/attempt`, null, {
+      params: assignmentId ? { assignment_id: assignmentId } : undefined,
+    });
     return data;
   },
   saveAttemptProgress: async (
@@ -1739,6 +1856,30 @@ export const quizzesApi = {
     const { data } = await api.get(`/quizzes/${quizId}/attempts/my`);
     return data;
   },
+  assign: async (payload: QuizAssignmentCreate): Promise<QuizAssignment> => {
+    const { data } = await api.post("/quizzes/assignments", payload);
+    return data;
+  },
+  listMyAssignments: async (): Promise<QuizAssignment[]> => {
+    const { data } = await api.get("/quizzes/assignments/my");
+    return data;
+  },
+  listTeacherAssignments: async (params?: { quiz_id?: string }): Promise<QuizAssignment[]> => {
+    const { data } = await api.get("/quizzes/assignments/teacher/my", { params });
+    return data;
+  },
+  getAssignment: async (assignmentId: string): Promise<QuizAssignment> => {
+    const { data } = await api.get(`/quizzes/assignments/${assignmentId}`);
+    return data;
+  },
+  approve: async (quizId: string): Promise<Quiz> => {
+    const { data } = await api.post(`/quizzes/${quizId}/approve`);
+    return data;
+  },
+  reject: async (quizId: string): Promise<Quiz> => {
+    const { data } = await api.post(`/quizzes/${quizId}/reject`);
+    return data;
+  },
 };
 
 // EPIC-5: Teacher Profile & Financial APIs
@@ -1756,10 +1897,23 @@ export interface TeacherProfile {
     website?: string | null;
   } | null;
   avatar_url?: string | null;
+  promo_images?: string[] | null;
+  promo_video?: string | null;
   is_active: boolean;
   is_verified: boolean;
   created_at: string;
   updated_at: string;
+  tax_info?: {
+    iban?: string;
+    company_type?: string;
+    tc_kimlik?: string;
+    address?: string;
+    city?: string;
+    district?: string;
+    exemption_status?: string;
+    document_path?: string;
+    document_barcode?: string;
+  } | null;
 }
 
 export interface TeacherProfileUpdate {
@@ -1774,6 +1928,19 @@ export interface TeacherProfileUpdate {
     website?: string;
   };
   avatar_url?: string;
+  promo_images?: string[];
+  promo_video?: string;
+  tax_info?: {
+    iban?: string;
+    company_type?: string;
+    tc_kimlik?: string;
+    address?: string;
+    city?: string;
+    district?: string;
+    exemption_status?: string;
+    document_path?: string;
+    document_barcode?: string;
+  } | null;
 }
 
 export interface BankAccount {
@@ -2919,7 +3086,7 @@ export interface AdCampaignCreate {
   name: string;
   campaign_type: CampaignType;
   placement_id: string;
-  course_id?: string;  // Optional: banner_ad için gerekli değil
+  course_id?: string;
   banner_image_url?: string;
   banner_link_url?: string;
   banner_alt_text?: string;
@@ -2927,6 +3094,7 @@ export interface AdCampaignCreate {
   end_date: string;
   daily_budget?: number;
   total_budget: number;
+  payment_method?: string;
   pricing_model?: PricingModel;
   target_categories?: string[];
   target_tags?: string[];
@@ -3259,13 +3427,6 @@ export const adDisplayApi = {
       slug: string;
       description?: string;
       thumbnail_path?: string;
-      price: number;
-      discount_price?: number;
-      teacher?: {
-        id: string;
-        full_name: string;
-      };
-      lesson_count?: number;
       price: number;
       discount_price?: number;
       teacher?: {
@@ -4110,6 +4271,10 @@ export const homeworksApi = {
     const { data } = await api.post(`/homeworks/submissions/${submissionId}/grade`, gradeData);
     return data;
   },
+  assign: async (homeworkId: string, assignData: { student_id?: string | null; due_date: string }): Promise<any> => {
+    const { data } = await api.post(`/homeworks/${homeworkId}/assign`, assignData);
+    return data;
+  },
 };
 
 export const examsApi = {
@@ -4212,6 +4377,64 @@ export const educationProgramsApi = {
   },
 };
 
+export interface SocialPostResponse {
+  id: string;
+  user_id: string;
+  content?: string;
+  media_url?: string;
+  media_type: "video" | "image" | "text";
+  created_at: string;
+  likes_count: number;
+  saves_count: number;
+  is_liked_by_me: boolean;
+  is_saved_by_me: boolean;
+  user?: any; // To hold user response
+}
 
-
+export const socialApi = {
+  getReels: async (skip: number = 0, limit: number = 10): Promise<SocialPostResponse[]> => {
+    const { data } = await api.get("/social/posts/reels", { params: { skip, limit } });
+    return data;
+  },
+  createPost: async (payload: { content?: string; media_url?: string; media_type: string }): Promise<SocialPostResponse> => {
+    const { data } = await api.post("/social/posts", payload);
+    return data;
+  },
+  likePost: async (postId: string) => {
+    const { data } = await api.post(`/social/posts/${postId}/like`);
+    return data;
+  },
+  unlikePost: async (postId: string) => {
+    const { data } = await api.delete(`/social/posts/${postId}/like`);
+    return data;
+  },
+  savePost: async (postId: string) => {
+    const { data } = await api.post(`/social/posts/${postId}/save`);
+    return data;
+  },
+  unsavePost: async (postId: string) => {
+    const { data } = await api.delete(`/social/posts/${postId}/save`);
+    return data;
+  },
+  getSavedPosts: async (): Promise<any[]> => {
+    const { data } = await api.get("/social/posts/saved");
+    return data;
+  },
+  followUser: async (userId: string) => {
+    const { data } = await api.post(`/social/follow/${userId}`);
+    return data;
+  },
+  unfollowUser: async (userId: string) => {
+    const { data } = await api.delete(`/social/follow/${userId}`);
+    return data;
+  },
+  getFollowers: async () => {
+    const { data } = await api.get("/social/followers");
+    return data;
+  },
+  getFollowing: async () => {
+    const { data } = await api.get("/social/following");
+    return data;
+  },
+};
 

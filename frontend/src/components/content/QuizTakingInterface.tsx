@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 interface QuizTakingInterfaceProps {
   lessonId: string;
   quizId: string;
+  assignmentId?: string;
   onComplete?: (attempt: QuizAttempt) => void;
   className?: string;
 }
@@ -21,6 +22,7 @@ interface QuizTakingInterfaceProps {
 export function QuizTakingInterface({
   lessonId,
   quizId,
+  assignmentId,
   onComplete,
   className,
 }: QuizTakingInterfaceProps) {
@@ -65,7 +67,7 @@ export function QuizTakingInterface({
 
   // Start attempt mutation
   const startAttemptMutation = useMutation({
-    mutationFn: () => quizzesApi.startAttempt(quizId),
+    mutationFn: () => quizzesApi.startAttempt(quizId, assignmentId),
     onSuccess: (attempt) => {
       setActiveAttempt(attempt);
       queryClient.invalidateQueries({ queryKey: ["quiz-attempts", quizId] });

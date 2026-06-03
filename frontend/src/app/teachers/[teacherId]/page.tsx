@@ -29,6 +29,8 @@ type TeacherInfo = {
   live_class_link?: string | null;
   created_at: string;
   phone?: string | null;
+  promo_images?: string[] | null;
+  promo_video?: string | null;
 };
 
 type Course = {
@@ -495,6 +497,61 @@ export default function TeacherProfilePage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Promo Images & Videos */}
+                  {(data.teacher.promo_video || (data.teacher.promo_images && data.teacher.promo_images.length > 0)) && (
+                    <div className="bg-white rounded-[2rem] border border-slate-100 p-6 sm:p-8 shadow-sm space-y-6 mt-6">
+                      <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase border-b border-slate-50 pb-3">
+                        Tanıtım Galeri & Tanıtım Videosu
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                        {/* Video component */}
+                        {data.teacher.promo_video && (
+                          <div className={`space-y-3 ${data.teacher.promo_images?.length ? "md:col-span-6" : "md:col-span-12"}`}>
+                            <h4 className="text-sm font-bold text-slate-700">Tanıtım Videosu</h4>
+                            <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-slate-900 border border-slate-100 shadow-sm flex items-center justify-center">
+                              {data.teacher.promo_video.includes("youtube.com") || data.teacher.promo_video.includes("youtu.be") ? (
+                                <iframe
+                                  src={`https://www.youtube.com/embed/${
+                                    data.teacher.promo_video.includes("youtu.be/")
+                                      ? data.teacher.promo_video.split("youtu.be/")[1]?.split("?")[0]
+                                      : data.teacher.promo_video.split("v=")[1]?.split("&")[0]
+                                  }`}
+                                  className="w-full h-full"
+                                  allowFullScreen
+                                />
+                              ) : (
+                                <video
+                                  src={`http://localhost:8000/media/${data.teacher.promo_video}`}
+                                  controls
+                                  className="w-full h-full object-cover"
+                                />
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Images component */}
+                        {data.teacher.promo_images && data.teacher.promo_images.length > 0 && (
+                          <div className={`space-y-3 ${data.teacher.promo_video ? "md:col-span-6" : "md:col-span-12"}`}>
+                            <h4 className="text-sm font-bold text-slate-700">Tanıtım Resimleri ({data.teacher.promo_images.length})</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                              {data.teacher.promo_images.map((imgUrl: string, idx: number) => (
+                                <div key={idx} className="relative aspect-video rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 shadow-sm hover:scale-[1.02] transition-transform duration-200 cursor-pointer">
+                                  <img
+                                    src={`http://localhost:8000/media/${imgUrl}`}
+                                    alt={`Tanıtım Resmi ${idx + 1}`}
+                                    className="w-full h-full object-cover"
+                                    onClick={() => window.open(`http://localhost:8000/media/${imgUrl}`, '_blank')}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                 </div>
               )}

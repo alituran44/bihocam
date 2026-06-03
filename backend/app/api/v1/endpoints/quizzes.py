@@ -31,6 +31,8 @@ from app.schemas.quiz import (
     QuizAttemptResponse,
     QuizAttemptAnswerCreate,
     QuizAttemptProgressUpdate,
+    QuizAssignmentCreate,
+    QuizAssignmentResponse,
 )
 
 router = APIRouter(prefix="", tags=["quizzes"])
@@ -39,6 +41,12 @@ router = APIRouter(prefix="", tags=["quizzes"])
 def require_teacher_or_admin(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role not in [UserRole.ADMIN, UserRole.TEACHER]:
         raise HTTPException(status_code=403, detail="Öğretmen veya admin yetkisi gerekli")
+    return current_user
+
+
+def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Yalnızca admin bu işlemi gerçekleştirebilir.")
     return current_user
 
 
@@ -53,7 +61,7 @@ async def list_quizzes(
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_current_user_optional),
 ):
-    """Quiz listesi (kurs veya ders bazlı)"""
+    """Quiz listesi (kurs veya ders bazlı veya bağımsız)"""
     from app.models.course import Course
     from app.models.order import Enrollment
     
@@ -71,12 +79,29 @@ async def list_quizzes(
             # Admin her şeyi görebilir
             pass
         elif current_user.role == UserRole.TEACHER:
-            # Öğretmen sadece kendi kurslarındaki quizleri görebilir
-            query = query.join(Lesson, Quiz.lesson_id == Lesson.id).join(Course, Lesson.course_id == Course.id).where(Course.teacher_id == current_user.id)
+            # Öğretmen kendi kurslarındaki quizleri veya kendi oluşturduğu bağımsız quizleri görebilir
+            query = query.outerjoin(Lesson, Quiz.lesson_id == Lesson.id).outerjoin(Course, Lesson.course_id == Course.id).where(
+                or_(
+                    Course.teacher_id == current_user.id,
+                    Quiz.teacher_id == current_user.id
+                )
+            )
         else:
-            # Öğrenci sadece kayıtlı olduğu kurslardaki quizleri görebilir
+            # Öğrenci sadece kayıtlı olduğu kurslardaki quizleri veya kendisine atanan quizleri görebilir
             enrollment_subquery = select(Enrollment.course_id).where(Enrollment.user_id == current_user.id)
-            query = query.join(Lesson, Quiz.lesson_id == Lesson.id).where(Lesson.course_id.in_(enrollment_subquery))
+            from app.models.quiz import QuizAssignment
+            assignment_subquery = select(QuizAssignment.quiz_id).where(
+                or_(
+                    QuizAssignment.student_id == current_user.id,
+                    QuizAssignment.course_id.in_(enrollment_subquery)
+                )
+            )
+            query = query.outerjoin(Lesson, Quiz.lesson_id == Lesson.id).where(
+                or_(
+                    Lesson.course_id.in_(enrollment_subquery),
+                    Quiz.id.in_(assignment_subquery)
+                )
+            )
     
     # Pagination
     total_result = await db.execute(select(sql_func.count()).select_from(query.subquery()))
@@ -123,31 +148,41 @@ async def create_quiz(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_teacher_or_admin),
 ):
-    """Yeni quiz oluştur"""
-    # Lesson var mı ve eğitmenin mi kontrol et
-    from app.models.course import Course
-    lesson_result = await db.execute(
-        select(Lesson)
-        .join(Course, Lesson.course_id == Course.id)
-        .where(Lesson.id == quiz_in.lesson_id)
-    )
-    lesson = lesson_result.scalar_one_or_none()
-    if not lesson:
-        raise HTTPException(status_code=404, detail="Ders bulunamadı")
-    
-    # Eğitmen kontrolü
-    from app.models.course import Course
-    course_result = await db.execute(select(Course).where(Course.id == lesson.course_id))
-    course = course_result.scalar_one_or_none()
-    if course and course.teacher_id != current_user.id and current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Bu derse quiz ekleme yetkiniz yok")
-    
-    # Zaten quiz var mı kontrol et
-    existing = await db.execute(select(Quiz).where(Quiz.lesson_id == quiz_in.lesson_id))
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Bu ders için zaten bir quiz var")
-    
-    quiz = Quiz(**quiz_in.model_dump())
+    """Yeni quiz oluştur (bağımsız veya bir derse bağlı)"""
+    if quiz_in.lesson_id:
+        # Lesson var mı ve eğitmenin mi kontrol et
+        from app.models.course import Course
+        lesson_result = await db.execute(
+            select(Lesson)
+            .join(Course, Lesson.course_id == Course.id)
+            .where(Lesson.id == quiz_in.lesson_id)
+        )
+        lesson = lesson_result.scalar_one_or_none()
+        if not lesson:
+            raise HTTPException(status_code=404, detail="Ders bulunamadı")
+        
+        # Eğitmen kontrolü
+        course_result = await db.execute(select(Course).where(Course.id == lesson.course_id))
+        course = course_result.scalar_one_or_none()
+        if course and course.teacher_id != current_user.id and current_user.role != UserRole.ADMIN:
+            raise HTTPException(status_code=403, detail="Bu derse quiz ekleme yetkiniz yok")
+        
+        # Zaten quiz var mı kontrol et
+        existing = await db.execute(select(Quiz).where(Quiz.lesson_id == quiz_in.lesson_id))
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Bu ders için zaten bir quiz var")
+        
+        quiz = Quiz(**quiz_in.model_dump(), is_approved=True)
+    else:
+        # Bağımsız Quiz (Deneme Sınavı vb.)
+        quiz_data = quiz_in.model_dump()
+        quiz_data["lesson_id"] = None
+        quiz = Quiz(
+            **quiz_data,
+            teacher_id=current_user.id,
+            is_approved=(current_user.role == UserRole.ADMIN)
+        )
+        
     db.add(quiz)
     await db.commit()
     await db.refresh(quiz)
@@ -160,7 +195,8 @@ async def create_quiz(
     )
     quiz_with_questions = result.scalar_one()
     # Sort questions by order
-    quiz_with_questions.questions = sorted(quiz_with_questions.questions, key=lambda q: q.order)
+    if quiz_with_questions.questions:
+        quiz_with_questions.questions = sorted(quiz_with_questions.questions, key=lambda q: q.order)
     return quiz_with_questions
 
 
@@ -189,27 +225,60 @@ async def get_quiz(
     
     # Eğer authenticated kullanıcı varsa, enrollment veya ownership kontrolü yap
     if current_user:
-        lesson_result = await db.execute(select(Lesson).where(Lesson.id == quiz.lesson_id))
-        lesson = lesson_result.scalar_one_or_none()
-        if lesson:
-            course_result = await db.execute(select(Course).where(Course.id == lesson.course_id))
-            course = course_result.scalar_one_or_none()
-            if course:
-                # Owner veya admin ise erişim ver
-                if course.teacher_id == current_user.id or current_user.role == UserRole.ADMIN:
-                    return quiz
-                # Enrolled ise erişim ver
-                enrollment_result = await db.execute(
-                    select(Enrollment).where(
-                        Enrollment.user_id == current_user.id,
-                        Enrollment.course_id == course.id
+        # Admin her zaman erişebilir
+        if current_user.role == UserRole.ADMIN:
+            return quiz
+            
+        # Eğitmen/Sahip kontrolü
+        if current_user.role == UserRole.TEACHER and quiz.teacher_id == current_user.id:
+            return quiz
+
+        # Sınav onaylı değilse ve yetkili değilse engelle
+        if not quiz.is_approved:
+            raise HTTPException(status_code=403, detail="Bu test henüz admin tarafından onaylanmamıştır.")
+
+        # Ders bazlı quiz kontrolü
+        if quiz.lesson_id:
+            lesson_result = await db.execute(select(Lesson).where(Lesson.id == quiz.lesson_id))
+            lesson = lesson_result.scalar_one_or_none()
+            if lesson:
+                course_result = await db.execute(select(Course).where(Course.id == lesson.course_id))
+                course = course_result.scalar_one_or_none()
+                if course:
+                    # Kurs eğitmeni ise erişim ver
+                    if course.teacher_id == current_user.id:
+                        return quiz
+                    # Enrolled ise erişim ver
+                    enrollment_result = await db.execute(
+                        select(Enrollment).where(
+                            Enrollment.user_id == current_user.id,
+                            Enrollment.course_id == course.id
+                        )
+                    )
+                    if enrollment_result.scalar_one_or_none():
+                        return quiz
+                    # Enrolled değilse erişim yok
+                    raise HTTPException(status_code=403, detail="Bu quiz'e erişim yetkiniz yok. Önce kursa kaydolmalısınız.")
+        
+        # Bağımsız / Atanmış Quiz Kontrolü
+        else:
+            # Öğrenci ataması var mı kontrol et
+            from app.models.quiz import QuizAssignment
+            enrollment_subquery = select(Enrollment.course_id).where(Enrollment.user_id == current_user.id)
+            assignment_result = await db.execute(
+                select(QuizAssignment).where(
+                    QuizAssignment.quiz_id == quiz.id,
+                    or_(
+                        QuizAssignment.student_id == current_user.id,
+                        QuizAssignment.course_id.in_(enrollment_subquery)
                     )
                 )
-                if enrollment_result.scalar_one_or_none():
-                    return quiz
-                # Enrolled değilse erişim yok
-                raise HTTPException(status_code=403, detail="Bu quiz'e erişim yetkiniz yok. Önce kursa kaydolmalısınız.")
-    
+            )
+            if assignment_result.scalar_one_or_none():
+                return quiz
+                
+            raise HTTPException(status_code=403, detail="Bu test için aktif bir atamanız bulunmuyor.")
+            
     # Anonymous kullanıcılar quiz detayını göremez
     raise HTTPException(status_code=401, detail="Quiz detayını görmek için giriş yapmalısınız")
 
@@ -257,6 +326,7 @@ async def add_question(
 @router.post("/{quiz_id}/attempt", response_model=QuizAttemptResponse)
 async def start_attempt(
     quiz_id: str,
+    assignment_id: Optional[str] = Query(None, description="Linked assignment ID"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -273,13 +343,32 @@ async def start_attempt(
     # Quiz'de soru var mı kontrol et
     if len(quiz.questions) == 0:
         raise HTTPException(status_code=400, detail="Quiz'de henüz soru yok. Önce soru ekleyin.")
+        
+    # Sınav onaylı mı ve aktif tarih aralığında mı kontrolü
+    if current_user.role != UserRole.ADMIN and quiz.teacher_id != current_user.id:
+        if not quiz.is_approved:
+            raise HTTPException(status_code=403, detail="Bu test henüz admin tarafından onaylanmamıştır.")
+            
+        now = datetime.now()
+        if quiz.start_date and now < quiz.start_date:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Bu sınav henüz başlamadı. Başlangıç zamanı: {quiz.start_date.strftime('%d.%m.%Y %H:%M')}"
+            )
+        if quiz.end_date and now > quiz.end_date:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Bu sınavın süresi sona erdi. Bitiş zamanı: {quiz.end_date.strftime('%d.%m.%Y %H:%M')}"
+            )
     
-    # Kullanıcının kursa kayıtlı olup olmadığını kontrol et
+    # Kullanıcının kursa kayıtlı veya atanmış olup olmadığını kontrol et
     from app.models.course import Course
     from app.models.order import Enrollment
-    lesson_result = await db.execute(select(Lesson).where(Lesson.id == quiz.lesson_id))
+    from app.models.quiz import QuizAssignment
+    
+    lesson_result = await db.execute(select(Lesson).where(Lesson.id == quiz.lesson_id) if quiz.lesson_id else select(Lesson).where(Lesson.id == None))
     lesson = lesson_result.scalar_one_or_none()
-    enrollment = None
+    
     if lesson:
         enrollment_result = await db.execute(
             select(Enrollment).where(
@@ -290,6 +379,38 @@ async def start_attempt(
         enrollment = enrollment_result.scalar_one_or_none()
         if not enrollment:
             raise HTTPException(status_code=403, detail="Bu quiz'e erişim yetkiniz yok. Önce kursa kaydolmalısınız.")
+    else:
+        # Bağımsız/standalone quiz kontrolü: Aktif bir atama var mı?
+        enrollment_subquery = select(Enrollment.course_id).where(Enrollment.user_id == current_user.id)
+        if assignment_id:
+            assignment_result = await db.execute(
+                select(QuizAssignment).where(
+                    QuizAssignment.id == assignment_id,
+                    QuizAssignment.quiz_id == quiz_id,
+                    or_(
+                        QuizAssignment.student_id == current_user.id,
+                        QuizAssignment.course_id.in_(enrollment_subquery)
+                    )
+                )
+            )
+            assignment = assignment_result.scalar_one_or_none()
+            if not assignment:
+                raise HTTPException(status_code=403, detail="Geçersiz atama ID'si veya atamaya erişiminiz yok.")
+        else:
+            # Otomatik olarak en güncel atamayı bul
+            assignment_result = await db.execute(
+                select(QuizAssignment).where(
+                    QuizAssignment.quiz_id == quiz_id,
+                    or_(
+                        QuizAssignment.student_id == current_user.id,
+                        QuizAssignment.course_id.in_(enrollment_subquery)
+                    )
+                ).order_by(QuizAssignment.created_at.desc())
+            )
+            assignment = assignment_result.scalar_one_or_none()
+            if not assignment:
+                raise HTTPException(status_code=403, detail="Bu test için aktif bir atamanız bulunmuyor.")
+            assignment_id = assignment.id
     
     # Maksimum deneme kontrolü
     if quiz.max_attempts:
@@ -314,6 +435,7 @@ async def start_attempt(
     attempt = QuizAttempt(
         quiz_id=quiz_id,
         user_id=current_user.id,
+        assignment_id=assignment_id,
         total_questions=len(questions),
         total_points=sum(q.points for q in questions),
         started_at=datetime.now(timezone.utc),
@@ -1049,7 +1171,7 @@ async def list_my_attempts(
     # Enrollment kontrolü
     from app.models.course import Course
     from app.models.order import Enrollment
-    lesson_result = await db.execute(select(Lesson).where(Lesson.id == quiz.lesson_id))
+    lesson_result = await db.execute(select(Lesson).where(Lesson.id == quiz.lesson_id) if quiz.lesson_id else select(Lesson).where(Lesson.id == None))
     lesson = lesson_result.scalar_one_or_none()
     if lesson:
         enrollment_result = await db.execute(
@@ -1059,6 +1181,21 @@ async def list_my_attempts(
             )
         )
         if not enrollment_result.scalar_one_or_none():
+            raise HTTPException(status_code=403, detail="Bu quiz'e erişim yetkiniz yok")
+    else:
+        # Bağımsız/standalone test: aktif atama var mı kontrol et
+        from app.models.quiz import QuizAssignment
+        enrollment_subquery = select(Enrollment.course_id).where(Enrollment.user_id == current_user.id)
+        assignment_result = await db.execute(
+            select(QuizAssignment).where(
+                QuizAssignment.quiz_id == quiz_id,
+                or_(
+                    QuizAssignment.student_id == current_user.id,
+                    QuizAssignment.course_id.in_(enrollment_subquery)
+                )
+            )
+        )
+        if not assignment_result.scalar_one_or_none():
             raise HTTPException(status_code=403, detail="Bu quiz'e erişim yetkiniz yok")
     
     # Attempt'ları getir
@@ -1074,3 +1211,230 @@ async def list_my_attempts(
     attempts = attempts_result.scalars().all()
     
     return list(attempts)
+
+
+# ============================================================================
+# Quiz Assignments Endpoints
+# ============================================================================
+
+from app.models.quiz import QuizAssignment
+
+@router.post("/assignments", response_model=QuizAssignmentResponse)
+async def create_assignment(
+    assignment_in: QuizAssignmentCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_teacher_or_admin),
+):
+    """Eğitmen: Bir testi kursa veya öğrenciye atar"""
+    # Quiz kontrolü
+    quiz_result = await db.execute(select(Quiz).where(Quiz.id == assignment_in.quiz_id))
+    quiz = quiz_result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Test bulunamadı")
+        
+    # Yetki kontrolü
+    if current_user.role == UserRole.TEACHER:
+        if quiz.teacher_id != current_user.id:
+            # Lesson check if it's a lesson-bound quiz
+            if quiz.lesson_id:
+                from app.models.course import Course
+                lesson_result = await db.execute(
+                    select(Lesson)
+                    .join(Course, Lesson.course_id == Course.id)
+                    .where(Lesson.id == quiz.lesson_id)
+                )
+                lesson = lesson_result.scalar_one_or_none()
+                if not lesson:
+                    raise HTTPException(status_code=403, detail="Bu test üzerinde yetkiniz yok.")
+                course_result = await db.execute(select(Course).where(Course.id == lesson.course_id))
+                course = course_result.scalar_one_or_none()
+                if not course or course.teacher_id != current_user.id:
+                    raise HTTPException(status_code=403, detail="Bu test üzerinde yetkiniz yok.")
+            else:
+                raise HTTPException(status_code=403, detail="Bu test üzerinde yetkiniz yok.")
+
+    # Target control (Either course OR student must be provided)
+    if not assignment_in.course_id and not assignment_in.student_id:
+        raise HTTPException(status_code=400, detail="Lütfen bir hedef seçin (Kurs veya Öğrenci)")
+        
+    if assignment_in.course_id and assignment_in.student_id:
+        raise HTTPException(status_code=400, detail="Bir atama için hem kurs hem öğrenci seçilemez")
+
+    # If assigning to course, check ownership of course
+    if assignment_in.course_id:
+        from app.models.course import Course
+        course_result = await db.execute(select(Course).where(Course.id == assignment_in.course_id))
+        course = course_result.scalar_one_or_none()
+        if not course:
+            raise HTTPException(status_code=404, detail="Kurs bulunamadı")
+        if current_user.role == UserRole.TEACHER and course.teacher_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Bu kursa test atama yetkiniz yok")
+
+    # If assigning to student, verify student exists
+    if assignment_in.student_id:
+        student_result = await db.execute(select(User).where(User.id == assignment_in.student_id))
+        student = student_result.scalar_one_or_none()
+        if not student:
+            raise HTTPException(status_code=404, detail="Öğrenci bulunamadı")
+
+    new_assignment = QuizAssignment(
+        quiz_id=assignment_in.quiz_id,
+        teacher_id=current_user.id,
+        course_id=assignment_in.course_id,
+        student_id=assignment_in.student_id,
+        due_date=assignment_in.due_date,
+    )
+    db.add(new_assignment)
+    await db.commit()
+    await db.refresh(new_assignment)
+    
+    # Reload with quiz and student details for response
+    result = await db.execute(
+        select(QuizAssignment)
+        .options(selectinload(QuizAssignment.quiz), selectinload(QuizAssignment.student))
+        .where(QuizAssignment.id == new_assignment.id)
+    )
+    return result.scalar_one()
+
+
+@router.get("/assignments/my", response_model=list[QuizAssignmentResponse])
+async def list_my_assignments(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Öğrenci: Kendisine atanmış tüm testleri listeler"""
+    from app.models.order import Enrollment
+    enrollment_subquery = select(Enrollment.course_id).where(Enrollment.user_id == current_user.id)
+    
+    stmt = (
+        select(QuizAssignment)
+        .join(Quiz, QuizAssignment.quiz_id == Quiz.id)
+        .options(selectinload(QuizAssignment.quiz), selectinload(QuizAssignment.student))
+        .where(
+            or_(
+                QuizAssignment.student_id == current_user.id,
+                QuizAssignment.course_id.in_(enrollment_subquery)
+            ),
+            Quiz.is_approved == True
+        )
+        .order_by(QuizAssignment.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    assignments = result.scalars().all()
+    
+    # Her atama için en güncel kullanıcı denemesini bul ve ekle
+    response_data = []
+    for a in assignments:
+        attempt_stmt = select(QuizAttempt).where(
+            QuizAttempt.quiz_id == a.quiz_id,
+            QuizAttempt.user_id == current_user.id,
+            or_(
+                QuizAttempt.assignment_id == a.id,
+                QuizAttempt.assignment_id == None
+            )
+        ).order_by(QuizAttempt.completed_at.desc().nulls_last(), QuizAttempt.created_at.desc()).limit(1)
+        attempt_result = await db.execute(attempt_stmt)
+        attempt = attempt_result.scalar_one_or_none()
+        
+        # Pydantic şemasına dönüştür
+        from app.schemas.quiz import QuizAssignmentResponse as SchemaResponse
+        a_data = SchemaResponse.model_validate(a)
+        a_data.my_attempt = attempt
+        response_data.append(a_data)
+        
+    return response_data
+
+
+@router.get("/assignments/teacher/my", response_model=list[QuizAssignmentResponse])
+async def list_teacher_assignments(
+    quiz_id: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_teacher_or_admin),
+):
+    """Eğitmen: Gönderdiği atamaları listeler"""
+    stmt = select(QuizAssignment).options(selectinload(QuizAssignment.quiz), selectinload(QuizAssignment.student)).where(QuizAssignment.teacher_id == current_user.id)
+    if quiz_id:
+        stmt = stmt.where(QuizAssignment.quiz_id == quiz_id)
+        
+    stmt = stmt.order_by(QuizAssignment.created_at.desc())
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+
+@router.get("/assignments/{assignment_id}", response_model=QuizAssignmentResponse)
+async def get_assignment(
+    assignment_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Atama detayını getir"""
+    stmt = select(QuizAssignment).options(selectinload(QuizAssignment.quiz), selectinload(QuizAssignment.student)).where(QuizAssignment.id == assignment_id)
+    result = await db.execute(stmt)
+    assignment = result.scalar_one_or_none()
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Atama bulunamadı")
+        
+    # Authorization checks
+    if current_user.role == UserRole.TEACHER and assignment.teacher_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Erişim yetkiniz yok")
+    if current_user.role == UserRole.STUDENT and assignment.student_id != current_user.id:
+        from app.models.order import Enrollment
+        enrollment_result = await db.execute(
+            select(Enrollment).where(
+                Enrollment.user_id == current_user.id,
+                Enrollment.course_id == assignment.course_id
+            )
+        )
+        if not enrollment_result.scalar_one_or_none():
+            raise HTTPException(status_code=403, detail="Erişim yetkiniz yok")
+            
+    # Sınav onaylanmış mı kontrolü (Öğrenciler için)
+    if current_user.role == UserRole.STUDENT:
+        if assignment.quiz and not assignment.quiz.is_approved:
+            raise HTTPException(status_code=403, detail="Bu test henüz onaylanmamıştır.")
+            
+    return assignment
+
+
+@router.post("/{quiz_id}/approve", response_model=QuizResponse)
+async def approve_quiz(
+    quiz_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """Admin: Bir quizi onaylar"""
+    result = await db.execute(
+        select(Quiz)
+        .options(selectinload(Quiz.questions))
+        .where(Quiz.id == quiz_id)
+    )
+    quiz = result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Test bulunamadı")
+        
+    quiz.is_approved = True
+    await db.commit()
+    await db.refresh(quiz)
+    return quiz
+
+
+@router.post("/{quiz_id}/reject", response_model=QuizResponse)
+async def reject_quiz(
+    quiz_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """Admin: Bir quizi reddeder/onayını kaldırır"""
+    result = await db.execute(
+        select(Quiz)
+        .options(selectinload(Quiz.questions))
+        .where(Quiz.id == quiz_id)
+    )
+    quiz = result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Test bulunamadı")
+        
+    quiz.is_approved = False
+    await db.commit()
+    await db.refresh(quiz)
+    return quiz

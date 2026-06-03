@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { coursesApi, quizzesApi, mediaApi } from "@/lib/api";
+import { coursesApi, quizzesApi, mediaApi, type QuizAssignment } from "@/lib/api";
 import { toast } from "sonner";
 
 interface Course {
@@ -20,8 +20,8 @@ interface Lesson {
 
 interface QuizListItem {
   id: string;
-  lesson_id: string;
-  lesson_title: string;
+  lesson_id?: string | null;
+  lesson_title?: string;
   title: string;
   description?: string;
   pdf_path?: string;
@@ -44,6 +44,7 @@ interface QuizQuestion {
 
 export default function TeacherQuizzesPage() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<"curriculum" | "standalone">("standalone");
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   
   // Quizzes list & lessons
@@ -62,6 +63,14 @@ export default function TeacherQuizzesPage() {
   const [pdfPath, setPdfPath] = useState("");
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
 
+  // New features state
+  const [numberOfOptions, setNumberOfOptions] = useState<number>(4);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [useAnswerKey, setUseAnswerKey] = useState<boolean>(false);
+  const [questionCount, setQuestionCount] = useState<number>(10);
+  const [answerKey, setAnswerKey] = useState<Record<number, string>>({});
+
   // Question management states
   const [activeQuizForQuestions, setActiveQuizForQuestions] = useState<QuizListItem | null>(null);
   const [questionsList, setQuestionsList] = useState<QuizQuestion[]>([]);
@@ -79,6 +88,17 @@ export default function TeacherQuizzesPage() {
   const [points, setPoints] = useState(10);
   const [explanation, setExplanation] = useState("");
 
+  // Assignment Modal States
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignQuizId, setAssignQuizId] = useState("");
+  const [assignTargetType, setAssignTargetType] = useState<"course" | "student">("course");
+  const [assignCourseId, setAssignCourseId] = useState("");
+  const [assignStudentId, setAssignStudentId] = useState("");
+  const [assignDueDate, setAssignDueDate] = useState("");
+  const [studentsList, setStudentsList] = useState<any[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [assignmentsList, setAssignmentsList] = useState<QuizAssignment[]>([]);
+
   // Fetch teacher's courses
   const { data: coursesData } = useQuery({
     queryKey: ["teacher-courses-quizzes"],
@@ -94,20 +114,26 @@ export default function TeacherQuizzesPage() {
     }
   }, [courses, selectedCourseId]);
 
-  // Load quizzes and lessons when selected course changes
+  // Load quizzes and lessons when selected course or tab changes
   const loadCourseData = async () => {
-    if (!selectedCourseId) return;
     setLoadingLists(true);
     try {
-      // 1. Load course lessons
-      const lessons = await coursesApi.getLessons(selectedCourseId);
-      setLessonsList(lessons);
+      if (activeTab === "curriculum") {
+        if (!selectedCourseId) return;
+        // 1. Load course lessons
+        const lessons = await coursesApi.getLessons(selectedCourseId);
+        setLessonsList(lessons);
 
-      // 2. Load quizzes in this course
-      const quizzes = await quizzesApi.list({ course_id: selectedCourseId });
-      setQuizzesList(quizzes);
+        // 2. Load quizzes in this course
+        const quizzes = await quizzesApi.list({ course_id: selectedCourseId });
+        setQuizzesList(quizzes);
+      } else {
+        // Load standalone quizzes (no lesson_id)
+        const quizzes = await quizzesApi.list();
+        setQuizzesList(quizzes.filter((q) => !q.lesson_id));
+      }
     } catch (err: any) {
-      toast.error("Kurs verileri yüklenirken bir hata oluştu.");
+      toast.error("Veriler yüklenirken bir hata oluştu.");
     } finally {
       setLoadingLists(false);
     }
@@ -115,13 +141,34 @@ export default function TeacherQuizzesPage() {
 
   useEffect(() => {
     loadCourseData();
-  }, [selectedCourseId]);
+    setActiveQuizForQuestions(null);
+  }, [selectedCourseId, activeTab]);
+
+  // Load students for assigning when course changes in assign modal
+  useEffect(() => {
+    const loadStudents = async () => {
+      if (assignTargetType === "student" && assignCourseId) {
+        setLoadingStudents(true);
+        try {
+          const list = await coursesApi.getCourseStudents(assignCourseId);
+          setStudentsList(list);
+        } catch {
+          toast.error("Öğrenci listesi yüklenemedi.");
+        } finally {
+          setLoadingStudents(false);
+        }
+      } else {
+        setStudentsList([]);
+      }
+    };
+    loadStudents();
+  }, [assignCourseId, assignTargetType]);
 
   // Quiz creation mutation
   const createQuizMutation = useMutation({
     mutationFn: (payload: any) => quizzesApi.create(payload),
     onSuccess: () => {
-      toast.success("Test başarıyla oluşturuldu.");
+      toast.success("Test başarıyla oluşturuldu ve test havuzuna kaydedildi.");
       loadCourseData();
       resetQuizForm();
     },
@@ -153,6 +200,12 @@ export default function TeacherQuizzesPage() {
     try {
       const data = await quizzesApi.getQuestions(quiz.id);
       setQuestionsList(data);
+      
+      // Load active assignments for this standalone quiz
+      if (!quiz.lesson_id) {
+        const assignments = await quizzesApi.listTeacherAssignments({ quiz_id: quiz.id });
+        setAssignmentsList(assignments);
+      }
     } catch (err: any) {
       toast.error("Sorular yüklenirken bir hata oluştu.");
     } finally {
@@ -189,6 +242,25 @@ export default function TeacherQuizzesPage() {
     },
   });
 
+  // Assign quiz mutation
+  const assignQuizMutation = useMutation({
+    mutationFn: (payload: any) => quizzesApi.assign(payload),
+    onSuccess: () => {
+      toast.success("Test başarıyla atandı/gönderildi!");
+      setShowAssignModal(false);
+      if (activeQuizForQuestions) {
+        fetchQuestions(activeQuizForQuestions);
+      }
+      // Reset assign states
+      setAssignCourseId("");
+      setAssignStudentId("");
+      setAssignDueDate("");
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || "Test atanırken bir hata oluştu.");
+    },
+  });
+
   const resetQuizForm = () => {
     setQuizTitle("");
     setQuizDescription("");
@@ -197,11 +269,17 @@ export default function TeacherQuizzesPage() {
     setTimeLimit("");
     setMaxAttempts("");
     setPdfPath("");
+    setNumberOfOptions(4);
+    setStartDate("");
+    setEndDate("");
+    setUseAnswerKey(false);
+    setQuestionCount(10);
+    setAnswerKey({});
     setShowAddForm(false);
   };
 
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0] && selectedLessonId) {
+    if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.type !== "application/pdf") {
         toast.error("Lütfen sadece PDF formatında bir sınav kağıdı yükleyin.");
@@ -209,7 +287,9 @@ export default function TeacherQuizzesPage() {
       }
       setIsUploadingPdf(true);
       try {
-        const result = await mediaApi.uploadDocument(selectedLessonId, file);
+        // Use a generic document upload endpoint if standalone
+        // (passing selectedLessonId if curriculum, otherwise generic)
+        const result = await mediaApi.uploadDocument(selectedLessonId || "standalone", file);
         setPdfPath(result.path);
         toast.success("Sınav PDF'i başarıyla yüklendi.");
       } catch (err: any) {
@@ -217,9 +297,6 @@ export default function TeacherQuizzesPage() {
       } finally {
         setIsUploadingPdf(false);
       }
-    } else if (!selectedLessonId) {
-      toast.error("Lütfen önce ilişkili dersi seçin.");
-      e.target.value = "";
     }
   };
 
@@ -236,9 +313,9 @@ export default function TeacherQuizzesPage() {
     setShowAddQuestionForm(false);
   };
 
-  const handleCreateQuizSubmit = (e: React.FormEvent) => {
+  const handleCreateQuizSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedLessonId) {
+    if (activeTab === "curriculum" && !selectedLessonId) {
       toast.error("Lütfen testin ekleneceği dersi seçin.");
       return;
     }
@@ -247,15 +324,52 @@ export default function TeacherQuizzesPage() {
       return;
     }
 
-    createQuizMutation.mutate({
-      lesson_id: selectedLessonId,
-      title: quizTitle,
-      description: quizDescription || null,
-      pdf_path: pdfPath || null,
-      passing_score: passingScore,
-      time_limit_minutes: timeLimit ? parseInt(timeLimit) : null,
-      max_attempts: maxAttempts ? parseInt(maxAttempts) : null,
-    });
+    try {
+      const payload: any = {
+        lesson_id: activeTab === "curriculum" ? selectedLessonId : null,
+        title: quizTitle,
+        description: quizDescription || null,
+        pdf_path: pdfPath || null,
+        passing_score: passingScore,
+        time_limit_minutes: timeLimit ? parseInt(timeLimit) : null,
+        max_attempts: maxAttempts ? parseInt(maxAttempts) : null,
+        number_of_options: numberOfOptions,
+        start_date: startDate ? new Date(startDate).toISOString() : null,
+        end_date: endDate ? new Date(endDate).toISOString() : null,
+      };
+
+      const createdQuiz = await quizzesApi.create(payload);
+
+      // If Cevap Anahtarı is checked, bulk create questions
+      if (useAnswerKey && questionCount > 0) {
+        const questionsToCreate = Array.from({ length: questionCount }, (_, i) => {
+          const qNum = i + 1;
+          const correctAns = answerKey[qNum] || "A";
+          // Generate default options based on numberOfOptions (e.g. A, B, C, D, E)
+          const optionsPayload: Record<string, string> = {};
+          const optionLetters = ["A", "B", "C", "D", "E"].slice(0, numberOfOptions);
+          optionLetters.forEach((lettr) => {
+            optionsPayload[lettr] = lettr;
+          });
+
+          return {
+            question_type: "multiple_choice" as const,
+            question_text: `${qNum}. Soru`,
+            correct_answer: correctAns,
+            options: optionsPayload,
+            points: Math.round(100 / questionCount),
+          };
+        });
+
+        await quizzesApi.bulkAddQuestions(createdQuiz.id, questionsToCreate);
+      }
+
+      toast.success("Test başarıyla oluşturuldu.");
+      loadCourseData();
+      resetQuizForm();
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "Test oluşturulurken bir hata oluştu.");
+    }
   };
 
   const handleAddQuestionSubmit = (e: React.FormEvent) => {
@@ -305,6 +419,34 @@ export default function TeacherQuizzesPage() {
     }
   };
 
+  const handleOpenAssignModal = (quizId: string) => {
+    setAssignQuizId(quizId);
+    setAssignTargetType("course");
+    if (courses.length > 0) {
+      setAssignCourseId(courses[0].id);
+    }
+    setShowAssignModal(true);
+  };
+
+  const handleAssignSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assignCourseId) {
+      toast.error("Lütfen bir kurs seçin.");
+      return;
+    }
+    if (assignTargetType === "student" && !assignStudentId) {
+      toast.error("Lütfen bir öğrenci seçin.");
+      return;
+    }
+
+    assignQuizMutation.mutate({
+      quiz_id: assignQuizId,
+      course_id: assignCourseId,
+      student_id: assignTargetType === "student" ? assignStudentId : null,
+      due_date: assignDueDate ? new Date(assignDueDate).toISOString() : null,
+    });
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fadeIn">
       {/* Header section */}
@@ -312,34 +454,16 @@ export default function TeacherQuizzesPage() {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Test Yönetimi</h2>
           <p className="text-gray-500 text-sm mt-1">
-            Derslerinize testler (quiz) tanımlayın, çoktan seçmeli, doğru/yanlış veya kısa cevaplı sorular ekleyerek öğrencileri değerlendirin.
+            Derslerinize veya bağımsız olarak deneme sınavları tanımlayın. Öğrencilere veya kurslara gönderin, soru ekleyin ve sonuçları takip edin.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <select
-            value={selectedCourseId}
-            onChange={(e) => setSelectedCourseId(e.target.value)}
-            className="px-4 py-2.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-xl font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all cursor-pointer"
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl font-semibold shadow-md shadow-teal-500/20 hover:shadow-lg hover:shadow-teal-500/30 transition-all duration-200"
           >
-            {courses.length === 0 ? (
-              <option value="">Kurs Bulunmamaktadır</option>
-            ) : (
-              courses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
-                </option>
-              ))
-            )}
-          </select>
-
-          {selectedCourseId && lessonsList.length > 0 && (
-            <button
-              onClick={() => setShowAddForm(!showAddForm)}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl font-semibold shadow-md shadow-teal-500/20 hover:shadow-lg hover:shadow-teal-500/30 transition-all duration-200"
-            >
-              {showAddForm ? "İptal" : "Yeni Test Oluştur"}
-            </button>
-          )}
+            {showAddForm ? "İptal" : "Yeni Test Oluştur"}
+          </button>
         </div>
       </div>
 
@@ -347,28 +471,30 @@ export default function TeacherQuizzesPage() {
       {showAddForm && (
         <div className="bg-white rounded-2xl border border-gray-200/60 shadow-md p-6 animate-slideDown">
           <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">
-            Ders İçin Yeni Test Tanımla
+            {activeTab === "curriculum" ? "Ders İçin Yeni Test Tanımla" : "Yeni Bağımsız Deneme Sınavı Oluştur"}
           </h3>
           <form onSubmit={handleCreateQuizSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">İlişkili Ders *</label>
-                <select
-                  required
-                  value={selectedLessonId}
-                  onChange={(e) => setSelectedLessonId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm"
-                >
-                  <option value="">Ders Seçiniz...</option>
-                  {lessonsList.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.title} ({l.lesson_type === "video" ? "Video" : "Döküman"})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {activeTab === "curriculum" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">İlişkili Ders *</label>
+                  <select
+                    required
+                    value={selectedLessonId}
+                    onChange={(e) => setSelectedLessonId(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm"
+                  >
+                    <option value="">Ders Seçiniz...</option>
+                    {lessonsList.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.title} ({l.lesson_type === "video" ? "Video" : "Döküman"})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-              <div className="space-y-2 md:col-span-2">
+              <div className={`space-y-2 ${activeTab === "curriculum" ? "md:col-span-2" : "md:col-span-3"}`}>
                 <label className="text-sm font-semibold text-gray-700">Test Başlığı *</label>
                 <input
                   type="text"
@@ -446,6 +572,101 @@ export default function TeacherQuizzesPage() {
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm"
                 />
               </div>
+
+              {/* Şık Sayısı & Zaman Ayarları */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">Şık Sayısı</label>
+                <select
+                  value={numberOfOptions}
+                  onChange={(e) => setNumberOfOptions(parseInt(e.target.value))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm bg-white"
+                >
+                  <option value={4}>4 Şık (A, B, C, D)</option>
+                  <option value={5}>5 Şık (A, B, C, D, E)</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">Başlangıç Tarihi & Saati (İsteğe bağlı)</label>
+                <input
+                  type="datetime-local"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">Bitiş Tarihi & Saati (İsteğe bağlı)</label>
+                <input
+                  type="datetime-local"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-sm"
+                />
+              </div>
+
+              {/* Cevap Anahtarı Girişi Blok */}
+              <div className="md:col-span-3 border-t border-gray-100 pt-4 mt-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    type="checkbox"
+                    id="useAnswerKey"
+                    checked={useAnswerKey}
+                    onChange={(e) => setUseAnswerKey(e.target.checked)}
+                    className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                  />
+                  <label htmlFor="useAnswerKey" className="text-sm font-bold text-gray-800 cursor-pointer">
+                    Cevap Anahtarı Şablonu ile Soruları Otomatik Oluştur
+                  </label>
+                </div>
+
+                {useAnswerKey && (
+                  <div className="bg-gray-50 border border-gray-150 rounded-2xl p-5 space-y-4 animate-slideDown">
+                    <div className="flex items-center gap-4 max-w-xs">
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-gray-500">Soru Sayısı</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={100}
+                          value={questionCount}
+                          onChange={(e) => setQuestionCount(Math.min(100, Math.max(1, parseInt(e.target.value) || 1)))}
+                          className="w-full px-3 py-1.5 rounded-xl border border-gray-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-teal-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3 max-h-60 overflow-y-auto p-1">
+                      {Array.from({ length: questionCount }, (_, i) => {
+                        const qNum = i + 1;
+                        const optionLetters = ["A", "B", "C", "D", "E"].slice(0, numberOfOptions);
+                        return (
+                          <div key={qNum} className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col items-center gap-1.5 shadow-sm">
+                            <span className="text-xs font-bold text-gray-700">Soru {qNum}</span>
+                            <div className="flex gap-1">
+                              {optionLetters.map((lettr) => (
+                                <button
+                                  type="button"
+                                  key={lettr}
+                                  onClick={() => setAnswerKey(prev => ({ ...prev, [qNum]: lettr }))}
+                                  className={`w-6 h-6 rounded-full text-[10px] font-bold border flex items-center justify-center transition-all ${
+                                    answerKey[qNum] === lettr
+                                      ? "bg-teal-500 border-teal-500 text-white shadow-sm"
+                                      : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                                  }`}
+                                >
+                                  {lettr}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
@@ -473,7 +694,9 @@ export default function TeacherQuizzesPage() {
         {/* Left column: Quizzes list */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Aktif Testler</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              Test Havuzu (Hazırlanan Sınavlar)
+            </h3>
 
             {loadingLists ? (
               <div className="flex justify-center py-8">
@@ -481,26 +704,33 @@ export default function TeacherQuizzesPage() {
               </div>
             ) : quizzesList.length === 0 ? (
               <div className="text-center py-10 border border-dashed border-gray-100 rounded-xl bg-gray-50/20">
-                <p className="text-gray-400 text-sm font-semibold">Bu kursta tanımlı test bulunmuyor.</p>
+                <p className="text-gray-400 text-sm font-semibold">Test havuzunda tanımlı test bulunmuyor.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {quizzesList.map((q) => (
                   <div
-                    key={q.id}
-                    className={`w-full text-left p-4 rounded-xl border transition-all duration-200 flex flex-col gap-2 relative ${
-                      activeQuizForQuestions?.id === q.id
-                        ? "bg-teal-50/40 border-teal-300 shadow-sm"
-                        : "bg-white border-gray-100 hover:border-gray-300"
-                    }`}
+                     key={q.id}
+                     className={`w-full text-left p-4 rounded-xl border transition-all duration-200 flex flex-col gap-2 relative ${
+                       activeQuizForQuestions?.id === q.id
+                         ? "bg-teal-50/40 border-teal-300 shadow-sm"
+                         : "bg-white border-gray-100 hover:border-gray-300"
+                     }`}
                   >
                     <button
-                      onClick={() => fetchQuestions(q)}
-                      className="w-full text-left flex flex-col gap-1.5"
+                       onClick={() => fetchQuestions(q)}
+                       className="w-full text-left flex flex-col gap-1.5 pr-8"
                     >
-                      <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded border border-gray-200/50 self-start">
-                        Ders: {q.lesson_title}
-                      </span>
+                      {q.lesson_title && (
+                        <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded border border-gray-200/50 self-start">
+                          Ders: {q.lesson_title}
+                        </span>
+                      )}
+                      {!q.lesson_id && (
+                        <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-100 self-start">
+                          Bağımsız Sınav
+                        </span>
+                      )}
                       <h4 className="font-bold text-sm text-gray-800 line-clamp-1">{q.title}</h4>
                       <div className="flex flex-wrap gap-2 text-[10px] text-gray-400 font-bold mt-1">
                         <span>Geçme: %{q.passing_score}</span>
@@ -509,15 +739,29 @@ export default function TeacherQuizzesPage() {
                       </div>
                     </button>
 
-                    <button
-                      onClick={() => handleDeleteQuiz(q.id)}
-                      className="absolute top-4 right-4 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all duration-200"
-                      title="Sil"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                    <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                      {!q.lesson_id && (
+                        <button
+                          onClick={() => handleOpenAssignModal(q.id)}
+                          className="p-1 text-teal-600 hover:bg-teal-50 rounded transition-all duration-200"
+                          title="Öğrenciye Tanımla"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                          </svg>
+                        </button>
+                      )}
+                      
+                      <button
+                        onClick={() => handleDeleteQuiz(q.id)}
+                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all duration-200"
+                        title="Sil"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -542,12 +786,22 @@ export default function TeacherQuizzesPage() {
                       </p>
                     )}
                   </div>
-                  <button
-                    onClick={() => setShowAddQuestionForm(!showAddQuestionForm)}
-                    className="flex items-center justify-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-semibold text-xs shadow-md shadow-teal-500/10 transition-all duration-200 shrink-0 self-start"
-                  >
-                    {showAddQuestionForm ? "İptal" : "Yeni Soru Ekle"}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {!activeQuizForQuestions.lesson_id && (
+                      <button
+                        onClick={() => handleOpenAssignModal(activeQuizForQuestions.id)}
+                        className="flex items-center justify-center gap-1.5 px-4 py-2 bg-teal-50 text-teal-700 border border-teal-200 rounded-xl font-semibold text-xs transition-all duration-200"
+                      >
+                        Testi Tanımla
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setShowAddQuestionForm(!showAddQuestionForm)}
+                      className="flex items-center justify-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-semibold text-xs shadow-md shadow-teal-500/10 transition-all duration-200 shrink-0 self-start"
+                    >
+                      {showAddQuestionForm ? "İptal" : "Yeni Soru Ekle"}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Add question form inside right panel */}
@@ -667,17 +921,17 @@ export default function TeacherQuizzesPage() {
                       {/* True/False correct answer selection */}
                       {questionType === "true_false" && (
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-gray-500">Doğru Yanıt Seçimi *</label>
-                          <select
-                            required
-                            value={correctAnswer}
-                            onChange={(e) => setCorrectAnswer(e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
-                          >
-                            <option value="">Seçiniz...</option>
-                            <option value="true">Doğru (True)</option>
-                            <option value="false">Yanlış (False)</option>
-                          </select>
+                           <label className="text-[10px] font-bold text-gray-500">Doğru Yanıt Seçimi *</label>
+                           <select
+                             required
+                             value={correctAnswer}
+                             onChange={(e) => setCorrectAnswer(e.target.value)}
+                             className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
+                           >
+                             <option value="">Seçiniz...</option>
+                             <option value="true">Doğru (True)</option>
+                             <option value="false">Yanlış (False)</option>
+                           </select>
                         </div>
                       )}
 
@@ -725,6 +979,41 @@ export default function TeacherQuizzesPage() {
                         </button>
                       </div>
                     </form>
+                  </div>
+                )}
+
+                {/* Tab selector for Standalone Quizzes details */}
+                {!activeQuizForQuestions.lesson_id && assignmentsList.length > 0 && (
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6 space-y-3">
+                    <h4 className="font-bold text-xs text-teal-800 uppercase tracking-wide">Aktif Atamalar ve Gönderimler</h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs text-left text-gray-600">
+                        <thead className="bg-gray-100 text-gray-700 font-semibold">
+                          <tr>
+                            <th className="p-2">Tür</th>
+                            <th className="p-2">Hedef Adı</th>
+                            <th className="p-2">Son Tarih</th>
+                            <th className="p-2">Atama Tarihi</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {assignmentsList.map((a) => (
+                            <tr key={a.id} className="border-b border-gray-100 bg-white">
+                              <td className="p-2 font-medium capitalize">{a.course_id ? "Kurs" : "Öğrenci"}</td>
+                              <td className="p-2 font-semibold">
+                                {a.course_id 
+                                  ? courses.find(c => c.id === a.course_id)?.title || "Kurs" 
+                                  : a.student?.full_name || "Öğrenci"}
+                              </td>
+                              <td className="p-2 text-red-600">
+                                {a.due_date ? new Date(a.due_date).toLocaleDateString("tr-TR") : "Belirtilmemiş"}
+                              </td>
+                              <td className="p-2">{new Date(a.created_at).toLocaleDateString("tr-TR")}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
 
@@ -834,13 +1123,135 @@ export default function TeacherQuizzesPage() {
                 </svg>
                 <h4 className="font-bold text-base text-gray-700">Test Seçilmedi</h4>
                 <p className="text-xs text-gray-400 mt-1 max-w-xs">
-                  Sol taraftaki listeden bir test seçerek soru ekleyebilir, mevcut soruları görüntüleyebilir veya silebilirsiniz.
+                  Sol taraftaki listeden bir test seçerek soru ekleyebilir, mevcut soruları görüntüleyebilir veya atamalar yapabilirsiniz.
                 </p>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Assign Test Modal */}
+      {showAssignModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-2xl w-full max-w-md p-6 animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-5">
+              <h3 className="text-lg font-bold text-gray-900">Sınavı Ata / Öğrencilere Gönder</h3>
+              <button
+                onClick={() => setShowAssignModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-all text-sm font-semibold"
+              >
+                Kapat
+              </button>
+            </div>
+            
+            <form onSubmit={handleAssignSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-600">Hedef Türü *</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAssignTargetType("course");
+                      setAssignStudentId("");
+                    }}
+                    className={`py-2 text-xs font-bold rounded-lg border transition-all ${
+                      assignTargetType === "course"
+                        ? "bg-teal-50 border-teal-300 text-teal-700 shadow-sm"
+                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Tüm Kursa Ata
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAssignTargetType("student")}
+                    className={`py-2 text-xs font-bold rounded-lg border transition-all ${
+                      assignTargetType === "student"
+                        ? "bg-teal-50 border-teal-300 text-teal-700 shadow-sm"
+                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Özel Öğrenciye Ata
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-600">Kurs Seçin *</label>
+                <select
+                  required
+                  value={assignCourseId}
+                  onChange={(e) => {
+                    setAssignCourseId(e.target.value);
+                    setAssignStudentId("");
+                  }}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
+                >
+                  <option value="">Seçiniz...</option>
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {assignTargetType === "student" && assignCourseId && (
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-600">Öğrenci Seçin *</label>
+                  {loadingStudents ? (
+                    <p className="text-xs text-gray-400 animate-pulse">Öğrenci listesi yükleniyor...</p>
+                  ) : studentsList.length === 0 ? (
+                    <p className="text-xs text-red-500 font-semibold">Bu kursa kayıtlı öğrenci bulunamadı.</p>
+                  ) : (
+                    <select
+                      required
+                      value={assignStudentId}
+                      onChange={(e) => setAssignStudentId(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    >
+                      <option value="">Seçiniz...</option>
+                      {studentsList.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.full_name} ({s.email})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-600">Son Çözüm Tarihi (İsteğe bağlı)</label>
+                <input
+                  type="datetime-local"
+                  value={assignDueDate}
+                  onChange={(e) => setAssignDueDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowAssignModal(false)}
+                  className="px-4 py-2 text-xs font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-lg transition-all"
+                >
+                  Kapat
+                </button>
+                <button
+                  type="submit"
+                  disabled={assignQuizMutation.isPending || (assignTargetType === "student" && !assignStudentId)}
+                  className="px-4 py-2 text-xs font-bold bg-teal-600 text-white hover:bg-teal-700 rounded-lg shadow-md shadow-teal-600/15 transition-all"
+                >
+                  {assignQuizMutation.isPending ? "Gönderiliyor..." : "Atamayı Tamamla"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

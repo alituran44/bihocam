@@ -51,10 +51,18 @@ export default function MyCourseDetailPage() {
   const id = params.id as string;
   const isNew = id === "new";
 
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+
   // Yeni kurs olusturma mutation (hook'lar kosullu return'den once olmali)
   const createCourseMutation = useMutation({
-    mutationFn: (data: { title: string; slug: string; description: string; price: number; category_ids?: string[] }) =>
-      coursesApi.create(data),
+    mutationFn: async (data: { title: string; slug: string; description: string; price: number; category_ids?: string[]; thumbnail?: File | null }) => {
+      const { thumbnail, ...courseData } = data;
+      const newCourse = await coursesApi.create(courseData);
+      if (thumbnail) {
+        await mediaApi.uploadCourseThumbnail(newCourse.id, thumbnail);
+      }
+      return newCourse;
+    },
     onSuccess: (newCourse: any) => {
       queryClient.invalidateQueries({ queryKey: ["my-courses"] });
       router.push(`/dashboard/my-courses/${newCourse.id}`);
@@ -120,12 +128,19 @@ export default function MyCourseDetailPage() {
 
   // Kurs güncelleme mutation
   const updateCourseMutation = useMutation({
-    mutationFn: (updateData: { title?: string; description?: string; price?: number; status?: string; category_ids?: string[] }) =>
-      coursesApi.update(id, updateData),
+    mutationFn: async (updateData: { title?: string; description?: string; price?: number; status?: string; category_ids?: string[]; thumbnail?: File | null }) => {
+      const { thumbnail, ...restData } = updateData;
+      const updated = await coursesApi.update(id, restData);
+      if (thumbnail) {
+        await mediaApi.uploadCourseThumbnail(id, thumbnail);
+      }
+      return updated;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-course", id] });
       queryClient.invalidateQueries({ queryKey: ["my-courses"] });
       setShowEditForm(false);
+      setThumbnailFile(null);
     },
     onError: (err: any) => {
       const detail = err?.response?.data?.detail;
@@ -741,6 +756,43 @@ export default function MyCourseDetailPage() {
               </div>
             </div>
             <div>
+              <label className="block text-sm font-bold text-gray-900 mb-2">Kapak Resmi</label>
+              <div className="flex flex-col gap-3">
+                {thumbnailFile ? (
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-gray-300 shadow-sm">
+                    <img src={URL.createObjectURL(thumbnailFile)} alt="Preview" className="w-full h-full object-cover" />
+                    <button 
+                      onClick={() => setThumbnailFile(null)} 
+                      className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1.5 hover:bg-red-700 shadow-md"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                ) : !isNew && course?.thumbnail_path ? (
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-gray-300 shadow-sm">
+                    <img src={mediaApi.getThumbnailUrl(null, course.thumbnail_path) || ""} alt="Current Thumbnail" className="w-full h-full object-cover" />
+                  </div>
+                ) : null}
+                <div className="flex items-center gap-3 w-full">
+                  <label className="flex-1 flex flex-col items-center justify-center h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <svg className="w-8 h-8 mb-3 text-gray-400" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                      <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Resim yüklemek için tıklayın</span> veya sürükleyip bırakın</p>
+                      <p className="text-xs text-gray-500">SVG, PNG, JPG veya GIF</p>
+                      <p className="text-xs text-indigo-500 font-medium mt-1">(Önerilen boyut: 1280x720 piksel)</p>
+                    </div>
+                    <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setThumbnailFile(e.target.files[0]);
+                      }
+                    }} />
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div>
               <label className="block text-sm font-bold text-gray-900 mb-2">
                 Kategoriler <span className="text-red-500">*</span>
               </label>
@@ -775,6 +827,7 @@ export default function MyCourseDetailPage() {
                       description: editDescription,
                       price: editPrice,
                       category_ids: editCategoryIds,
+                      thumbnail: thumbnailFile,
                     });
                   } else {
                     const updateData: any = {
@@ -782,6 +835,7 @@ export default function MyCourseDetailPage() {
                       description: editDescription || undefined,
                       category_ids: editCategoryIds,
                       price: editPrice,
+                      thumbnail: thumbnailFile,
                     };
                     updateCourseMutation.mutate(updateData);
                   }

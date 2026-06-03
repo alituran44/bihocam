@@ -21,7 +21,7 @@ from app.models.course import Course, Lesson  # noqa: F401
 from app.models.cart import CartItem  # noqa: F401
 from app.models.coupon import Coupon, CouponUsage  # noqa: F401
 from app.models.order import Order, OrderItem, Enrollment  # noqa: F401
-from app.models.quiz import Quiz, QuizQuestion, QuizAttempt, QuizAttemptAnswer  # noqa: F401
+from app.models.quiz import Quiz, QuizQuestion, QuizAttempt, QuizAttemptAnswer, QuizAssignment  # noqa: F401
 from app.models.lesson_progress import LessonProgress  # noqa: F401
 from app.models.course_review import CourseReview  # noqa: F401
 from app.models.category import Category, course_categories  # noqa: F401
@@ -44,6 +44,7 @@ from app.models.page import Page  # noqa: F401
 from app.models.education_program import EducationProgram  # noqa: F401
 from app.models.homework import Homework, HomeworkSubmission  # noqa: F401
 from app.models.exam import Exam, ExamQuestion, ExamAttempt, ExamAttemptAnswer  # noqa: F401
+from app.models.social import SocialPost, PostLike, SavedPost, UserFollow  # noqa: F401
 
 
 
@@ -99,10 +100,12 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         
-        # Run custom SQLite column migrations for existing users table
+        # Run custom SQLite column migrations for existing tables
         def run_sqlite_migrations(connection):
             dbapi_conn = connection.connection
             cursor = dbapi_conn.cursor()
+            
+            # Users migrations
             cursor.execute("PRAGMA table_info(users)")
             columns = [row[1] for row in cursor.fetchall()]
             if "live_class_price" not in columns:
@@ -111,6 +114,34 @@ async def lifespan(app: FastAPI):
                 cursor.execute("ALTER TABLE users ADD COLUMN live_class_discount_price FLOAT")
             if "live_class_link" not in columns:
                 cursor.execute("ALTER TABLE users ADD COLUMN live_class_link VARCHAR(500)")
+            if "promo_images" not in columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN promo_images JSON")
+            if "promo_video" not in columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN promo_video VARCHAR(500)")
+                
+            # Quizzes migrations
+            cursor.execute("PRAGMA table_info(quizzes)")
+            quiz_columns = [row[1] for row in cursor.fetchall()]
+            if "number_of_options" not in quiz_columns:
+                cursor.execute("ALTER TABLE quizzes ADD COLUMN number_of_options INTEGER DEFAULT 4")
+            if "start_date" not in quiz_columns:
+                cursor.execute("ALTER TABLE quizzes ADD COLUMN start_date DATETIME")
+            if "end_date" not in quiz_columns:
+                cursor.execute("ALTER TABLE quizzes ADD COLUMN end_date DATETIME")
+            if "is_approved" not in quiz_columns:
+                cursor.execute("ALTER TABLE quizzes ADD COLUMN is_approved BOOLEAN DEFAULT 0")
+            if "teacher_id" not in quiz_columns:
+                cursor.execute("ALTER TABLE quizzes ADD COLUMN teacher_id VARCHAR(36)")
+                
+            # Homeworks migrations
+            cursor.execute("PRAGMA table_info(homeworks)")
+            homework_columns = [row[1] for row in cursor.fetchall()]
+            if "student_id" not in homework_columns:
+                cursor.execute("ALTER TABLE homeworks ADD COLUMN student_id VARCHAR(36)")
+            if "file_path" not in homework_columns:
+                cursor.execute("ALTER TABLE homeworks ADD COLUMN file_path VARCHAR(500)")
+            if "is_assigned" not in homework_columns:
+                cursor.execute("ALTER TABLE homeworks ADD COLUMN is_assigned BOOLEAN DEFAULT 0")
                 
         await conn.run_sync(run_sqlite_migrations)
     

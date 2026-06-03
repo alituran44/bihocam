@@ -13,10 +13,13 @@ class QuizBase(BaseModel):
     max_attempts: int | None = None
     shuffle_questions: bool = False
     show_correct_answers: bool = True
+    number_of_options: int | None = 4
+    start_date: datetime | None = None
+    end_date: datetime | None = None
 
 
 class QuizCreate(QuizBase):
-    lesson_id: str
+    lesson_id: str | None = None
 
 
 class QuizUpdate(BaseModel):
@@ -32,7 +35,8 @@ class QuizUpdate(BaseModel):
 
 class QuizResponse(QuizBase):
     id: str
-    lesson_id: str
+    lesson_id: str | None = None
+    is_approved: bool = False
     questions: list["QuizQuestionResponse"] = []
     created_at: datetime
     updated_at: datetime
@@ -44,10 +48,14 @@ class QuizResponse(QuizBase):
 class QuizListItem(BaseModel):
     id: str
     title: str
-    lesson_id: str
+    lesson_id: str | None = None
     pdf_path: str | None = None
     question_count: int
     attempt_count: int
+    number_of_options: int | None = 4
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    is_approved: bool = False
     created_at: datetime
 
     class Config:
@@ -131,6 +139,7 @@ class QuizAttemptResponse(QuizAttemptBase):
     id: str
     quiz_id: str
     user_id: str
+    assignment_id: str | None = None
     status: QuizAttemptStatus
     total_questions: int
     correct_answers: int
@@ -143,6 +152,38 @@ class QuizAttemptResponse(QuizAttemptBase):
     answers: list[QuizAttemptAnswerResponse] = []
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class QuizAssignmentCreate(BaseModel):
+    quiz_id: str
+    course_id: str | None = None
+    student_id: str | None = None
+    due_date: datetime | None = None
+
+
+class QuizAssignmentUserResponse(BaseModel):
+    id: str
+    full_name: str
+    email: str
+    
+    class Config:
+        from_attributes = True
+
+
+class QuizAssignmentResponse(BaseModel):
+    id: str
+    quiz_id: str
+    teacher_id: str
+    course_id: str | None = None
+    student_id: str | None = None
+    due_date: datetime | None = None
+    created_at: datetime
+    quiz: QuizResponse | None = None
+    my_attempt: QuizAttemptResponse | None = None
+    student: QuizAssignmentUserResponse | None = None
 
     class Config:
         from_attributes = True

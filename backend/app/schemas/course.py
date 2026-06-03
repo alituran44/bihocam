@@ -179,6 +179,8 @@ class TeacherInfo(BaseModel):
     live_class_price: Optional[float] = None
     live_class_discount_price: Optional[float] = None
     live_class_link: Optional[str] = None
+    promo_images: Optional[list[str]] = None
+    promo_video: Optional[str] = None
 
     class Config:
         from_attributes = True
