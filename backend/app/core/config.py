@@ -20,7 +20,11 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3454"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3454", 
+        "http://localhost:3000", 
+        "https://bihocam.vercel.app"
+    ]
 
     # Redis (for future use)
     REDIS_URL: str = "redis://localhost:6379/0"
