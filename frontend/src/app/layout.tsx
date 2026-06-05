@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/lib/providers";
 import SiteSettingsScripts from "@/components/SiteSettingsScripts";
 import FloatingChat from "@/components/FloatingChat";
+import { AIAssistantChat } from "@/components/ui/AIAssistantChat";
 
 // Tüm sayfalar dynamic render — useSearchParams SSR hatalarını önler
 export const dynamic = "force-dynamic";
@@ -33,6 +34,7 @@ export default function RootLayout({
           <SiteSettingsScripts />
           {children}
           <FloatingChat />
+          <AIAssistantChat />
         </Providers>
       </body>
     </html>

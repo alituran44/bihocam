@@ -23,6 +23,7 @@ from app.models.notification import Notification, NotificationPreferences  # noq
 from app.models.site_settings import SiteSettings  # noqa: F401
 from app.models.email_log import EmailLog  # noqa: F401
 from app.models.crm import CrmAudience, CrmAudienceMember, CrmEmailTemplate  # noqa: F401
+from app.models.call_request import CallRequest  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)

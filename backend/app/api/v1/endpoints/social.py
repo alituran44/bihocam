@@ -3,7 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
-from app.api import deps
+from app.db.session import get_db
+from app.api.v1.endpoints.auth import get_current_user
 from app.models.user import User, UserRole
 from app.models.social import SocialPost, PostLike, SavedPost, UserFollow, MediaType
 from app.schemas.social import (
@@ -21,8 +22,8 @@ router = APIRouter()
 @router.post("/follow/{user_id}", response_model=FollowResponse)
 async def follow_user(
     user_id: str,
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     if user_id == current_user.id:
         raise HTTPException(status_code=400, detail="You cannot follow yourself")
@@ -54,8 +55,8 @@ async def follow_user(
 @router.delete("/follow/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def unfollow_user(
     user_id: str,
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     stmt = select(UserFollow).where(
         UserFollow.follower_id == current_user.id,
@@ -72,8 +73,8 @@ async def unfollow_user(
 
 @router.get("/followers", response_model=List[FollowResponse])
 async def get_followers(
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     # This endpoint is to see who follows ME
     # In a real app we would paginate this
@@ -85,8 +86,8 @@ async def get_followers(
 
 @router.get("/following", response_model=List[FollowResponse])
 async def get_following(
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     stmt = select(UserFollow).where(UserFollow.follower_id == current_user.id)
     result = await db.execute(stmt)
@@ -98,8 +99,8 @@ async def get_following(
 @router.post("/posts", response_model=SocialPostResponse)
 async def create_post(
     post_in: SocialPostCreate,
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     # Only Admin and Teachers can create posts in the current design
     if current_user.role not in [UserRole.ADMIN, UserRole.TEACHER]:
@@ -126,8 +127,8 @@ async def create_post(
 
 @router.get("/posts/reels", response_model=List[SocialPostResponse])
 async def get_reels_feed(
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     skip: int = 0,
     limit: int = 10
 ):
@@ -169,8 +170,8 @@ async def get_reels_feed(
 @router.post("/posts/{post_id}/like", response_model=LikeResponse)
 async def like_post(
     post_id: str,
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     # check post
     stmt = select(SocialPost).where(SocialPost.id == post_id)
@@ -192,8 +193,8 @@ async def like_post(
 @router.delete("/posts/{post_id}/like", status_code=status.HTTP_204_NO_CONTENT)
 async def unlike_post(
     post_id: str,
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     stmt = select(PostLike).where(PostLike.post_id == post_id, PostLike.user_id == current_user.id)
     like = (await db.execute(stmt)).scalar_one_or_none()
@@ -206,8 +207,8 @@ async def unlike_post(
 @router.post("/posts/{post_id}/save", response_model=SavedPostResponse)
 async def save_post(
     post_id: str,
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     stmt = select(SocialPost).where(SocialPost.id == post_id)
     post = (await db.execute(stmt)).scalar_one_or_none()
@@ -228,8 +229,8 @@ async def save_post(
 @router.delete("/posts/{post_id}/save", status_code=status.HTTP_204_NO_CONTENT)
 async def unsave_post(
     post_id: str,
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     stmt = select(SavedPost).where(SavedPost.post_id == post_id, SavedPost.user_id == current_user.id)
     saved = (await db.execute(stmt)).scalar_one_or_none()
@@ -241,8 +242,8 @@ async def unsave_post(
 
 @router.get("/posts/saved", response_model=List[SavedPostResponse])
 async def get_saved_posts(
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     stmt = select(SavedPost).where(SavedPost.user_id == current_user.id)
     result = await db.execute(stmt)

@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { quizzesApi, type Quiz, type QuizQuestion, type QuizCreate, type QuizUpdate, type QuizQuestionCreate, type QuizQuestionUpdate } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { AIGenerateButton } from "@/components/ui/AIGenerateButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Trash2, GripVertical, Edit2, Save, AlertCircle, CheckCircle2, Settings, FileText, Clock, Target, RotateCcw } from "lucide-react";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
@@ -795,8 +796,17 @@ export function QuizManager({ lessonId, courseId, onClose }: QuizManagerProps) {
                                 onChange={(e) => setQuestionForm({ ...questionForm, question_text: e.target.value })}
                                 placeholder="Soru metnini girin..."
                                 rows={4}
-                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-none"
+                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-none mb-2"
                               />
+                              <div className="flex justify-end">
+                                <AIGenerateButton 
+                                  type="quiz" 
+                                  promptData={`Quiz: ${quizTitle}. Tip: ${questionForm.question_type}. Lütfen sadece 1 adet soru metni üret. Eğer çoktan seçmeli ise şıkları yazma, sadece soruyu sor.`} 
+                                  onSuccess={(text) => setQuestionForm({ ...questionForm, question_text: text })} 
+                                  buttonText="✨ AI ile Soru Üret"
+                                  className="text-xs px-3 py-1.5 shadow-none"
+                                />
+                              </div>
                             </div>
 
                             {questionForm.question_type === "multiple_choice" && (

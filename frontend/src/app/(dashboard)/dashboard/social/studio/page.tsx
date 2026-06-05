@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useAuthStore } from "@/lib/store";
+import { AIGenerateButton } from "@/components/ui/AIGenerateButton";
 
 type StudioView = "dashboard" | "video_upload" | "story_creator";
 
@@ -19,10 +20,13 @@ export default function ContentStudioPage() {
   const [isPublic, setIsPublic] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [selectedCover, setSelectedCover] = useState<File | null>(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   // State for story creator
   const [storyBgColor, setStoryBgColor] = useState("#000000");
   const [storyImage, setStoryImage] = useState<File | null>(null);
+  const [storyPrompt, setStoryPrompt] = useState("");
+  const [isGeneratingStoryImage, setIsGeneratingStoryImage] = useState(false);
 
   const colors = ["#000000", "#EF4444", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6", "#EC4899"];
 
@@ -201,10 +205,19 @@ export default function ContentStudioPage() {
                 <textarea 
                   placeholder="Videonuzu detaylandırın..."
                   rows={6}
-                  className="w-full bg-[#1A1D2D] border-none rounded-2xl px-4 py-4 text-white text-sm font-medium placeholder-gray-600 focus:ring-1 focus:ring-teal-500 outline-none resize-none"
+                  className="w-full bg-[#1A1D2D] border-none rounded-2xl px-4 py-4 text-white text-sm font-medium placeholder-gray-600 focus:ring-1 focus:ring-teal-500 outline-none resize-none mb-2"
                   value={videoDescription}
                   onChange={(e) => setVideoDescription(e.target.value)}
                 />
+                <div className="flex justify-end">
+                  <AIGenerateButton 
+                    type="description" 
+                    promptData={`Sosyal medya kısa video/reels için ilgi çekici, bol emojili ve hashtagli bir açıklama yaz. Konu/Başlık: ${videoTitle}`} 
+                    onSuccess={(text) => setVideoDescription(text)} 
+                    buttonText="AI ile Açıklama Üret"
+                    className="text-xs px-3 py-1.5 bg-[#1A1D2D] border border-teal-500/30 shadow-none hover:bg-teal-500/20"
+                  />
+                </div>
               </div>
 
               <div>
@@ -234,9 +247,50 @@ export default function ContentStudioPage() {
             {/* Right Column in Form */}
             <div className="w-48 space-y-6">
               <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-400 mb-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-teal-500"></div> Kapak Fotoğrafı
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-400">
+                    <div className="w-1.5 h-1.5 rounded-full bg-teal-500"></div> Kapak Fotoğrafı
+                  </label>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!videoTitle) {
+                        alert("Lütfen önce video başlığını girin.");
+                        return;
+                      }
+                      setIsGeneratingImage(true);
+                      try {
+                        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/ai/generate_image`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ prompt: `${videoTitle} konulu sosyal medya video kapağı, dikey formatta, neon tarzı` }),
+                        });
+                        if (!response.ok) throw new Error('API isteği başarısız oldu');
+                        const data = await response.json();
+                        const imageRes = await fetch(data.image_url);
+                        const imageBlob = await imageRes.blob();
+                        const file = new File([imageBlob], "ai_cover.jpg", { type: "image/jpeg" });
+                        setSelectedCover(file);
+                      } catch (error) {
+                        console.error("Resim üretilirken hata:", error);
+                        alert("Yapay zeka ile resim üretilirken bir hata oluştu.");
+                      } finally {
+                        setIsGeneratingImage(false);
+                      }
+                    }}
+                    disabled={isGeneratingImage}
+                    className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded hover:from-purple-600 hover:to-pink-600 shadow-sm disabled:opacity-50 transition-all"
+                  >
+                    {isGeneratingImage ? (
+                      <>
+                        <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+                        Üretiliyor...
+                      </>
+                    ) : (
+                      <>✨ AI</>
+                    )}
+                  </button>
+                </div>
                 <div 
                   onClick={() => coverInputRef.current?.click()}
                   className="w-full aspect-[9/16] rounded-3xl border-2 border-dashed border-teal-500/30 bg-[#1A1D2D] flex flex-col items-center justify-center cursor-pointer hover:bg-[#1A1D2D]/80 hover:border-teal-500/60 transition-all overflow-hidden"
@@ -352,6 +406,51 @@ export default function ContentStudioPage() {
                 </svg>
                 Arka Plan
               </label>
+
+              <div className="mb-4">
+                <label className="block text-xs font-semibold text-gray-500 mb-2">✨ AI ile Arka Plan Üret</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={storyPrompt}
+                    onChange={(e) => setStoryPrompt(e.target.value)}
+                    placeholder="Örn: Uzay temalı, neon renklerde dikey arka plan"
+                    className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                  />
+                  <button
+                    disabled={isGeneratingStoryImage || !storyPrompt.trim()}
+                    onClick={async () => {
+                      setIsGeneratingStoryImage(true);
+                      try {
+                        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/ai/generate_image`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ prompt: `${storyPrompt}, dikey hikaye formatı (9:16), estetik arka plan` }),
+                        });
+                        if (!response.ok) throw new Error('API isteği başarısız oldu');
+                        const data = await response.json();
+                        const imageRes = await fetch(data.image_url);
+                        const imageBlob = await imageRes.blob();
+                        const file = new File([imageBlob], "ai_story_bg.jpg", { type: "image/jpeg" });
+                        setStoryImage(file);
+                        setStoryBgColor("transparent");
+                      } catch (error) {
+                        console.error("Resim üretilirken hata:", error);
+                        alert("Yapay zeka ile resim üretilirken bir hata oluştu.");
+                      } finally {
+                        setIsGeneratingStoryImage(false);
+                      }
+                    }}
+                    className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-xl hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 transition-all flex items-center justify-center min-w-[80px]"
+                  >
+                    {isGeneratingStoryImage ? (
+                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+                    ) : (
+                      "Üret"
+                    )}
+                  </button>
+                </div>
+              </div>
               
               <div 
                 onClick={() => storyBgInputRef.current?.click()}
@@ -360,7 +459,7 @@ export default function ContentStudioPage() {
                 <svg className="w-6 h-6 text-teal-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
-                <span className="text-xs font-semibold text-teal-900">Dosya Seçin</span>
+                <span className="text-xs font-semibold text-teal-900">veya Cihazınızdan Seçin</span>
               </div>
               <input type="file" ref={storyBgInputRef} className="hidden" accept="image/*" onChange={(e) => { e.target.files && setStoryImage(e.target.files[0]); setStoryBgColor("transparent"); }} />
 

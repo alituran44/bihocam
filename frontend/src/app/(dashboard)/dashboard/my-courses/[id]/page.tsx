@@ -83,6 +83,7 @@ export default function MyCourseDetailPage() {
   const [notifyType, setNotifyType] = useState<"announcement" | "live_lesson">("announcement");
   const [liveLessonAt, setLiveLessonAt] = useState("");
   const [liveLessonUrl, setLiveLessonUrl] = useState("");
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
 
   const { data: course, isLoading } = useQuery<Course>({
@@ -756,7 +757,48 @@ export default function MyCourseDetailPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">Kapak Resmi</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-bold text-gray-900">Kapak Resmi</label>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!editTitle) {
+                      alert("Lütfen önce kurs başlığını girin.");
+                      return;
+                    }
+                    setIsGeneratingImage(true);
+                    try {
+                      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/ai/generate_image`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: `${editTitle} eğitimi kapak fotoğrafı, modern ve profesyonel` }),
+                      });
+                      if (!response.ok) throw new Error('API isteği başarısız oldu');
+                      const data = await response.json();
+                      const imageRes = await fetch(data.image_url);
+                      const imageBlob = await imageRes.blob();
+                      const file = new File([imageBlob], "ai_thumbnail.jpg", { type: "image/jpeg" });
+                      setThumbnailFile(file);
+                    } catch (error) {
+                      console.error("Resim üretilirken hata:", error);
+                      alert("Yapay zeka ile resim üretilirken bir hata oluştu.");
+                    } finally {
+                      setIsGeneratingImage(false);
+                    }
+                  }}
+                  disabled={isGeneratingImage}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg hover:from-purple-600 hover:to-pink-600 shadow-sm disabled:opacity-50 transition-all"
+                >
+                  {isGeneratingImage ? (
+                    <>
+                      <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+                      Üretiliyor...
+                    </>
+                  ) : (
+                    <>✨ AI ile Üret</>
+                  )}
+                </button>
+              </div>
               <div className="flex flex-col gap-3">
                 {thumbnailFile ? (
                   <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-gray-300 shadow-sm">
