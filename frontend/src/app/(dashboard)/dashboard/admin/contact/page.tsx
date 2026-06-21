@@ -29,9 +29,9 @@ interface FaqItem {
 }
 
 const initialContactInfo: ContactInfo = {
-  address: "Örnek Mah. Eğitim Cad. No:1, İstanbul, Türkiye",
-  email: "iletisim@bihocam.com",
-  phone: "+90 (212) 555 0100",
+  address: "Çanakkale / Türkiye",
+  email: "bilgi@bihocam.com",
+  phone: "+90 8508405543",
   workingHours: {
     weekdays: "09:00 – 18:00",
     saturday: "10:00 – 15:00",

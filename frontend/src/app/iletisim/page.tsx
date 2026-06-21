@@ -14,8 +14,8 @@ const contactInfo = [
       </svg>
     ),
     title: "Adres",
-    value: "Örnek Mah. Eğitim Cad. No:1",
-    sub: "İstanbul, Türkiye",
+    value: "Çanakkale",
+    sub: "Türkiye",
     color: "from-teal-500 to-emerald-500",
     bg: "bg-teal-50",
   },
@@ -26,7 +26,7 @@ const contactInfo = [
       </svg>
     ),
     title: "E-posta",
-    value: "iletisim@bihocam.com",
+    value: "bilgi@bihocam.com",
     sub: "7/24 e-posta desteği",
     color: "from-blue-500 to-indigo-500",
     bg: "bg-blue-50",
@@ -38,7 +38,7 @@ const contactInfo = [
       </svg>
     ),
     title: "Telefon",
-    value: "+90 (212) 555 0100",
+    value: "+90 8508405543",
     sub: "Pzt–Cum 09:00–18:00",
     color: "from-purple-500 to-pink-500",
     bg: "bg-purple-50",
@@ -277,8 +277,8 @@ export default function ContactPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <p className="text-white font-semibold">İstanbul, Türkiye</p>
-                <p className="text-white/60 text-sm mt-1">Örnek Mah. Eğitim Cad. No:1</p>
+                <p className="text-white font-semibold">Çanakkale, Türkiye</p>
+                <p className="text-white/60 text-sm mt-1">Çanakkale / Türkiye</p>
               </div>
             </div>
 
