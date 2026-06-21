@@ -490,13 +490,13 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
-                className="flex flex-wrap justify-center lg:justify-start gap-3 md:gap-4"
+                className="flex flex-nowrap justify-start lg:justify-start gap-2 sm:gap-3 md:gap-4 overflow-x-auto sm:overflow-x-visible no-scrollbar pt-1 pb-3 sm:pb-1 w-full"
               >
                 <Link
                   href="/register"
-                  className="group relative px-5 lg:px-6 xl:px-8 py-3.5 xl:py-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-bold rounded-2xl text-sm lg:text-base overflow-hidden shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/40 transform hover:-translate-y-1 transition-all duration-300 whitespace-nowrap"
+                  className="group relative px-3.5 sm:px-5 lg:px-6 xl:px-8 py-2.5 sm:py-3.5 xl:py-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-bold rounded-2xl text-xs sm:text-sm lg:text-base overflow-hidden shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/40 transform hover:-translate-y-1 transition-all duration-300 whitespace-nowrap"
                 >
-                  <span className="relative z-10 flex items-center gap-2">
+                  <span className="relative z-10 flex items-center gap-1.5 sm:gap-2">
                     Ücretsiz Başla
                     <motion.span animate={{ x: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
                       →
@@ -507,14 +507,14 @@ export default function Home() {
 
                 <Link
                   href="/become-instructor"
-                  className="px-5 lg:px-6 xl:px-8 py-3.5 xl:py-4 bg-white text-gray-800 font-bold rounded-2xl border-2 border-gray-200 hover:border-teal-500 hover:text-teal-600 transform hover:-translate-y-1 transition-all duration-300 text-sm lg:text-base shadow-sm whitespace-nowrap"
+                  className="px-3.5 sm:px-5 lg:px-6 xl:px-8 py-2.5 sm:py-3.5 xl:py-4 bg-white text-gray-800 font-bold rounded-2xl border-2 border-gray-200 hover:border-teal-500 hover:text-teal-600 transform hover:-translate-y-1 transition-all duration-300 text-xs sm:text-sm lg:text-base shadow-sm whitespace-nowrap"
                 >
                   Eğitmen Olmak İstiyorum
                 </Link>
 
                 <Link
                   href="/tanisma-dersi"
-                  className="px-5 lg:px-6 xl:px-8 py-3.5 xl:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/40 transform hover:-translate-y-1 transition-all duration-300 text-sm lg:text-base whitespace-nowrap"
+                  className="px-3.5 sm:px-5 lg:px-6 xl:px-8 py-2.5 sm:py-3.5 xl:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/40 transform hover:-translate-y-1 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap"
                 >
                   🎯 Tanışma Dersi Al
                 </Link>

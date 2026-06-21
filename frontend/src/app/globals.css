@@ -314,3 +314,14 @@ body {
 .animate-audio-bar-2 { animation: audio-wave-2 0.8s ease-in-out infinite; }
 .animate-audio-bar-3 { animation: audio-wave-3 1.0s ease-in-out infinite; }
 .animate-audio-bar-4 { animation: audio-wave-4 1.4s ease-in-out infinite; }
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
