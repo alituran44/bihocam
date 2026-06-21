@@ -43,6 +43,7 @@ function CheckoutContent() {
   const [step, setStep] = useState<Step>("info");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [agreed, setAgreed] = useState(false);
 
   const [billingInfo, setBillingInfo] = useState({
     full_name: user?.full_name || "",
@@ -100,6 +101,10 @@ function CheckoutContent() {
     }
     if (!billingInfo.address.trim() || billingInfo.address.trim().length < 10) {
       setFormError("Adres en az 10 karakter olmalı.");
+      return;
+    }
+    if (!agreed) {
+      setFormError("Devam etmek için Mesafeli Satış Sözleşmesi ve Üyelik Sözleşmesi'ni kabul etmelisiniz.");
       return;
     }
 
@@ -238,6 +243,24 @@ function CheckoutContent() {
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all resize-none bg-gray-50"
                 required
               />
+            </div>
+
+            {/* Agreements Checkbox */}
+            <div className="flex items-start gap-3 text-sm text-gray-600 bg-slate-50 p-4 rounded-xl border border-gray-100">
+              <input
+                id="agree-checkbox"
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 cursor-pointer"
+                required
+              />
+              <label htmlFor="agree-checkbox" className="cursor-pointer hover:text-gray-900 leading-normal font-semibold">
+                <Link href="/pages/mesafeli-satis-sozlesmesi" target="_blank" className="text-teal-600 hover:underline font-bold">Mesafeli Satış Sözleşmesi</Link>
+                {" ve "}
+                <Link href="/pages/uyelik-sozlesmesi" target="_blank" className="text-teal-600 hover:underline font-bold">Üyelik Sözleşmesi</Link>
+                &apos;ni okudum ve kabul ediyorum. *
+              </label>
             </div>
 
             <button
