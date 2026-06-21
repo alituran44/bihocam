@@ -9,6 +9,8 @@ interface User {
   is_active: boolean;
   is_verified: boolean;
   avatar_url?: string | null;
+  phone?: string | null;
+  bio?: string | null;
 }
 
 interface AuthState {

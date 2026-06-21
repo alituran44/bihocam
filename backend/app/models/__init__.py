@@ -56,6 +56,7 @@ from app.models.live_class import TeacherAvailability, LiveClassReservation
 from app.models.library import TeacherLibraryItem
 from app.models.education_program import EducationProgram
 from app.models.social import SocialPost, PostLike, SavedPost, UserFollow, MediaType
+from app.models.popcast import Popcast, UserPopcastFavorite, PopcastStatus
 
 __all__ = [
     "User",
@@ -150,4 +151,7 @@ __all__ = [
     "SavedPost",
     "UserFollow",
     "MediaType",
+    "Popcast",
+    "UserPopcastFavorite",
+    "PopcastStatus",
 ]

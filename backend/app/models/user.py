@@ -125,3 +125,6 @@ class User(Base):
         back_populates="author",
         cascade="all, delete-orphan",
     )
+
+    popcasts = relationship("Popcast", back_populates="teacher", cascade="all, delete-orphan")
+    favorite_popcasts = relationship("UserPopcastFavorite", back_populates="user", cascade="all, delete-orphan")

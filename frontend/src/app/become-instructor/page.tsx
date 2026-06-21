@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuthStore } from "@/lib/store";
-import { teacherApplicationsApi, authApi, type TeacherApplicationCreate } from "@/lib/api";
+import { teacherApplicationsApi, authApi, api, type TeacherApplicationCreate } from "@/lib/api";
 import { FileUpload } from "@/components/ui/FileUpload";
 import AdBanner from "@/components/ads/AdBanner";
 
@@ -21,7 +22,7 @@ const LEVEL_OPTIONS = ["İlkokul", "Ortaokul", "Lise", "Yabancı Dil", "Koçluk"
 export default function BecomeInstructorPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { user, setUser, isAuthenticated, setToken } = useAuthStore();
+  const { user, setUser, isAuthenticated } = useAuthStore();
   
   // Account registration states (only for guests)
   const [accountData, setAccountData] = useState({
@@ -95,7 +96,6 @@ export default function BecomeInstructorPage() {
         const loginRes = await authApi.login(accountData.email, accountData.password);
         if (loginRes.access_token) {
           localStorage.setItem("access_token", loginRes.access_token);
-          setToken(loginRes.access_token);
         }
         
         // Fetch current user profile
@@ -199,7 +199,7 @@ export default function BecomeInstructorPage() {
   const updateDocsMutation = useMutation({
     mutationFn: async (data: { cv_path?: string; graduation_cert_path?: string; criminal_record_path?: string }) => {
       // Direct call to PATCH endpoint we created
-      const { data: response } = await authApi.api.patch("/teacher-applications/me/documents", data);
+      const { data: response } = await api.patch("/teacher-applications/me/documents", data);
       return response;
     },
     onSuccess: () => {
@@ -755,22 +755,25 @@ export default function BecomeInstructorPage() {
                   
                   <div className="space-y-3">
                     {[
-                      { key: "ageLimit", label: "18 yaşından büyük olduğumu onaylıyorum. *" },
-                      { key: "allTerms", label: "Tüm hüküm, koşul ve veri koruma kanunu yönergelerini kabul ediyorum. *" },
-                      { key: "agreement", label: "Üyelik Sözleşmesini okudum ve kabul ediyorum. *" },
-                      { key: "sales", label: "Mesafeli Satış Sözleşmesini okudum ve kabul ediyorum. *" },
-                      { key: "kvkk", label: "KVKK Aydınlatma Metnini okudum ve kabul ediyorum. *" },
-                      { key: "privacy", label: "Gizlilik ve Çerez Politikasını okudum ve kabul ediyorum. *" },
+                      { key: "ageLimit", element: <span>18 yaşından büyük olduğumu onaylıyorum. *</span> },
+                      { key: "allTerms", element: <span>Tüm hüküm, koşul ve veri koruma kanunu yönergelerini kabul ediyorum. *</span> },
+                      { key: "agreement", element: <span><Link href="/pages/uyelik-sozlesmesi" target="_blank" className="text-teal-600 hover:text-teal-700 underline font-bold">Üyelik Sözleşmesini</Link> okudum ve kabul ediyorum. *</span> },
+                      { key: "sales", element: <span><Link href="/pages/mesafeli-satis-sozlesmesi" target="_blank" className="text-teal-600 hover:text-teal-700 underline font-bold">Mesafeli Satış Sözleşmesini</Link> okudum ve kabul ediyorum. *</span> },
+                      { key: "kvkk", element: <span><Link href="/pages/KVKK-aydinlatma-metni" target="_blank" className="text-teal-600 hover:text-teal-700 underline font-bold">KVKK Aydınlatma Metnini</Link> okudum ve kabul ediyorum. *</span> },
+                      { key: "privacy", element: <span><Link href="/pages/gizlilik" target="_blank" className="text-teal-600 hover:text-teal-700 underline font-bold">Gizlilik ve Çerez Politikasını</Link> okudum ve kabul ediyorum. *</span> },
                     ].map((term) => (
-                      <label key={term.key} className="flex items-start gap-3 text-sm font-semibold text-gray-600 cursor-pointer hover:text-gray-900">
+                      <div key={term.key} className="flex items-start gap-3 text-sm font-semibold text-gray-600">
                         <input
+                          id={`term-${term.key}`}
                           type="checkbox"
                           checked={terms[term.key as keyof typeof terms]}
                           onChange={() => handleCheckboxChange(term.key as keyof typeof terms)}
-                          className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                          className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 cursor-pointer"
                         />
-                        {term.label}
-                      </label>
+                        <label htmlFor={`term-${term.key}`} className="cursor-pointer hover:text-gray-900 leading-normal">
+                          {term.element}
+                        </label>
+                      </div>
                     ))}
                   </div>
                 </div>

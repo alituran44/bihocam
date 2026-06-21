@@ -1,28 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PopupAnnouncement from "@/components/PopupAnnouncement";
 import AdBanner from "@/components/ads/AdBanner";
 import FeaturedCourses from "@/components/ads/FeaturedCourses";
-import { motion, AnimatePresence } from "framer-motion";
-import { coursesApi, publicApi, educationProgramsApi, EducationProgram, blogPublicApi, BlogPost } from "@/lib/api";
+import { motion, AnimatePresence, useInView } from "framer-motion";
+import CountUp from "react-countup";
+import { coursesApi, publicApi, educationProgramsApi, EducationProgram, blogPublicApi, BlogPost, popcastsApi, PopcastResponse, type Course } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import { usePopupAnnouncement } from "@/hooks/usePopupAnnouncement";
-
-interface Course {
-  id: string;
-  title: string;
-  slug: string;
-  thumbnail_path: string | null;
-  price: number;
-  discount_price: number | null;
-  teacher?: { id: string; full_name: string } | null;
-}
+import { Play, Pause, Headphones, Heart, Download } from "lucide-react";
 
 // Visual helpers for education program banners
 const getGradientBySlug = (slug: string) => {
@@ -156,6 +148,119 @@ export default function Home() {
   // Popup announcement
   const { activePopup, dismissPopup } = usePopupAnnouncement();
 
+  const queryClient = useQueryClient();
+  const [currentPlayingPopcast, setCurrentPlayingPopcast] = useState<PopcastResponse | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioProgress, setAudioProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Get approved popcasts for homepage
+  const { data: popcasts } = useQuery<PopcastResponse[]>({
+    queryKey: ["public-popcasts-homepage"],
+    queryFn: () => popcastsApi.list({ skip: 0, limit: 6 }),
+    enabled: !maintenanceMode,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Toggle favorite mutation
+  const favoriteMutation = useMutation({
+    mutationFn: async ({ id, isFav }: { id: string; isFav: boolean }) => {
+      if (isFav) {
+        return popcastsApi.unfavorite(id);
+      } else {
+        return popcastsApi.favorite(id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["public-popcasts-homepage"] });
+    },
+  });
+
+  useEffect(() => {
+    audioRef.current = new Audio();
+
+    const handleTimeUpdate = () => {
+      if (audioRef.current) {
+        setCurrentTime(audioRef.current.currentTime);
+        setAudioProgress((audioRef.current.currentTime / audioRef.current.duration) * 100 || 0);
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      if (audioRef.current) {
+        setAudioDuration(audioRef.current.duration);
+      }
+    };
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setAudioProgress(0);
+      setCurrentTime(0);
+    };
+
+    audioRef.current.addEventListener("timeupdate", handleTimeUpdate);
+    audioRef.current.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audioRef.current.addEventListener("ended", handleEnded);
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.removeEventListener("timeupdate", handleTimeUpdate);
+        audioRef.current.removeEventListener("loadedmetadata", handleLoadedMetadata);
+        audioRef.current.removeEventListener("ended", handleEnded);
+      }
+    };
+  }, []);
+
+  const handlePlayPause = (popcast: PopcastResponse) => {
+    if (!audioRef.current) return;
+
+    if (currentPlayingPopcast?.id === popcast.id) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.play().catch(() => {});
+        setIsPlaying(true);
+      }
+    } else {
+      audioRef.current.pause();
+      audioRef.current.src = popcast.audio_url;
+      setCurrentPlayingPopcast(popcast);
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(() => {});
+    }
+  };
+
+  const handleToggleFavorite = async (e: React.MouseEvent, id: string, isFav: boolean) => {
+    e.stopPropagation();
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    favoriteMutation.mutate({ id, isFav });
+  };
+
+  const handleDownload = (e: React.MouseEvent, url: string, title: string) => {
+    e.stopPropagation();
+    fetch(url)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${title}.mp3`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      })
+      .catch(() => {
+        window.open(url, "_blank");
+      });
+  };
+
   if (maintenanceMode && user?.role !== "admin") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4 relative overflow-hidden">
@@ -251,152 +356,428 @@ export default function Home() {
 
       <Header />
 
-      {/* Modern Sleek Hero (DersHerYerde Vibe) */}
-      <motion.section initial="hidden" animate="visible" variants={staggerContainer} className="relative pt-32 pb-24 md:pt-40 md:pb-36 bg-gradient-to-b from-teal-500/10 via-white to-transparent overflow-hidden">
-        {/* Glow Spheres */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-teal-200/30 rounded-full filter blur-3xl -z-10"></div>
-        <div className="absolute top-1/3 right-1/4 w-[25rem] h-[25rem] bg-indigo-200/20 rounded-full filter blur-3xl -z-10"></div>
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* HERO - ANIMATED PREMIUM REDESIGN                     */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <section className="relative pt-28 pb-20 md:pt-36 md:pb-32 overflow-hidden">
+        {/* Animated Mesh Gradient Background */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-teal-50/60 to-indigo-50/40" />
+          {/* Morphing Blob 1 */}
+          <motion.div
+            className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-teal-300/20 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.2, 1], x: [0, 40, 0], y: [0, -20, 0] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          />
+          {/* Morphing Blob 2 */}
+          <motion.div
+            className="absolute -bottom-20 -right-20 w-[500px] h-[500px] bg-indigo-300/20 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 20, 0] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          />
+          {/* Morphing Blob 3 */}
+          <motion.div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-rose-200/10 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.3, 1] }}
+            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+          />
+          {/* Dot grid pattern */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, #0d9488 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+        </div>
+
+        {/* Floating Education Icons */}
+        <div className="absolute inset-0 overflow-hidden -z-10 pointer-events-none">
+          {[
+            { emoji: '📚', top: '10%', left: '5%', delay: 0, duration: 5 },
+            { emoji: '🎓', top: '15%', right: '8%', delay: 1, duration: 6 },
+            { emoji: '✏️', top: '60%', left: '3%', delay: 2, duration: 4.5 },
+            { emoji: '🔬', bottom: '20%', right: '5%', delay: 0.5, duration: 7 },
+            { emoji: '📐', top: '35%', left: '8%', delay: 3, duration: 5.5 },
+            { emoji: '🧮', bottom: '30%', right: '10%', delay: 1.5, duration: 6 },
+            { emoji: '🌟', top: '75%', left: '15%', delay: 2.5, duration: 4 },
+            { emoji: '💡', top: '25%', right: '15%', delay: 1, duration: 5 },
+          ].map((item, i) => (
+            <motion.div
+              key={i}
+              className="absolute text-3xl select-none"
+              style={{ top: item.top, left: (item as any).left, right: (item as any).right, bottom: (item as any).bottom }}
+              animate={{ y: [0, -15, 0], rotate: [0, 5, -5, 0], opacity: [0.5, 0.9, 0.5] }}
+              transition={{ duration: item.duration, repeat: Infinity, ease: 'easeInOut', delay: item.delay }}
+            >
+              {item.emoji}
+            </motion.div>
+          ))}
+        </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Left Column Text */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+            
+            {/* ── LEFT COLUMN ── */}
             <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-100 text-teal-800 text-xs font-bold uppercase tracking-wider animate-bounce">
-                🚀 Türkiye'nin En İyi Eğitim Platformu!
-              </div>
 
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-gray-900 tracking-tight leading-none">
-                Geleceğinizi Şekillendirecek{" "}
-                <span className="bg-gradient-to-r from-teal-600 via-emerald-600 to-indigo-600 bg-clip-text text-transparent">
-                  Eğitmenler
-                </span>{" "}
-                Burada!
-              </h1>
+              {/* Badge */}
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-teal-500/10 to-indigo-500/10 border border-teal-300/40 text-teal-700 text-xs font-bold uppercase tracking-wider shadow-sm"
+              >
+                <motion.span
+                  animate={{ rotate: [0, 20, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  🚀
+                </motion.span>
+                Türkiye'nin En İyi Eğitim Platformu
+                <span className="flex w-2 h-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+                </span>
+              </motion.div>
 
-              <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-medium">
-                YKS, LGS, Lise, İlkokul ve tüm branşlarda Türkiye'nin en seçkin eğitmen kadrosuyla birebir canlı derslere, interaktif testlere ve yapay zeka asistanı desteğine hemen ulaşın.
-              </p>
+              {/* Headline */}
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="text-5xl md:text-6xl lg:text-7xl font-black text-gray-900 tracking-tight leading-[1.05]"
+              >
+                Geleceğinizi{" "}
+                <br className="hidden lg:block" />
+                Şekillendirecek{" "}
+                <span className="relative inline-block">
+                  <span className="text-shimmer">Eğitmenler</span>
+                  {/* Underline wave */}
+                  <motion.svg
+                    className="absolute -bottom-2 left-0 w-full"
+                    viewBox="0 0 300 12"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 1 }}
+                    transition={{ duration: 1.2, delay: 0.8 }}
+                  >
+                    <motion.path
+                      d="M0,8 Q75,0 150,8 Q225,16 300,8"
+                      fill="none"
+                      stroke="url(#waveGrad)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                    />
+                    <defs>
+                      <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#0d9488" />
+                        <stop offset="100%" stopColor="#6366f1" />
+                      </linearGradient>
+                    </defs>
+                  </motion.svg>
+                </span>
+                {" "}Burada!
+              </motion.h1>
 
-              <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+              {/* Subtitle */}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
+              >
+                YKS, LGS, Lise, İlkokul ve tüm branşlarda Türkiye'nin en seçkin eğitmen kadrosuyla{" "}
+                <span className="font-bold text-teal-700">birebir canlı dersler</span>,{" "}
+                <span className="font-bold text-indigo-700">interaktif testler</span> ve{" "}
+                <span className="font-bold text-rose-600">yapay zeka desteği</span>'ne hemen ulaşın.
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.6 }}
+                className="flex flex-wrap justify-center lg:justify-start gap-3 md:gap-4"
+              >
                 <Link
                   href="/register"
-                  className="px-8 py-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-bold rounded-2xl hover:shadow-xl hover:shadow-teal-500/20 transform hover:-translate-y-0.5 transition-all text-base"
+                  className="group relative px-5 lg:px-6 xl:px-8 py-3.5 xl:py-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-bold rounded-2xl text-sm lg:text-base overflow-hidden shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/40 transform hover:-translate-y-1 transition-all duration-300 whitespace-nowrap"
                 >
-                  Ücretsiz Başla →
+                  <span className="relative z-10 flex items-center gap-2">
+                    Ücretsiz Başla
+                    <motion.span animate={{ x: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
+                      →
+                    </motion.span>
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-teal-400 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </Link>
+
                 <Link
                   href="/become-instructor"
-                  className="px-8 py-4 bg-white text-gray-800 font-bold rounded-2xl border-2 border-gray-200 hover:border-teal-500 hover:text-teal-600 transform hover:-translate-y-0.5 transition-all text-base shadow-sm"
+                  className="px-5 lg:px-6 xl:px-8 py-3.5 xl:py-4 bg-white text-gray-800 font-bold rounded-2xl border-2 border-gray-200 hover:border-teal-500 hover:text-teal-600 transform hover:-translate-y-1 transition-all duration-300 text-sm lg:text-base shadow-sm whitespace-nowrap"
                 >
                   Eğitmen Olmak İstiyorum
                 </Link>
+
                 <Link
                   href="/tanisma-dersi"
-                  className="px-8 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-600/30 hover:bg-blue-700 transform hover:-translate-y-0.5 transition-all text-base"
+                  className="px-5 lg:px-6 xl:px-8 py-3.5 xl:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/40 transform hover:-translate-y-1 transition-all duration-300 text-sm lg:text-base whitespace-nowrap"
                 >
-                  Tanışma Dersi Al
+                  🎯 Tanışma Dersi Al
                 </Link>
-              </div>
+              </motion.div>
 
-              {/* Mini Stats Banner with Icons */}
-              <div className="pt-8 grid grid-cols-2 sm:grid-cols-4 gap-6 border-t border-gray-200/60 max-w-2xl mx-auto lg:mx-0">
-                {[
-                  { value: "15K+", label: "Aktif Öğrenci", icon: <svg className="w-6 h-6 text-teal-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg> },
-                  { value: "500+", label: "Premium Ders", icon: <svg className="w-6 h-6 text-indigo-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg> },
-                  { value: "100+", label: "Seçkin Eğitmen", icon: <svg className="w-6 h-6 text-rose-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6" /></svg> },
-                  { value: "4.9", label: "Ort. Puan", icon: <svg className="w-6 h-6 text-yellow-500 mb-2" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg> },
-                ].map((stat) => (
-                  <div key={stat.label} className="text-center lg:text-left flex flex-col items-center lg:items-start group">
-                    {stat.icon}
-                    <div className="text-2xl font-black text-gray-900 tracking-tight group-hover:text-teal-600 transition-colors">{stat.value}</div>
-                    <div className="text-xs font-bold text-gray-500 mt-1">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
+              {/* ── Animated Stats ── */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1, delay: 1 }}
+                className="pt-8 border-t border-gray-200/60"
+              >
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-2xl mx-auto lg:mx-0">
+                  {[
+                    { end: 15000, suffix: '+', label: 'Aktif Öğrenci', color: 'text-teal-600', bg: 'bg-teal-50', emoji: '👨‍🎓', decimals: 0, formattingFn: (v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}K+` : `${v}` },
+                    { end: 500, suffix: '+', label: 'Premium Ders', color: 'text-indigo-600', bg: 'bg-indigo-50', emoji: '📚', decimals: 0, formattingFn: (v: number) => `${Math.round(v)}+` },
+                    { end: 100, suffix: '+', label: 'Seçkin Eğitmen', color: 'text-rose-600', bg: 'bg-rose-50', emoji: '👨‍🏫', decimals: 0, formattingFn: (v: number) => `${Math.round(v)}+` },
+                    { end: 4.9, suffix: '', label: 'Ort. Puan', color: 'text-amber-600', bg: 'bg-amber-50', emoji: '⭐', decimals: 1, formattingFn: (v: number) => v.toFixed(1) },
+                  ].map((stat) => (
+                    <motion.div
+                      key={stat.label}
+                      whileHover={{ scale: 1.05 }}
+                      className={`${stat.bg} rounded-2xl p-4 text-center lg:text-left flex flex-col items-center lg:items-start gap-1 border border-white shadow-sm`}
+                    >
+                      <span className="text-2xl">{stat.emoji}</span>
+                      <div className={`text-2xl font-black ${stat.color} tracking-tight`}>
+                        <CountUp
+                          end={stat.end}
+                          duration={2.5}
+                          delay={1.2}
+                          decimals={stat.decimals}
+                          formattingFn={stat.formattingFn}
+                        />
+                      </div>
+                      <div className="text-xs font-bold text-gray-500">{stat.label}</div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
             </div>
 
-            {/* Right Column Image */}
-            <div className="lg:col-span-5 flex justify-center relative">
-              {/* Animated Floating Frame */}
-              <div className="relative w-full max-w-md transform hover:rotate-2 transition-transform duration-500">
-                <div className="absolute -inset-4 bg-gradient-to-tr from-teal-400 to-indigo-500 rounded-[2.5rem] blur-2xl opacity-30 -z-10 animate-pulse"></div>
-                <img
-                  src="/teacher_matching.png"
-                  alt="BiHocam Eğitim Asistanı"
-                  className="w-full object-contain rounded-[2rem] drop-shadow-2xl bg-white border border-gray-100 p-4"
+            {/* ── RIGHT COLUMN – Animated Visual ── */}
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1, delay: 0.3 }}
+              className="lg:col-span-5 flex justify-center relative"
+            >
+              {/* Outer glow ring */}
+              <div className="relative w-full max-w-[420px]">
+                {/* Spinning orbit ring 1 */}
+                <motion.div
+                  className="absolute inset-0 rounded-full border-2 border-dashed border-teal-300/40"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
                 />
+                {/* Spinning orbit ring 2 */}
+                <motion.div
+                  className="absolute -inset-8 rounded-full border border-dashed border-indigo-300/30"
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                />
+
+                {/* Floating badge cards */}
+                <motion.div
+                  className="absolute -top-6 -left-8 bg-white rounded-2xl shadow-xl border border-gray-100 px-4 py-3 flex items-center gap-3 z-20"
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center text-xl">✅</div>
+                  <div>
+                    <p className="text-xs font-black text-gray-800">Ders Tamamlandı!</p>
+                    <p className="text-[10px] text-gray-400">Matematik • 45 dk</p>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  className="absolute -bottom-4 -right-6 bg-white rounded-2xl shadow-xl border border-gray-100 px-4 py-3 flex items-center gap-3 z-20"
+                  animate={{ y: [0, 8, 0] }}
+                  transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+                >
+                  <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-xl">⭐</div>
+                  <div>
+                    <p className="text-xs font-black text-gray-800">Harika İlerleme!</p>
+                    <p className="text-[10px] text-gray-400">Bu haftaki performans</p>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  className="absolute top-1/2 -right-10 -translate-y-1/2 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl shadow-xl px-4 py-3 flex items-center gap-2 z-20"
+                  animate={{ x: [0, 6, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+                >
+                  <span className="text-2xl">🤖</span>
+                  <div>
+                    <p className="text-xs font-black text-white">AI Asistan</p>
+                    <p className="text-[10px] text-teal-100">Hazır & Aktif</p>
+                  </div>
+                </motion.div>
+
+                {/* Main Image with glow */}
+                <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white">
+                  <div className="absolute inset-0 bg-gradient-to-br from-teal-400/20 to-indigo-500/20 z-10" />
+                  <motion.img
+                    src="/teacher_student.png"
+                    alt="BiHocam Eğitim"
+                    className="w-full object-cover"
+                    animate={{ scale: [1, 1.02, 1] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/teacher_matching.png';
+                    }}
+                  />
+                  {/* Shimmer overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent animate-shimmer pointer-events-none" />
+                </div>
+
+                {/* Online indicator */}
+                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur rounded-full px-3 py-1.5 flex items-center gap-2 shadow-md z-20">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  </span>
+                  <span className="text-xs font-bold text-gray-700">Canlı Ders Aktif</span>
+                </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
+      </section>
 
-      </motion.section>
-
-
-
-      {/* Marquee Ticker */}
-      <div className="bg-teal-600 text-white py-3 overflow-hidden whitespace-nowrap border-y border-teal-700/50 relative shadow-inner">
-        <div className="absolute inset-0 bg-gradient-to-r from-teal-600 via-transparent to-teal-600 z-10 w-full pointer-events-none"></div>
-        <motion.div 
-          className="inline-block"
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* ANIMATED MARQUEE TICKER                              */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <div className="relative bg-gradient-to-r from-teal-600 via-teal-500 to-emerald-600 text-white py-4 overflow-hidden border-y border-teal-700/30 shadow-inner">
+        {/* Fade edges */}
+        <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-teal-600 to-transparent z-10" />
+        <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-emerald-600 to-transparent z-10" />
+        <motion.div
+          className="flex whitespace-nowrap"
           animate={{ x: ["0%", "-50%"] }}
-          transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
+          transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
         >
-          <div className="inline-flex gap-12 px-6 text-sm md:text-base font-semibold tracking-wide">
-            <span className="flex items-center gap-2">🚀 15.000+ Aktif Öğrenci</span>
-            <span className="flex items-center gap-2">⭐ 4.9 Ortalama Memnuniyet</span>
-            <span className="flex items-center gap-2">👨‍🏫 100+ Seçkin Eğitmen</span>
-            <span className="flex items-center gap-2">🎯 YKS'de Yüksek Başarı</span>
-            <span className="flex items-center gap-2">💻 Kişiselleştirilmiş Eğitim</span>
-            {/* Duplicate for seamless looping */}
-            <span className="flex items-center gap-2">🚀 15.000+ Aktif Öğrenci</span>
-            <span className="flex items-center gap-2">⭐ 4.9 Ortalama Memnuniyet</span>
-            <span className="flex items-center gap-2">👨‍🏫 100+ Seçkin Eğitmen</span>
-            <span className="flex items-center gap-2">🎯 YKS'de Yüksek Başarı</span>
-            <span className="flex items-center gap-2">💻 Kişiselleştirilmiş Eğitim</span>
-          </div>
+          {[...Array(2)].map((_, ri) => (
+            <div key={ri} className="flex items-center gap-10 px-6 text-sm md:text-base font-semibold tracking-wide">
+              {[
+                { icon: '🚀', text: '15.000+ Aktif Öğrenci' },
+                { icon: '⭐', text: '4.9 Ortalama Memnuniyet' },
+                { icon: '👨‍🏫', text: '100+ Seçkin Eğitmen' },
+                { icon: '🎯', text: "YKS'de Yüksek Başarı" },
+                { icon: '💻', text: 'Kişiselleştirilmiş Eğitim' },
+                { icon: '🏆', text: "Türkiye'nin #1 Eğitim Platformu" },
+                { icon: '📱', text: 'Her Cihazdan Erişim' },
+                { icon: '🤖', text: 'Yapay Zeka Destekli' },
+              ].map((item, i) => (
+                <span key={i} className="flex items-center gap-3">
+                  <span className="text-lg">{item.icon}</span>
+                  <span>{item.text}</span>
+                  <span className="text-teal-300/60 text-xl font-thin">|</span>
+                </span>
+              ))}
+            </div>
+          ))}
         </motion.div>
       </div>
 
-      {/* KATEGORİLER */}
-      <section className="py-20 bg-slate-50/50">
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* ANIMATED CATEGORY CARDS                              */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-4">Eğitim Kategorileri</h2>
-            <p className="text-slate-600 font-medium max-w-2xl mx-auto text-lg">
-              Size en uygun eğitimi seçin ve hemen başarıya adım atın. 
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-16"
+          >
+            <span className="inline-block px-4 py-1.5 bg-teal-100 text-teal-700 text-xs font-bold uppercase tracking-widest rounded-full mb-4">Kategoriler</span>
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">Eğitim Kategorileri</h2>
+            <p className="text-slate-500 font-medium max-w-2xl mx-auto text-lg">
+              Size en uygun eğitimi seçin ve hemen başarıya adım atın.
             </p>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { id: 'ilkokul', title: 'İlkokul', desc: 'Takviye dersler ve bursluluk sınavı hazırlığı', bg: 'bg-[#ff69b4]' },
-              { id: 'ortaokul', title: 'Ortaokul', desc: 'LGS hazırlık ve takviye dersler', bg: 'bg-[#ffeb3b]' },
-              { id: 'lise', title: 'Lise', desc: 'YKS hazırlık ve takviye dersler', bg: 'bg-[#20c997]' },
-              { id: 'yabanci-dil', title: 'Yabancı Dil', desc: 'Sınav hazırlığı ve dil becerileri', bg: 'bg-[#ff4d4f]' },
-              { id: 'kocluk', title: 'Koçluk', desc: 'Eğitim ve öğrenci koçluğu', bg: 'bg-[#0050ff]' },
-              { id: 'beceri', title: 'Beceri', desc: 'Hızlı okuma, robotik kodlama, müzik, vb', bg: 'bg-[#d946ef]' }
-            ].map(cat => (
-              <Link 
-                href={`/tanisma-dersi?category=${cat.id}`} 
-                key={cat.id} 
-                className="group flex flex-col bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl border border-slate-100 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+              { id: 'ilkokul', title: 'İlkokul', desc: 'Takviye dersler ve bursluluk sınavı hazırlığı', emoji: '🌱', gradient: 'from-pink-400 via-rose-400 to-pink-500', shadowColor: 'shadow-pink-300/50' },
+              { id: 'ortaokul', title: 'Ortaokul', desc: 'LGS hazırlık ve takviye dersler', emoji: '📖', gradient: 'from-amber-400 via-yellow-400 to-orange-400', shadowColor: 'shadow-amber-300/50' },
+              { id: 'lise', title: 'Lise', desc: 'YKS hazırlık ve takviye dersler', emoji: '🎯', gradient: 'from-teal-400 via-emerald-400 to-cyan-500', shadowColor: 'shadow-teal-300/50' },
+              { id: 'yabanci-dil', title: 'Yabancı Dil', desc: 'Sınav hazırlığı ve dil becerileri', emoji: '🌍', gradient: 'from-red-400 via-rose-500 to-pink-500', shadowColor: 'shadow-red-300/50' },
+              { id: 'kocluk', title: 'Koçluk', desc: 'Eğitim ve öğrenci koçluğu', emoji: '🧭', gradient: 'from-blue-500 via-indigo-500 to-violet-500', shadowColor: 'shadow-blue-300/50' },
+              { id: 'beceri', title: 'Beceri', desc: 'Hızlı okuma, robotik, müzik, vb.', emoji: '💡', gradient: 'from-violet-500 via-purple-500 to-fuchsia-500', shadowColor: 'shadow-violet-300/50' },
+            ].map((cat, i) => (
+              <motion.div
+                key={cat.id}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: i * 0.1 }}
               >
-                <div className={`h-48 w-full ${cat.bg} relative overflow-hidden flex items-end justify-center`}>
-                   {/* Decorative Circles */}
-                   <div className="absolute top-0 right-0 w-48 h-48 bg-white/20 rounded-full -mr-20 -mt-20"></div>
-                   <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/20 rounded-full -ml-16 -mb-16"></div>
-                   
-                   {/* Minimalist 3D-like Icon Avatar Placeholder */}
-                   <div className="w-28 h-28 bg-white/20 backdrop-blur-md rounded-t-full rounded-b-xl border-t-2 border-l-2 border-r-2 border-white/40 shadow-inner flex items-center justify-center translate-y-6 group-hover:translate-y-2 transition-transform duration-300">
-                     <span className="text-5xl drop-shadow-md">🎓</span>
-                   </div>
-                </div>
-                <div className="p-8 text-center bg-white flex-1 flex flex-col items-center justify-center pt-10">
-                  <h3 className="text-[1.7rem] font-black text-[#1e1b4b] mb-3">{cat.title}</h3>
-                  <p className="text-slate-500 text-[15px] font-semibold leading-relaxed">{cat.desc}</p>
-                </div>
-              </Link>
+                <Link
+                  href={`/tanisma-dersi?category=${cat.id}`}
+                  className="group block rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
+                >
+                  {/* Card top gradient area */}
+                  <div className={`relative h-44 bg-gradient-to-br ${cat.gradient} flex items-center justify-center overflow-hidden`}>
+                    {/* Animated circles */}
+                    <motion.div
+                      className="absolute -top-8 -right-8 w-32 h-32 bg-white/20 rounded-full"
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: i * 0.3 }}
+                    />
+                    <motion.div
+                      className="absolute -bottom-4 -left-4 w-20 h-20 bg-white/15 rounded-full"
+                      animate={{ scale: [1, 1.3, 1] }}
+                      transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: i * 0.2 }}
+                    />
+                    {/* Sparkle particles */}
+                    {[...Array(4)].map((_, pi) => (
+                      <motion.div
+                        key={pi}
+                        className="absolute w-1.5 h-1.5 bg-white/60 rounded-full"
+                        style={{
+                          top: `${20 + pi * 18}%`,
+                          left: `${10 + pi * 22}%`,
+                        }}
+                        animate={{ opacity: [0, 1, 0], scale: [0, 1.5, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, delay: pi * 0.5 + i * 0.3 }}
+                      />
+                    ))}
+                    {/* Central emoji */}
+                    <motion.div
+                      className="relative z-10 flex flex-col items-center"
+                      whileHover={{ scale: 1.2, rotate: 5 }}
+                    >
+                      <motion.span
+                        className="text-7xl drop-shadow-lg select-none"
+                        animate={{ y: [0, -8, 0] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
+                      >
+                        {cat.emoji}
+                      </motion.span>
+                    </motion.div>
+                  </div>
+
+                  {/* Card body */}
+                  <div className="bg-white px-6 py-5 flex items-center justify-between border-t-0">
+                    <div>
+                      <h3 className="text-xl font-black text-slate-900 group-hover:text-teal-600 transition-colors">{cat.title}</h3>
+                      <p className="text-slate-500 text-sm font-medium mt-0.5">{cat.desc}</p>
+                    </div>
+                    <motion.div
+                      className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 group-hover:bg-teal-500 flex items-center justify-center transition-all duration-300"
+                      whileHover={{ scale: 1.1 }}
+                    >
+                      <svg className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </motion.div>
+                  </div>
+                </Link>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -732,6 +1113,184 @@ export default function Home() {
               ))}
             </div>
           </div>
+        </motion.section>
+      )}
+
+      {/* Popcast Section */}
+      {popcasts && popcasts.length > 0 && (
+        <motion.section 
+          initial="hidden" 
+          whileInView="visible" 
+          viewport={{ once: true, amount: 0.1 }} 
+          variants={fadeUpVariants} 
+          className="py-24 bg-gradient-to-b from-slate-50 to-slate-100 relative overflow-hidden"
+        >
+          {/* Animated Background blobs */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
+            <div className="absolute top-20 left-10 w-72 h-72 bg-teal-200 rounded-full filter blur-3xl animate-blob"></div>
+            <div className="absolute bottom-20 right-10 w-72 h-72 bg-indigo-200 rounded-full filter blur-3xl animate-blob animation-delay-2000"></div>
+          </div>
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-4">
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-teal-50 border border-teal-100 rounded-full text-teal-600 text-xs font-bold uppercase tracking-wider">
+                  <Headphones className="w-3.5 h-3.5" /> BiHocam Popcast
+                </div>
+                <h2 className="text-4xl font-black text-gray-900 tracking-tight">Popcast ile Dinleyerek Öğren</h2>
+                <p className="text-gray-500 font-semibold text-base max-w-2xl">
+                  Eğitmenlerimizin hazırladığı kısa, keyifli sesli ders notlarını dinleyerek konuları pekiştirin. İstediğiniz an favorilerinize ekleyin veya çevrimdışı dinlemek üzere indirin.
+                </p>
+              </div>
+            </div>
+
+            {/* Popcast List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {popcasts.map((popcast) => {
+                const isCurrent = currentPlayingPopcast?.id === popcast.id;
+                const isPlayingThis = isCurrent && isPlaying;
+                
+                return (
+                  <div 
+                    key={popcast.id} 
+                    className="relative group bg-white/70 backdrop-blur-md rounded-3xl border border-white/40 p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* Cover Image / Audio Visualizer */}
+                      <div className="relative aspect-video rounded-2xl bg-gradient-to-br from-teal-400 to-indigo-500 overflow-hidden mb-6 flex items-center justify-center shadow-inner">
+                        {popcast.cover_image_url ? (
+                          <img 
+                            src={popcast.cover_image_url} 
+                            alt={popcast.title} 
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                          />
+                        ) : (
+                          <Headphones className="w-16 h-16 text-white/30 relative z-10" />
+                        )}
+                        <div className="absolute inset-0 bg-black/35 transition-opacity group-hover:bg-black/45" />
+
+                        {/* Floating Duration */}
+                        <span className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-[11px] font-black px-2.5 py-1 rounded-lg">
+                          {Math.floor(popcast.duration / 60)}:{(Math.floor(popcast.duration % 60)).toString().padStart(2, '0')}
+                        </span>
+
+                        {/* Play/Pause overlay */}
+                        <button 
+                          onClick={() => handlePlayPause(popcast)}
+                          className="absolute w-14 h-14 bg-teal-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 hover:bg-teal-600 transition-all duration-200 z-10"
+                        >
+                          {isPlayingThis ? (
+                            <Pause className="w-6 h-6 fill-white" />
+                          ) : (
+                            <Play className="w-6 h-6 fill-white translate-x-0.5" />
+                          )}
+                        </button>
+
+                        {/* Playing Visualizer Wave */}
+                        {isPlayingThis && (
+                          <div className="absolute bottom-3 left-3 flex items-end gap-0.5 h-6 z-10">
+                            <span className="w-1 bg-teal-400 animate-audio-bar-1 rounded-t"></span>
+                            <span className="w-1 bg-teal-400 animate-audio-bar-2 rounded-t"></span>
+                            <span className="w-1 bg-teal-400 animate-audio-bar-3 rounded-t"></span>
+                            <span className="w-1 bg-teal-400 animate-audio-bar-4 rounded-t"></span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Title & Desc */}
+                      <div className="space-y-2">
+                        <h3 className="font-bold text-gray-900 group-hover:text-teal-600 transition-colors text-lg line-clamp-1">
+                          {popcast.title}
+                        </h3>
+                        <p className="text-gray-400 text-sm line-clamp-2 leading-relaxed">
+                          {popcast.description || "Bu popcast için açıklama bulunmamaktadır."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 pt-5 border-t border-gray-100 flex items-center justify-between">
+                      {/* Teacher Profile */}
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+                          {popcast.teacher?.avatar_url ? (
+                            <img src={popcast.teacher.avatar_url} alt={popcast.teacher.full_name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-teal-600 text-white flex items-center justify-center text-xs font-bold">
+                              {popcast.teacher?.full_name?.charAt(0) || "E"}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs font-bold text-gray-700">{popcast.teacher?.full_name || "Eğitmen"}</span>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={(e) => handleToggleFavorite(e, popcast.id, popcast.is_favorited)}
+                          disabled={favoriteMutation.isPending}
+                          className={`w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center transition-colors ${popcast.is_favorited ? 'bg-rose-50 border-rose-100 text-rose-500 hover:bg-rose-100' : 'bg-white hover:bg-slate-50 text-gray-400 hover:text-gray-600'}`}
+                        >
+                          <Heart className={`w-4 h-4 ${popcast.is_favorited ? 'fill-rose-500' : ''}`} />
+                        </button>
+                        <button 
+                          onClick={(e) => handleDownload(e, popcast.audio_url, popcast.title)}
+                          className="w-9 h-9 bg-white hover:bg-slate-50 border border-gray-200 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Sticky Player HUD at the bottom when playing */}
+          <AnimatePresence>
+            {currentPlayingPopcast && (
+              <motion.div 
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 100, opacity: 0 }}
+                className="fixed bottom-6 left-1/2 -translate-x-1/2 max-w-xl w-[calc(100%-2rem)] bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-800 p-4 shadow-2xl flex items-center justify-between gap-4 z-50 text-white"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-teal-500/20 flex items-center justify-center flex-shrink-0 border border-teal-500/30 overflow-hidden">
+                    {currentPlayingPopcast.cover_image_url ? (
+                      <img src={currentPlayingPopcast.cover_image_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <Headphones className="w-5 h-5 text-teal-400" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-sm truncate leading-snug">{currentPlayingPopcast.title}</h4>
+                    <p className="text-[11px] text-teal-400/90 font-semibold truncate mt-0.5">{currentPlayingPopcast.teacher?.full_name || "Eğitmen"}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {/* Timeline progress indicator */}
+                  <div className="hidden sm:block text-xs font-semibold text-slate-400 tabular-nums">
+                    {Math.floor(currentTime / 60)}:{(Math.floor(currentTime % 60)).toString().padStart(2, '0')}
+                  </div>
+                  <div className="w-20 sm:w-32 h-1.5 bg-slate-800 rounded-full overflow-hidden relative">
+                    <div className="bg-teal-400 h-full transition-all duration-100" style={{ width: `${audioProgress}%` }}></div>
+                  </div>
+                  <div className="hidden sm:block text-xs font-semibold text-slate-400 tabular-nums">
+                    {Math.floor(audioDuration / 60)}:{(Math.floor(audioDuration % 60)).toString().padStart(2, '0')}
+                  </div>
+
+                  <button 
+                    onClick={() => handlePlayPause(currentPlayingPopcast)}
+                    className="w-10 h-10 bg-teal-500 text-white rounded-full flex items-center justify-center hover:scale-105 hover:bg-teal-600 transition-transform flex-shrink-0"
+                  >
+                    {isPlaying ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white translate-x-0.5" />}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.section>
       )}
 

@@ -49,6 +49,7 @@ from app.api.v1.endpoints import (
     social,
     ai_assistant,
     call_requests,
+    popcasts,
 )
 
 api_router = APIRouter()
@@ -107,4 +108,5 @@ api_router.include_router(homeworks.router, prefix="/homeworks", tags=["Homework
 api_router.include_router(exams.router, prefix="/exams", tags=["Exams"])
 api_router.include_router(social.router, prefix="/social", tags=["Social"])
 api_router.include_router(ai_assistant.router, prefix="/ai", tags=["AI Assistant"])
-api_router.include_router(call_requests.router, prefix="/call-requests", tags=["Call Requests"])
+api_router.include_router(call_requests.router, prefix="/call-requests", tags=["Call Requests"])
+api_router.include_router(popcasts.router, prefix="/popcasts", tags=["Popcasts"])

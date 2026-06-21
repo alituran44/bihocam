@@ -213,5 +213,15 @@ class CourseResponse(CourseBase):
     published_at: datetime | None = None
     lessons: list[LessonResponse] = []
 
+    @field_validator("thumbnail_path")
+    @classmethod
+    def get_thumbnail_url(cls, v: str | None) -> str | None:
+        if v:
+            if v.startswith("http://") or v.startswith("https://") or v.startswith("/api/v1/media"):
+                return v
+            filename = v.split("/")[-1]
+            return f"http://127.0.0.1:8000/api/v1/media/thumbnails/{filename}"
+        return v
+
     class Config:
         from_attributes = True

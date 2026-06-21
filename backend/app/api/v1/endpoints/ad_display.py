@@ -21,6 +21,15 @@ from app.services.ad_campaign_service import (
 router = APIRouter()
 
 
+def format_thumbnail_path(v: str | None) -> str | None:
+    if v:
+        if v.startswith("http://") or v.startswith("https://") or v.startswith("/api/v1/media"):
+            return v
+        filename = v.split("/")[-1]
+        return f"http://127.0.0.1:8000/api/v1/media/thumbnails/{filename}"
+    return v
+
+
 # ==================== Public Endpoints ====================
 
 @router.get(
@@ -123,7 +132,7 @@ async def get_ads_for_placement(
                     "title": course.title,
                     "slug": course.slug,
                     "description": description,
-                    "thumbnail_path": course.thumbnail_path,
+                    "thumbnail_path": format_thumbnail_path(course.thumbnail_path),
                     "price": float(course.price),
                     "discount_price": float(course.discount_price) if course.discount_price else None,
                     "teacher": {
@@ -253,7 +262,7 @@ async def get_featured_courses_public(
                     "id": course.id,
                     "title": course.title,
                     "slug": course.slug,
-                    "thumbnail_path": course.thumbnail_path,
+                    "thumbnail_path": format_thumbnail_path(course.thumbnail_path),
                     "price": float(course.price),
                     "discount_price": float(course.discount_price) if course.discount_price else None,
                     "teacher": {

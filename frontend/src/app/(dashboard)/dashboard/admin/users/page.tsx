@@ -87,6 +87,24 @@ export default function AdminUsersPage() {
     },
   });
 
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (userId: string) => usersApi.delete(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      alert("Kullanıcı kalıcı olarak silindi.");
+    },
+    onError: (err: any) => {
+      alert("Silme hatası: " + (err.response?.data?.detail || "Bilinmeyen hata"));
+    }
+  });
+
+  const handleDelete = (userId: string) => {
+    if (window.confirm("Bu kullanıcıyı kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz!")) {
+      deleteMutation.mutate(userId);
+    }
+  };
+
   const totalPages = data ? Math.ceil(data.total / limit) : 0;
 
   // Add CSS animation
@@ -286,8 +304,10 @@ export default function AdminUsersPage() {
                   index={index}
                   onDeactivate={() => deactivateMutation.mutate(userItem.id)}
                   onActivate={() => activateMutation.mutate(userItem.id)}
+                  onDelete={() => handleDelete(userItem.id)}
                   isDeactivating={deactivateMutation.isPending}
                   isActivating={activateMutation.isPending}
+                  isDeleting={deleteMutation.isPending && deleteMutation.variables === userItem.id}
                 />
               ))}
             </div>
@@ -301,8 +321,10 @@ export default function AdminUsersPage() {
                     index={index}
                     onDeactivate={() => deactivateMutation.mutate(userItem.id)}
                     onActivate={() => activateMutation.mutate(userItem.id)}
+                    onDelete={() => handleDelete(userItem.id)}
                     isDeactivating={deactivateMutation.isPending}
                     isActivating={activateMutation.isPending}
+                    isDeleting={deleteMutation.isPending && deleteMutation.variables === userItem.id}
                   />
                 ))}
               </div>
@@ -373,15 +395,19 @@ function UserCard({
   index,
   onDeactivate,
   onActivate,
+  onDelete,
   isDeactivating,
   isActivating,
+  isDeleting,
 }: {
   user: UserListItem;
   index: number;
   onDeactivate: () => void;
   onActivate: () => void;
+  onDelete: () => void;
   isDeactivating: boolean;
   isActivating: boolean;
+  isDeleting: boolean;
 }) {
   const router = useRouter();
   const initials = user.full_name
@@ -496,12 +522,19 @@ function UserCard({
         ) : (
           <button
             onClick={onActivate}
-            disabled={isActivating}
+            disabled={isActivating || isDeleting}
             className="px-4 py-2.5 bg-green-50 text-green-600 rounded-xl font-semibold text-sm hover:bg-green-100 transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 border-2 border-green-200"
           >
             {isActivating ? "..." : "Aktif"}
           </button>
         )}
+        <button
+          onClick={onDelete}
+          disabled={isDeleting}
+          className="px-4 py-2.5 bg-red-50 text-red-600 rounded-xl font-semibold text-sm hover:bg-red-100 transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 border-2 border-red-200"
+        >
+          {isDeleting ? "..." : "Sil"}
+        </button>
       </div>
 
       {/* Hover Glow Effect */}
@@ -516,15 +549,19 @@ function UserListRow({
   index,
   onDeactivate,
   onActivate,
+  onDelete,
   isDeactivating,
   isActivating,
+  isDeleting,
 }: {
   user: UserListItem;
   index: number;
   onDeactivate: () => void;
   onActivate: () => void;
+  onDelete: () => void;
   isDeactivating: boolean;
   isActivating: boolean;
+  isDeleting: boolean;
 }) {
   const router = useRouter();
   const initials = user.full_name
@@ -663,13 +700,30 @@ function UserListRow({
             </button>
           )}
 
+          <button
+            onClick={onDelete}
+            disabled={isDeleting}
+            className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all duration-200 transform hover:scale-110 active:scale-95 disabled:opacity-50 border-2 border-red-200 hover:border-red-300 group/btn"
+            title="Hesabı Kalıcı Olarak Sil"
+          >
+            {isDeleting ? (
+              <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <svg className="w-5 h-5 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            )}
+          </button>
+
           {/* More Actions Menu */}
           <MenuDropdown
             user={user}
             onDeactivate={onDeactivate}
             onActivate={onActivate}
+            onDelete={onDelete}
             isDeactivating={isDeactivating}
             isActivating={isActivating}
+            isDeleting={isDeleting}
           />
         </div>
       </div>
@@ -685,14 +739,18 @@ function MenuDropdown({
   user,
   onDeactivate,
   onActivate,
+  onDelete,
   isDeactivating,
   isActivating,
+  isDeleting,
 }: {
   user: UserListItem;
   onDeactivate: () => void;
   onActivate: () => void;
+  onDelete: () => void;
   isDeactivating: boolean;
   isActivating: boolean;
+  isDeleting: boolean;
 }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -761,12 +819,25 @@ function MenuDropdown({
                 user.is_active ? onDeactivate() : onActivate();
                 setIsOpen(false);
               }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-rose-50 transition-all duration-200 group/item"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-orange-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 transition-all duration-200 group/item"
             >
               <svg className="w-4 h-4 group-hover/item:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
               </svg>
               {user.is_active ? "Deaktif Et" : "Aktif Et"}
+            </button>
+
+            <button
+              onClick={() => {
+                onDelete();
+                setIsOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-rose-50 transition-all duration-200 group/item"
+            >
+              <svg className="w-4 h-4 group-hover/item:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Kalıcı Olarak Sil
             </button>
           </div>
         </div>

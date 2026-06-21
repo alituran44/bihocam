@@ -1998,3 +1998,91 @@ async def get_teacher_promo_video(
             content_type = "video/ogg"
             
         return StreamingResponse(generate(), media_type=content_type)
+
+
+@router.get("/popcasts/audio/{filename}")
+async def get_popcast_audio(
+    filename: str,
+    request: Request,
+    storage: StorageBackend = Depends(get_storage),
+):
+    """Popcast ses dosyasını range stream ile döndür (Public)"""
+    storage_key = f"popcasts/audio/{filename}"
+    try:
+        if not await storage.exists(storage_key):
+            raise StorageNotFoundError()
+    except StorageNotFoundError:
+        raise HTTPException(status_code=404, detail="Ses dosyası bulunamadı")
+        
+    try:
+        file_content = await storage.download(storage_key)
+    except StorageNotFoundError:
+        raise HTTPException(status_code=404, detail="Ses dosyası bulunamadı")
+        
+    range_header = request.headers.get("Range")
+    
+    if range_header:
+        range_match = range_header.replace("bytes=", "").split("-")
+        start = int(range_match[0]) if range_match[0] else 0
+        end = int(range_match[1]) if range_match[1] else len(file_content) - 1
+        
+        if start < 0 or end >= len(file_content) or start > end:
+            raise HTTPException(status_code=416, detail="Range Not Satisfiable")
+        
+        chunk = file_content[start:end + 1]
+        content_length = len(file_content)
+        
+        content_type = "audio/mpeg"
+        if filename.endswith(".wav"):
+            content_type = "audio/wav"
+        elif filename.endswith(".ogg"):
+            content_type = "audio/ogg"
+        elif filename.endswith(".m4a"):
+            content_type = "audio/mp4"
+        
+        return StreamingResponse(
+            iter([chunk]),
+            status_code=206,
+            media_type=content_type,
+            headers={
+                "Accept-Ranges": "bytes",
+                "Content-Range": f"bytes {start}-{end}/{content_length}",
+                "Content-Length": str(len(chunk)),
+            }
+        )
+    else:
+        def generate():
+            chunk_size = 8192
+            for i in range(0, len(file_content), chunk_size):
+                yield file_content[i:i + chunk_size]
+        
+        content_type = "audio/mpeg"
+        if filename.endswith(".wav"):
+            content_type = "audio/wav"
+        elif filename.endswith(".ogg"):
+            content_type = "audio/ogg"
+        elif filename.endswith(".m4a"):
+            content_type = "audio/mp4"
+            
+        return StreamingResponse(generate(), media_type=content_type)
+
+
+@router.get("/popcasts/covers/{filename}")
+async def get_popcast_cover(
+    filename: str,
+    storage: StorageBackend = Depends(get_storage),
+):
+    """Popcast kapak görselini döndür (Public)"""
+    storage_key = f"popcasts/covers/{filename}"
+    try:
+        file_content = await storage.download(storage_key)
+    except StorageNotFoundError:
+        raise HTTPException(status_code=404, detail="Kapak görseli bulunamadı")
+        
+    file_ext = Path(filename).suffix.lower()
+    content_type = f"image/{file_ext[1:] if file_ext != '.jpg' else 'jpeg'}"
+    
+    return StreamingResponse(
+        iter([file_content]),
+        media_type=content_type,
+    )

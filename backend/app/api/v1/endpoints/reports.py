@@ -208,11 +208,11 @@ async def get_earnings_report(
     
     # Interval'e göre tarih formatı
     if interval == "daily":
-        date_format = func.to_char(Order.created_at, "YYYY-MM-DD")
+        date_format = func.strftime("%Y-%m-%d", Order.created_at)
     elif interval == "weekly":
-        date_format = func.to_char(Order.created_at, "IYYY-IW")  # ISO week
+        date_format = func.strftime("%Y-%W", Order.created_at)  # SQLite ISO week equivalent is rough
     else:  # monthly
-        date_format = func.to_char(Order.created_at, "YYYY-MM")
+        date_format = func.strftime("%Y-%m", Order.created_at)
     
     # Group by'a göre sorgu
     if group_by == "course":

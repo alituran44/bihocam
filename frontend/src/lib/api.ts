@@ -4438,3 +4438,86 @@ export const socialApi = {
   },
 };
 
+// ── Popcast API ──
+export type PopcastStatus = "draft" | "pending_review" | "approved" | "rejected";
+
+export interface PopcastResponse {
+  id: string;
+  title: string;
+  description: string | null;
+  audio_url: string;
+  cover_image_url: string | null;
+  duration: number;
+  status: PopcastStatus;
+  admin_note: string | null;
+  teacher_id: string;
+  created_at: string;
+  updated_at: string;
+  teacher?: {
+    id: string;
+    full_name: string;
+    avatar_url: string | null;
+  } | null;
+  is_favorited: boolean;
+}
+
+export const popcastsApi = {
+  list: async (params?: { skip?: number; limit?: number; search?: string }): Promise<PopcastResponse[]> => {
+    const { data } = await api.get("/popcasts", { params });
+    return data;
+  },
+  getMe: async (): Promise<PopcastResponse[]> => {
+    const { data } = await api.get("/popcasts/me");
+    return data;
+  },
+  create: async (payload: { title: string; description?: string; audio_url: string; cover_image_url?: string; duration: number }): Promise<PopcastResponse> => {
+    const { data } = await api.post("/popcasts", payload);
+    return data;
+  },
+  update: async (id: string, payload: Partial<{ title: string; description: string; audio_url: string; cover_image_url: string; duration: number; status: PopcastStatus }>): Promise<PopcastResponse> => {
+    const { data } = await api.patch(`/popcasts/${id}`, payload);
+    return data;
+  },
+  delete: async (id: string): Promise<{ message: string }> => {
+    const { data } = await api.delete(`/popcasts/${id}`);
+    return data;
+  },
+  uploadAudio: async (file: File): Promise<{ filename: string; path: string; url: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post("/popcasts/upload-audio", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+  uploadCover: async (file: File): Promise<{ filename: string; path: string; url: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post("/popcasts/upload-cover", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+  favorite: async (id: string): Promise<{ message: string; success: boolean }> => {
+    const { data } = await api.post(`/popcasts/${id}/favorite`);
+    return data;
+  },
+  unfavorite: async (id: string): Promise<{ message: string; success: boolean }> => {
+    const { data } = await api.post(`/popcasts/${id}/unfavorite`);
+    return data;
+  },
+  getFavorites: async (): Promise<PopcastResponse[]> => {
+    const { data } = await api.get("/popcasts/favorites");
+    return data;
+  },
+  adminListAll: async (statusFilter?: PopcastStatus): Promise<PopcastResponse[]> => {
+    const params = statusFilter ? { status: statusFilter } : {};
+    const { data } = await api.get("/popcasts/admin/all", { params });
+    return data;
+  },
+  adminReview: async (id: string, payload: { status: PopcastStatus; admin_note?: string }): Promise<PopcastResponse> => {
+    const { data } = await api.post(`/popcasts/${id}/review`, payload);
+    return data;
+  },
+};
+

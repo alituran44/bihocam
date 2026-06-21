@@ -64,52 +64,146 @@ body {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-10px) rotate(2deg); }
+  66% { transform: translateY(-5px) rotate(-2deg); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-18px); }
+}
+
+@keyframes float-reverse {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(10px) rotate(-3deg); }
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-up {
-  animation: fadeUp 0.4s ease-out forwards;
-}
-
-.animate-float {
-  animation: float 4s ease-in-out infinite;
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes blob {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
 }
 
-.animate-blob {
-  animation: blob 7s infinite;
+@keyframes morph {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  33% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  66% { border-radius: 50% 60% 30% 70% / 40% 70% 60% 30%; }
 }
 
-.animation-delay-2000 {
-  animation-delay: 2s;
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.animation-delay-4000 {
-  animation-delay: 4s;
+@keyframes spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
 }
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(13, 148, 136, 0.3); }
+  50% { box-shadow: 0 0 50px rgba(13, 148, 136, 0.7), 0 0 100px rgba(13, 148, 136, 0.3); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(180deg); }
+}
+
+@keyframes wave {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes bounce-in {
+  0% { opacity: 0; transform: scale(0.3) translateY(30px); }
+  60% { transform: scale(1.05) translateY(-5px); }
+  80% { transform: scale(0.97) translateY(3px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Utility classes */
+.animate-fade-up { animation: fadeUp 0.4s ease-out forwards; }
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-float-slow { animation: float-slow 6s ease-in-out infinite; }
+.animate-float-reverse { animation: float-reverse 5s ease-in-out infinite; }
+.animate-blob { animation: blob 7s infinite; }
+.animate-morph { animation: morph 8s ease-in-out infinite; }
+.animate-spin-slow { animation: spin-slow 20s linear infinite; }
+.animate-spin-reverse { animation: spin-reverse 15s linear infinite; }
+.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+.animate-sparkle { animation: sparkle 2s ease-in-out infinite; }
+.animate-wave { animation: wave 20s linear infinite; }
+.animate-bounce-in { animation: bounce-in 0.8s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards; }
+.animate-gradient { animation: gradient-shift 4s ease infinite; background-size: 200% 200%; }
+
+.animation-delay-200 { animation-delay: 0.2s; }
+.animation-delay-400 { animation-delay: 0.4s; }
+.animation-delay-600 { animation-delay: 0.6s; }
+.animation-delay-800 { animation-delay: 0.8s; }
+.animation-delay-1000 { animation-delay: 1s; }
+.animation-delay-1500 { animation-delay: 1.5s; }
+.animation-delay-2000 { animation-delay: 2s; }
+.animation-delay-3000 { animation-delay: 3s; }
+.animation-delay-4000 { animation-delay: 4s; }
+
+/* Shimmer text effect */
+.text-shimmer {
+  background: linear-gradient(90deg, #0d9488, #06b6d4, #8b5cf6, #0d9488);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Orbiting element */
+.orbit-element {
+  position: absolute;
+  animation: orbit 8s linear infinite;
+}
+
 
 /* Gradient text */
 .text-gradient {
@@ -197,3 +291,26 @@ body {
   background-image: radial-gradient(circle, var(--gray-200) 1px, transparent 1px);
   background-size: 24px 24px;
 }
+
+/* Popcast Audio Wave Visualizer Animations */
+@keyframes audio-wave-1 {
+  0%, 100% { height: 4px; }
+  50% { height: 24px; }
+}
+@keyframes audio-wave-2 {
+  0%, 100% { height: 6px; }
+  50% { height: 18px; }
+}
+@keyframes audio-wave-3 {
+  0%, 100% { height: 8px; }
+  50% { height: 22px; }
+}
+@keyframes audio-wave-4 {
+  0%, 100% { height: 5px; }
+  50% { height: 16px; }
+}
+
+.animate-audio-bar-1 { animation: audio-wave-1 1.2s ease-in-out infinite; }
+.animate-audio-bar-2 { animation: audio-wave-2 0.8s ease-in-out infinite; }
+.animate-audio-bar-3 { animation: audio-wave-3 1.0s ease-in-out infinite; }
+.animate-audio-bar-4 { animation: audio-wave-4 1.4s ease-in-out infinite; }
