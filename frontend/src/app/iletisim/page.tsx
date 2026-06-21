@@ -39,7 +39,7 @@ const contactInfo = [
     ),
     title: "Telefon",
     value: "+90 8508405543",
-    sub: "Pzt–Cum 09:00–18:00",
+    sub: "Her Gün 09:00–22:00",
     color: "from-purple-500 to-pink-500",
     bg: "bg-purple-50",
   },
@@ -292,9 +292,9 @@ export default function ContactPage() {
               </h3>
               <div className="space-y-3">
                 {[
-                  { day: "Pazartesi – Cuma", hours: "09:00 – 18:00", open: true },
-                  { day: "Cumartesi", hours: "10:00 – 15:00", open: true },
-                  { day: "Pazar", hours: "Kapalı", open: false },
+                  { day: "Pazartesi – Cuma", hours: "09:00 – 22:00", open: true },
+                  { day: "Cumartesi", hours: "09:00 – 22:00", open: true },
+                  { day: "Pazar", hours: "09:00 – 22:00", open: true },
                 ].map((item) => (
                   <div key={item.day} className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">{item.day}</span>

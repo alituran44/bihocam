@@ -33,9 +33,9 @@ const initialContactInfo: ContactInfo = {
   email: "bilgi@bihocam.com",
   phone: "+90 8508405543",
   workingHours: {
-    weekdays: "09:00 – 18:00",
-    saturday: "10:00 – 15:00",
-    sunday: "Kapalı",
+    weekdays: "09:00 – 22:00",
+    saturday: "09:00 – 22:00",
+    sunday: "09:00 – 22:00",
   },
   social: {
     twitter: "https://twitter.com/bihocam",
