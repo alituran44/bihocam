@@ -2,9 +2,10 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
-import { paymentsApi } from "@/lib/api";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { paymentsApi, teachersApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
+import Link from "next/link";
 import {
   Loader2,
   ShieldCheck,
@@ -54,8 +55,47 @@ function CheckoutContent() {
 
   const couponCode = searchParams.get("coupon") || undefined;
 
+  // Package checkout params
+  const checkoutType = searchParams.get("type");
+  const teacherId = searchParams.get("teacher_id");
+  const weeks = searchParams.get("weeks") ? parseInt(searchParams.get("weeks")!) : null;
+  const hours = searchParams.get("hours") ? parseInt(searchParams.get("hours")!) : null;
+  const slotId = searchParams.get("slot_id");
+
+  const { data: teacherProfile } = useQuery({
+    queryKey: ["checkout-teacher", teacherId],
+    queryFn: () => teachersApi.get(teacherId!),
+    enabled: !!teacherId && checkoutType === "package",
+  });
+
+  const DISCOUNT_MAP: Record<number, number> = {
+    4: 0,
+    12: 10,
+    24: 15,
+    36: 20
+  };
+
+  const calcPackagePrice = () => {
+    if (!teacherProfile?.teacher?.live_class_price || !weeks || !hours) return 0;
+    const hourlyPrice = teacherProfile.teacher.live_class_price;
+    const subtotal = hourlyPrice * hours * weeks;
+    const discountPercent = DISCOUNT_MAP[weeks] || 0;
+    const discount = subtotal * (discountPercent / 100);
+    return Math.round(subtotal - discount);
+  };
+
+  const packagePrice = calcPackagePrice();
+
   const checkoutMutation = useMutation({
-    mutationFn: () => paymentsApi.checkout(couponCode, billingInfo),
+    mutationFn: () => {
+      const packageInfo = checkoutType === "package" && weeks && hours && teacherId && slotId ? {
+        weeks,
+        hours,
+        teacher_id: teacherId,
+        slot_id: slotId
+      } : undefined;
+      return paymentsApi.checkout(couponCode, billingInfo, packageInfo);
+    },
     onSuccess: (data) => {
       if (!data.iframe_token) {
         router.push(`/payment/success?oid=${data.order_id}`);
@@ -188,6 +228,24 @@ function CheckoutContent() {
                 Ödeme işlemine devam etmek için fatura bilgilerinizi doldurun.
               </p>
             </div>
+
+            {checkoutType === "package" && teacherProfile && (
+              <div className="bg-gradient-to-r from-teal-500/5 to-teal-600/5 border border-teal-100 rounded-2xl p-5 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-teal-100 flex items-center justify-center text-2xl flex-shrink-0">
+                    🎓
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-800 text-sm">{teacherProfile.teacher.full_name}</h3>
+                    <p className="text-[11px] text-slate-500 font-semibold">{weeks} Hafta Canlı Ders Paketi ({hours} Saat/Hafta)</p>
+                  </div>
+                </div>
+                <div className="border-t border-teal-100/50 pt-3 flex justify-between items-baseline">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Toplam Ödenecek Tutar</span>
+                  <span className="text-xl font-black text-teal-700">{packagePrice.toLocaleString("tr-TR")} TL</span>
+                </div>
+              </div>
+            )}
 
             {formError && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 flex items-start gap-2">
@@ -446,6 +504,16 @@ function CheckoutContent() {
               </ul>
             </div>
           </div>
+
+          {checkoutType === "package" && (
+            <div className="bg-teal-50 border border-teal-200 rounded-2xl p-5 flex justify-between items-center shadow-sm">
+              <div className="space-y-0.5">
+                <p className="text-xs font-bold text-teal-800 uppercase tracking-wider">Toplam Ödenecek Tutar</p>
+                <p className="text-xs text-teal-600 font-semibold">{weeks} Hafta Canlı Ders Paketi ({hours} Saat/Hafta)</p>
+              </div>
+              <span className="text-2xl font-black text-teal-700">{packagePrice.toLocaleString("tr-TR")} TL</span>
+            </div>
+          )}
 
           {/* Bank accounts */}
           {bankAccounts.map((acc) => (

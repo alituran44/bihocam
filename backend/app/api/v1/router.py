@@ -50,6 +50,7 @@ from app.api.v1.endpoints import (
     ai_assistant,
     call_requests,
     popcasts,
+    mock_exams,
 )
 
 api_router = APIRouter()
@@ -109,4 +110,5 @@ api_router.include_router(exams.router, prefix="/exams", tags=["Exams"])
 api_router.include_router(social.router, prefix="/social", tags=["Social"])
 api_router.include_router(ai_assistant.router, prefix="/ai", tags=["AI Assistant"])
 api_router.include_router(call_requests.router, prefix="/call-requests", tags=["Call Requests"])
-api_router.include_router(popcasts.router, prefix="/popcasts", tags=["Popcasts"])
+api_router.include_router(popcasts.router, prefix="/popcasts", tags=["Popcasts"])
+api_router.include_router(mock_exams.router, prefix="/mock-exams", tags=["MockExams"])

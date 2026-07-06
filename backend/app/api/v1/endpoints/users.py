@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.endpoints.auth import get_current_user
 from app.core.config import settings
-from app.core.security import get_password_hash, create_access_token
+from app.core.security import get_password_hash, create_access_token, create_password_reset_token
 from app.db.session import get_db
 from app.models.notification import NotificationType, NotificationPriority
 from app.models.user import User, UserRole
@@ -236,9 +236,11 @@ async def update_user(
         return user
     except Exception as e:
         await db.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"Error updating user: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Kullanıcı güncellenirken bir hata oluştu: {str(e)}"
+            detail="Kullanıcı güncellenirken bir hata oluştu."
         )
 
 
@@ -286,9 +288,11 @@ async def deactivate_user(
         return user
     except Exception as e:
         await db.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"Error deactivating user: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Hesap deaktif edilirken bir hata oluştu: {str(e)}"
+            detail="Hesap deaktif edilirken bir hata oluştu."
         )
 
 
@@ -416,7 +420,7 @@ async def reset_user_password(
     if reset_request.mode == "magic_link":
         # Magic link oluştur (24 saat geçerli)
         # JWT token ile password reset token oluştur
-        reset_token = create_access_token(
+        reset_token = create_password_reset_token(
             subject=user.id,
             expires_delta=timedelta(hours=settings.PASSWORD_RESET_TOKEN_EXPIRE_HOURS)
         )
@@ -479,9 +483,11 @@ async def reset_user_password(
             )
         except Exception as e:
             await db.rollback()
+            import logging
+            logging.getLogger(__name__).error(f"Error resetting password: {e}", exc_info=True)
             raise HTTPException(
                 status_code=500,
-                detail=f"Şifre sıfırlanırken bir hata oluştu: {str(e)}"
+                detail="Şifre sıfırlanırken bir hata oluştu."
             )
     
     else:

@@ -214,8 +214,29 @@ async def strip_trailing_slash(request: Request, call_next):
     return await call_next(request)
 
 # P1-03: Rate limiting
+import time
+
+async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    reset_time = getattr(exc, "reset_time", None)
+    retry_after = 60
+    if reset_time:
+        retry_after = max(1, int(reset_time - time.time()))
+        
+    response = JSONResponse(
+        status_code=429,
+        content={
+            "error": "Rate limit exceeded",
+            "detail": f"Çok fazla istek gönderildi. Lütfen {retry_after} saniye sonra tekrar deneyin.",
+            "retry_after_seconds": retry_after
+        },
+        headers={
+            "Retry-After": str(retry_after)
+        }
+    )
+    return response
+
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, custom_rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,

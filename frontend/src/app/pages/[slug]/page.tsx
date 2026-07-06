@@ -4,6 +4,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import DOMPurify from "isomorphic-dompurify";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { pagesApi } from "@/lib/api";
@@ -130,7 +131,7 @@ export default function PublicPageDetail() {
                       prose-p:text-base prose-p:font-medium
                       prose-ul:list-disc prose-ul:pl-6 prose-ul:space-y-2
                       prose-li:text-sm prose-li:font-semibold"
-                    dangerouslySetInnerHTML={{ __html: page.content }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(page.content) }}
                   />
                 </div>
               )}

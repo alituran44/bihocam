@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/lib/store";
-import { coursesApi, enrollmentsApi, courseReviewsApi, notificationsApi, categoriesApi, usersApi, ordersApi, bankAccountsApi, reportsApi, blogAdminApi, type Notification, type CourseStudent, type BankAccount } from "@/lib/api";
+import { coursesApi, enrollmentsApi, courseReviewsApi, notificationsApi, categoriesApi, usersApi, ordersApi, bankAccountsApi, reportsApi, blogAdminApi, mockExamsApi, popcastsApi, socialApi, type Notification, type CourseStudent, type BankAccount } from "@/lib/api";
 
 // Öğretmen Dashboard Component
 function TeacherDashboard() {
@@ -850,10 +850,104 @@ function TeacherDashboard() {
 
 // Öğrenci Dashboard Component
 function StudentDashboard() {
+  const queryClient = useQueryClient();
   const { data: enrollments, isLoading: enrollmentsLoading } = useQuery({
     queryKey: ["my-enrollments"],
     queryFn: () => enrollmentsApi.myEnrollments(),
   });
+
+  // Fetch assigned mock exams
+  const { data: mockExams } = useQuery<any[]>({
+    queryKey: ["student-mock-exams"],
+    queryFn: () => mockExamsApi.list(),
+  });
+
+  // Fetch popcasts (stories)
+  const { data: popcasts } = useQuery<any[]>({
+    queryKey: ["student-dashboard-popcasts"],
+    queryFn: () => popcastsApi.list(),
+  });
+
+  // Fetch followed teachers
+  const { data: followingList, refetch: refetchFollowing } = useQuery<any[]>({
+    queryKey: ["student-following"],
+    queryFn: () => socialApi.getFollowing(),
+  });
+  const followingIds = new Set(followingList?.map((f: any) => f.id) || []);
+
+  // Follow/unfollow mutations
+  const followMutation = useMutation({
+    mutationFn: (userId: string) => socialApi.followUser(userId),
+    onSuccess: () => {
+      refetchFollowing();
+      queryClient.invalidateQueries({ queryKey: ["student-following"] });
+    }
+  });
+
+  const unfollowMutation = useMutation({
+    mutationFn: (userId: string) => socialApi.unfollowUser(userId),
+    onSuccess: () => {
+      refetchFollowing();
+      queryClient.invalidateQueries({ queryKey: ["student-following"] });
+    }
+  });
+
+  // Calendar strip state
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  // Audio player state and hooks
+  const [activePopcast, setActivePopcast] = useState<any | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioProgress, setAudioProgress] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const audioElRef = useState(() => {
+    if (typeof window !== "undefined") return new Audio();
+    return null;
+  })[0];
+
+  useEffect(() => {
+    if (!audioElRef) return;
+    const handleTimeUpdate = () => {
+      setAudioProgress((audioElRef.currentTime / audioElRef.duration) * 100 || 0);
+    };
+    const handleLoadedMetadata = () => {
+      setAudioDuration(audioElRef.duration);
+    };
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setAudioProgress(0);
+    };
+    audioElRef.addEventListener("timeupdate", handleTimeUpdate);
+    audioElRef.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audioElRef.addEventListener("ended", handleEnded);
+
+    return () => {
+      audioElRef.pause();
+      audioElRef.removeEventListener("timeupdate", handleTimeUpdate);
+      audioElRef.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      audioElRef.removeEventListener("ended", handleEnded);
+    };
+  }, [audioElRef]);
+
+  const handlePlayPause = (popcast: any) => {
+    if (!audioElRef) return;
+    if (activePopcast?.id === popcast.id) {
+      if (isPlaying) {
+        audioElRef.pause();
+        setIsPlaying(false);
+      } else {
+        audioElRef.play().catch(() => {});
+        setIsPlaying(true);
+      }
+    } else {
+      audioElRef.pause();
+      audioElRef.src = popcast.audio_url;
+      setActivePopcast(popcast);
+      audioElRef.play().then(() => {
+        setIsPlaying(true);
+      }).catch(() => {});
+    }
+  };
 
   const enrolledCount = enrollments?.length || 0;
   const completedCount = enrollments?.filter((e: any) => e.progress_percentage === 100).length || 0;
@@ -943,8 +1037,110 @@ function StudentDashboard() {
     enabled: courseIds.length > 0 && !!enrollments,
   });
 
+  const getWeekDays = () => {
+    const today = new Date();
+    const currentDay = today.getDay();
+    const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + mondayOffset);
+
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      days.push(d);
+    }
+    return days;
+  };
+  const weekDays = getWeekDays();
+
+  const selectedDayLessons = upcomingLiveLessons?.filter((lesson: any) => {
+    if (!lesson.live_lesson_at) return false;
+    const d = new Date(lesson.live_lesson_at);
+    return d.toDateString() === selectedDate.toDateString();
+  }) || [];
+
+  const selectedDayExams = mockExams?.filter((exam: any) => {
+    if (!exam.start_date) return false;
+    const d = new Date(exam.start_date);
+    return d.toDateString() === selectedDate.toDateString();
+  }) || [];
+
+  const selectedDayEvents = [
+    ...selectedDayLessons.map(l => ({ type: "live_class", time: new Date(l.live_lesson_at), data: l })),
+    ...selectedDayExams.map(e => ({ type: "mock_exam", time: new Date(e.start_date), data: e }))
+  ].sort((a, b) => a.time.getTime() - b.time.getTime());
+
   return (
     <div className="space-y-8">
+      {/* Eğitmen Popcast Hikayeleri */}
+      {popcasts && popcasts.length > 0 && (
+        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-6 border border-gray-150 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-extrabold text-gray-900 flex items-center gap-2">
+              <span className="flex h-2.5 w-2.5 rounded-full bg-pink-500 animate-pulse"></span>
+              Eğitmen Paylaşımları & Popcast
+            </h3>
+            <span className="text-xs text-gray-500 font-semibold">{popcasts.length} aktif sesli hikaye</span>
+          </div>
+
+          <div className="flex items-center gap-6 overflow-x-auto pb-2 scrollbar-hide">
+            {popcasts.map((popcast) => {
+              const teacherName = popcast.teacher?.full_name || "Eğitmen";
+              const isPlayingThis = activePopcast?.id === popcast.id && isPlaying;
+
+              return (
+                <div
+                  key={popcast.id}
+                  onClick={() => handlePlayPause(popcast)}
+                  className="flex flex-col items-center gap-1.5 cursor-pointer shrink-0 group select-none"
+                >
+                  <div className="relative">
+                    <div className={`absolute -inset-1 rounded-full bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 transition-all ${
+                      isPlayingThis ? "animate-spin" : "group-hover:scale-105"
+                    }`}></div>
+                    
+                    <div className="relative w-16 h-16 rounded-full bg-white p-0.5 overflow-hidden">
+                      {popcast.teacher?.avatar_url ? (
+                        <img
+                          src={popcast.teacher.avatar_url}
+                          alt={teacherName}
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      ) : (
+                        <div className="w-full h-full rounded-full bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center text-indigo-600 font-black text-lg">
+                          {teacherName.slice(0, 1).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow border-2 border-white">
+                      {isPlayingThis ? (
+                        <svg className="w-3 h-3 fill-white" viewBox="0 0 24 24">
+                          <rect x="4" y="4" width="4" height="16" />
+                          <rect x="16" y="4" width="4" height="16" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3 h-3 fill-white ml-0.5" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+
+                  <span className="text-xs font-bold text-gray-700 max-w-[85px] truncate text-center group-hover:text-indigo-600 transition-colors">
+                    {teacherName}
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-semibold max-w-[85px] truncate text-center">
+                    {popcast.title}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
@@ -963,85 +1159,145 @@ function StudentDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Sol: Devam Et ve Bildirimler */}
+        {/* Sol: Devam Et ve Program */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Yaklaşan Canlı Dersler */}
-          {upcomingLiveLessons && upcomingLiveLessons.length > 0 && (
-            <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl p-6 shadow-sm border border-teal-100">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-900">Yaklaşan Canlı Dersler</h2>
-                </div>
-                <Link href="/dashboard/live-lessons" className="text-sm text-teal-600 hover:text-teal-700 font-semibold flex items-center gap-1">
-                  Tümünü Gör
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          {/* Haftalık Ders & Sınav Takvimi */}
+          <div className="bg-white rounded-[2rem] p-6 border border-gray-150 shadow-sm space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                </Link>
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">Haftalık Program</h2>
+                  <p className="text-xs text-gray-500 font-semibold">Derslerinizi ve sınavlarınızı gün gün takip edin</p>
+                </div>
               </div>
-              <div className="space-y-3">
-                {upcomingLiveLessons.map((lesson: any) => {
-                  const lessonDate = new Date(lesson.live_lesson_at);
-                  const now = new Date();
-                  const diffMs = lessonDate.getTime() - now.getTime();
-                  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-                  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                  const isSoon = diffHours < 24;
-                  
-                  return (
-                    <Link
-                      key={lesson.id}
-                      href={lesson.live_lesson_url || `/dashboard/courses/${lesson.course.id}`}
-                      className="block bg-white rounded-xl p-4 border border-teal-200 hover:border-teal-300 hover:shadow-md transition-all"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-xs font-medium text-teal-600 bg-teal-100 px-2 py-1 rounded-full">
-                              {lesson.course.title}
-                            </span>
-                            {isSoon && (
-                              <span className="text-xs font-medium text-orange-600 bg-orange-100 px-2 py-1 rounded-full">
-                                Yakında
-                              </span>
-                            )}
-                          </div>
-                          <h3 className="font-semibold text-gray-900 mb-1">{lesson.title}</h3>
-                          <p className="text-sm text-gray-600 mb-2">
-                            {lessonDate.toLocaleDateString("tr-TR", {
-                              day: "2-digit",
-                              month: "long",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
-                          {diffHours > 0 ? (
-                            <p className="text-xs text-gray-500">
-                              {diffHours} saat {diffMinutes} dakika sonra
-                            </p>
-                          ) : diffMinutes > 0 ? (
-                            <p className="text-xs text-orange-600 font-medium">
-                              {diffMinutes} dakika sonra başlıyor!
-                            </p>
-                          ) : (
-                            <p className="text-xs text-emerald-600 font-medium">Şimdi başlıyor!</p>
-                          )}
-                        </div>
-                        <svg className="w-5 h-5 text-teal-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
+              
+              <Link href="/dashboard/live-lessons" className="text-xs text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1">
+                Tüm Programı Gör
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
             </div>
-          )}
+
+            {/* Weekly Days Strip */}
+            <div className="grid grid-cols-7 gap-2">
+              {weekDays.map((day, idx) => {
+                const isSelected = day.toDateString() === selectedDate.toDateString();
+                const isToday = day.toDateString() === new Date().toDateString();
+                const dayName = day.toLocaleDateString("tr-TR", { weekday: "short" });
+                const dayNum = day.getDate();
+
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setSelectedDate(day)}
+                    className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all select-none ${
+                      isSelected
+                        ? "bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/25 scale-105"
+                        : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    <span className={`text-[10px] uppercase font-bold tracking-wider ${
+                      isSelected ? "text-indigo-100" : "text-gray-400"
+                    }`}>
+                      {dayName}
+                    </span>
+                    <span className="text-base font-extrabold mt-1">
+                      {dayNum}
+                    </span>
+                    {isToday && !isSelected && (
+                      <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full mt-1.5"></span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Daily Events List */}
+            <div className="space-y-3 pt-2">
+              {selectedDayEvents.length === 0 ? (
+                <div className="text-center py-10 bg-slate-50 border border-dashed border-slate-150 rounded-2xl flex flex-col items-center justify-center space-y-2">
+                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
+                    ☕
+                  </div>
+                  <div className="text-xs font-bold text-gray-800">
+                    Planlanmış ders veya sınav bulunmuyor
+                  </div>
+                  <div className="text-[10px] text-gray-400 font-semibold">
+                    Dinlenmek veya geçmiş konuları tekrar etmek için harika bir gün!
+                  </div>
+                </div>
+              ) : (
+                selectedDayEvents.map((event: any, idx: number) => {
+                  const timeStr = event.time.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+                  
+                  if (event.type === "live_class") {
+                    const lesson = event.data;
+                    return (
+                      <div
+                        key={`live-${lesson.id}-${idx}`}
+                        className="bg-teal-50/40 border border-teal-100/60 rounded-2xl p-4 flex items-center justify-between hover:shadow-sm transition-all animate-fadeIn"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center text-teal-600 text-sm font-bold shrink-0">
+                            {timeStr}
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-extrabold text-teal-600 tracking-wider bg-teal-100/60 px-2 py-0.5 rounded-full uppercase">
+                              Canlı Ders
+                            </span>
+                            <h4 className="font-bold text-gray-900 text-sm mt-1">{lesson.title}</h4>
+                            <p className="text-xs text-gray-500 font-semibold mt-0.5">{lesson.course.title}</p>
+                          </div>
+                        </div>
+
+                        <Link
+                          href={lesson.live_lesson_url || `/dashboard/courses/${lesson.course.id}`}
+                          className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow transition-all shrink-0"
+                        >
+                          Katıl
+                        </Link>
+                      </div>
+                    );
+                  } else {
+                    const exam = event.data;
+                    return (
+                      <div
+                        key={`exam-${exam.id}-${idx}`}
+                        className="bg-purple-50/40 border border-purple-100/60 rounded-2xl p-4 flex items-center justify-between hover:shadow-sm transition-all animate-fadeIn"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 text-sm font-bold shrink-0">
+                            {timeStr}
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-extrabold text-purple-600 tracking-wider bg-purple-100/60 px-2 py-0.5 rounded-full uppercase">
+                              Deneme Sınavı ({exam.exam_type})
+                            </span>
+                            <h4 className="font-bold text-gray-900 text-sm mt-1">{exam.title}</h4>
+                            <p className="text-xs text-gray-500 font-semibold mt-0.5">Süre: {exam.duration_minutes} dk | {exam.number_of_options} Şık</p>
+                          </div>
+                        </div>
+
+                        <Link
+                          href="/dashboard/student/mock-exams"
+                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow transition-all shrink-0"
+                        >
+                          Sınavı Çöz
+                        </Link>
+                      </div>
+                    );
+                  }
+                })
+              )}
+            </div>
+          </div>
 
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-6">
@@ -1375,6 +1631,130 @@ function StudentDashboard() {
           </div>
         </div>
       </div>
+      {/* Popcast Audio Player Modal */}
+      {activePopcast && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn">
+          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-2xl overflow-hidden max-w-md w-full animate-scaleUp">
+            <div className="relative aspect-video bg-gradient-to-br from-indigo-900 via-slate-800 to-indigo-950 overflow-hidden flex flex-col justify-between p-6">
+              {activePopcast.cover_image_url && (
+                <img
+                  src={activePopcast.cover_image_url}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay"
+                />
+              )}
+              <div className="flex items-center justify-between z-10">
+                <span className="text-xs font-bold bg-white/20 text-white backdrop-blur px-3 py-1 rounded-full">
+                  Popcast Dinle
+                </span>
+                <button
+                  onClick={() => {
+                    if (audioElRef) audioElRef.pause();
+                    setIsPlaying(false);
+                    setActivePopcast(null);
+                  }}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="z-10 text-white space-y-1">
+                <span className="text-xs font-bold text-teal-400 tracking-wider uppercase">
+                  {activePopcast.subject_name || "GENEL"}
+                </span>
+                <h4 className="text-xl font-extrabold tracking-tight">
+                  {activePopcast.title}
+                </h4>
+              </div>
+            </div>
+            <div className="p-6 space-y-6 bg-white">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-150">
+                    {activePopcast.teacher?.avatar_url ? (
+                      <img src={activePopcast.teacher.avatar_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg">
+                        {activePopcast.teacher?.full_name?.slice(0,1).toUpperCase() || "E"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-gray-900">{activePopcast.teacher?.full_name || "Eğitmen"}</h5>
+                    <p className="text-xs text-gray-500 font-semibold">{activePopcast.teacher?.bio || "BiHocam Eğitmeni"}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    const isFollowed = followingIds.has(activePopcast.teacher_id);
+                    if (isFollowed) {
+                      unfollowMutation.mutate(activePopcast.teacher_id);
+                    } else {
+                      followMutation.mutate(activePopcast.teacher_id);
+                    }
+                  }}
+                  className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all ${
+                    followingIds.has(activePopcast.teacher_id)
+                      ? "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
+                      : "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 shadow"
+                  }`}
+                >
+                  {followingIds.has(activePopcast.teacher_id) ? "Takibi Bırak" : "Takip Et"}
+                </button>
+              </div>
+              <div className="space-y-1.5">
+                <div className="relative w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="absolute top-0 left-0 h-full bg-indigo-600 transition-all duration-100"
+                    style={{ width: `${audioProgress}%` }}
+                  ></div>
+                </div>
+                <div className="flex justify-between text-[10px] text-gray-500 font-semibold">
+                  <span>
+                    {Math.floor((audioElRef?.currentTime || 0) / 60)}:
+                    {String(Math.floor((audioElRef?.currentTime || 0) % 60)).padStart(2, "0")}
+                  </span>
+                  <span>
+                    {Math.floor(audioDuration / 60)}:
+                    {String(Math.floor(audioDuration % 60)).padStart(2, "0")}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-center gap-6 pb-2">
+                <Link
+                  href={`/dashboard/messages?recipient_id=${activePopcast.teacher_id}`}
+                  onClick={() => {
+                    if (audioElRef) audioElRef.pause();
+                    setIsPlaying(false);
+                    setActivePopcast(null);
+                  }}
+                  className="w-12 h-12 rounded-full border border-gray-200 text-gray-600 flex items-center justify-center hover:bg-gray-50 hover:text-indigo-600 transition-colors shadow-sm"
+                  title="Mesaj Gönder"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </Link>
+                <button
+                  onClick={() => handlePlayPause(activePopcast)}
+                  className="w-16 h-16 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all"
+                >
+                  {isPlaying ? (
+                    <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24">
+                      <rect x="4" y="4" width="4" height="16" />
+                      <rect x="16" y="4" width="4" height="16" />
+                    </svg>
+                  ) : (
+                    <svg className="w-6 h-6 fill-white ml-1" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

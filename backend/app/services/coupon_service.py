@@ -33,12 +33,10 @@ async def get_active_site_wide_campaigns(
     query = (
         select(Coupon)
         .where(
-            and_(
-                text("coupons.trigger_type::text = 'site_wide'"),  # PostgreSQL text cast
-                Coupon.is_active == True,
-                Coupon.valid_from <= now,
-                Coupon.valid_until >= now,
-            )
+            Coupon.trigger_type == "site_wide",
+            Coupon.is_active == True,
+            Coupon.valid_from <= now,
+            Coupon.valid_until >= now,
         )
     )
     

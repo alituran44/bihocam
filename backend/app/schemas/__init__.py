@@ -88,6 +88,14 @@ from app.schemas.messaging import (
     MessageReportCreate,
 )
 from app.schemas.education_program import EducationProgramCreate, EducationProgramUpdate, EducationProgramResponse
+from app.schemas.mock_exam import (
+    MockExamCreate,
+    MockExamResponse,
+    MockExamAttemptSubmit,
+    MockExamAttemptResponse,
+    MockExamAttemptAnalysis,
+    MockExamAttemptListResponse,
+)
 
 __all__ = [
     "UserCreate", "UserUpdate", "UserResponse", "Token", "TokenPayload",
@@ -119,4 +127,6 @@ __all__ = [
     "MessageRecipient", "UnreadCountResponse",
     "UserBlockCreate", "MessageReportCreate",
     "EducationProgramCreate", "EducationProgramUpdate", "EducationProgramResponse",
+    "MockExamCreate", "MockExamResponse", "MockExamAttemptSubmit", "MockExamAttemptResponse", "MockExamAttemptAnalysis", "MockExamAttemptListResponse",
 ]
+

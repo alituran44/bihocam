@@ -57,6 +57,7 @@ from app.models.library import TeacherLibraryItem
 from app.models.education_program import EducationProgram
 from app.models.social import SocialPost, PostLike, SavedPost, UserFollow, MediaType
 from app.models.popcast import Popcast, UserPopcastFavorite, PopcastStatus
+from app.models.mock_exam import MockExam, MockExamQuestion, MockExamAttempt, MockExamStudentAnswer
 
 __all__ = [
     "User",
@@ -154,4 +155,9 @@ __all__ = [
     "Popcast",
     "UserPopcastFavorite",
     "PopcastStatus",
+    "MockExam",
+    "MockExamQuestion",
+    "MockExamAttempt",
+    "MockExamStudentAnswer",
 ]
+

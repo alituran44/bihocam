@@ -37,8 +37,15 @@ api.interceptors.response.use(
           const { useAuthStore } = require("./store");
           useAuthStore.getState().logout();
         } catch {}
-        window.location.href = "/login";
+        
+        // Prevent redirect loop if already on login page or sending login request
+        const isLoginPage = window.location.pathname === "/login";
+        const isLoginRequest = error.config?.url?.includes("/auth/login");
+        if (!isLoginPage && !isLoginRequest) {
+          window.location.href = "/login";
+        }
       }
+      return Promise.reject(error);
     }
     // Rate limiting (429) - show user-friendly message
     if (error.response?.status === 429) {
@@ -101,6 +108,14 @@ export const authApi = {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
     }
+  },
+  resetPassword: async (payload: { token: string; new_password: string }) => {
+    const { data } = await api.post("/auth/reset-password", payload);
+    return data;
+  },
+  getDemoAccounts: async () => {
+    const { data } = await api.get("/auth/demo-accounts");
+    return data;
   },
 };
 
@@ -507,6 +522,53 @@ export const mediaApi = {
     const { data } = await api.post("/media/upload-document", formData, config);
     return data;
   },
+
+  uploadGeneralImage: async (file: File, onProgress?: (progress: number) => void): Promise<any> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    const config: any = {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    };
+    
+    if (onProgress) {
+      config.onUploadProgress = (progressEvent: any) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percentCompleted);
+        }
+      };
+    }
+    
+    const { data } = await api.post("/media/upload-image", formData, config);
+    return data;
+  },
+
+  uploadGeneralFile: async (file: File, onProgress?: (progress: number) => void): Promise<any> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    const config: any = {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    };
+    
+    if (onProgress) {
+      config.onUploadProgress = (progressEvent: any) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percentCompleted);
+        }
+      };
+    }
+    
+    const { data } = await api.post("/media/upload-file", formData, config);
+    return data;
+  },
+
   
   // EPIC-10: Unified Content Upload (EP10-BE-04)
   uploadContent: async (lessonId: string, file: File, onProgress?: (progress: number) => void): Promise<UploadResponse> => {
@@ -807,12 +869,20 @@ export const couponsApi = {
 
 // Payments API (PayTR iFrame entegrasyonu)
 export const paymentsApi = {
-  checkout: async (couponCode?: string | null, billingInfo?: { full_name: string; phone: string; address: string }) => {
+  checkout: async (
+    couponCode?: string | null, 
+    billingInfo?: { full_name: string; phone: string; address: string },
+    packageInfo?: { weeks: number; hours: number; teacher_id: string; slot_id: string }
+  ) => {
     const params: Record<string, string> = {};
     if (couponCode) params.coupon_code = couponCode;
     if (billingInfo?.full_name) params.user_name = billingInfo.full_name;
     if (billingInfo?.phone) params.user_phone = billingInfo.phone;
     if (billingInfo?.address) params.user_address = billingInfo.address;
+    if (packageInfo?.weeks) params.package_weeks = String(packageInfo.weeks);
+    if (packageInfo?.hours) params.package_hours = String(packageInfo.hours);
+    if (packageInfo?.teacher_id) params.teacher_id = packageInfo.teacher_id;
+    if (packageInfo?.slot_id) params.slot_id = packageInfo.slot_id;
     const { data } = await api.post("/payments/checkout", null, { params });
     return data as {
       order_id: string;
@@ -1090,6 +1160,10 @@ export const teachersApi = {
   },
   deleteLibraryItem: async (itemId: string) => {
     const { data } = await api.delete(`/teachers/me/library/${itemId}`);
+    return data;
+  },
+  updateMyProfile: async (profile: TeacherProfileUpdate) => {
+    const { data } = await api.put("/teachers/me/profile", profile);
     return data;
   },
 };
@@ -1617,6 +1691,114 @@ export const emailLogsApi = {
   },
 };
 
+// Mock Exams API Types
+export interface MockExamQuestion {
+  id?: string;
+  mock_exam_id?: string;
+  question_number: number;
+  subject_name: string;
+  correct_answer?: string | null;
+  points: number;
+}
+
+export interface MockExam {
+  id: string;
+  title: string;
+  description?: string | null;
+  exam_type: string; // LGS, YKS
+  pdf_path: string;
+  duration_minutes: number;
+  number_of_options: number;
+  is_active: boolean;
+  created_by_id: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  course_id?: string | null;
+  student_id?: string | null;
+  created_at: string;
+  updated_at: string;
+  questions?: MockExamQuestion[];
+}
+
+export interface MockExamCreate {
+  title: string;
+  description?: string | null;
+  exam_type: string;
+  pdf_path: string;
+  duration_minutes: number;
+  number_of_options: number;
+  is_active: boolean;
+  start_date?: string | null;
+  end_date?: string | null;
+  course_id?: string | null;
+  student_id?: string | null;
+  questions: MockExamQuestion[];
+}
+
+export interface MockExamStudentAnswer {
+  id?: string;
+  attempt_id?: string;
+  question_number: number;
+  selected_answer: string | null;
+  is_correct?: boolean | null;
+}
+
+export interface MockExamAttempt {
+  id: string;
+  mock_exam_id: string;
+  student_id: string;
+  status: "in_progress" | "completed";
+  total_correct: number;
+  total_wrong: number;
+  total_empty: number;
+  total_net: number;
+  score: number;
+  started_at: string;
+  completed_at?: string | null;
+  answers?: MockExamStudentAnswer[];
+}
+
+export interface MockExamSubjectAnalysis {
+  subject_name: string;
+  total_questions: number;
+  correct: number;
+  wrong: number;
+  empty: number;
+  net: number;
+  accuracy_percentage: number;
+}
+
+export interface MockExamAnswerComparison {
+  question_number: number;
+  subject_name: string;
+  selected_answer: string | null;
+  correct_answer?: string | null;
+  is_correct?: boolean | null;
+}
+
+export interface MockExamAttemptAnalysis {
+  attempt: MockExamAttempt;
+  mock_exam_title: string;
+  mock_exam_type: string;
+  subjects_analysis: MockExamSubjectAnalysis[];
+  comparisons: MockExamAnswerComparison[];
+}
+
+export interface MockExamAttemptListItem {
+  id: string;
+  mock_exam_id: string;
+  mock_exam_title: string;
+  mock_exam_type: string;
+  status: string;
+  total_correct: number;
+  total_wrong: number;
+  total_empty: number;
+  total_net: number;
+  score: number;
+  started_at: string;
+  completed_at: string | null;
+}
+
 // Quizzes API
 export interface Quiz {
   id: string;
@@ -1930,6 +2112,9 @@ export interface TeacherProfileUpdate {
   avatar_url?: string;
   promo_images?: string[];
   promo_video?: string;
+  live_class_price?: number | null;
+  live_class_discount_price?: number | null;
+  live_class_link?: string | null;
   tax_info?: {
     iban?: string;
     company_type?: string;
@@ -4462,7 +4647,7 @@ export interface PopcastResponse {
 }
 
 export const popcastsApi = {
-  list: async (params?: { skip?: number; limit?: number; search?: string }): Promise<PopcastResponse[]> => {
+  list: async (params?: { skip?: number; limit?: number; search?: string; teacher_id?: string }): Promise<PopcastResponse[]> => {
     const { data } = await api.get("/popcasts", { params });
     return data;
   },
@@ -4520,4 +4705,47 @@ export const popcastsApi = {
     return data;
   },
 };
+
+// Mock Exams API client
+export const mockExamsApi = {
+  list: async (): Promise<MockExam[]> => {
+    const { data } = await api.get("/mock-exams");
+    return data;
+  },
+  listMyAttempts: async (): Promise<MockExamAttemptListItem[]> => {
+    const { data } = await api.get("/mock-exams/attempts/my");
+    return data;
+  },
+  get: async (id: string): Promise<MockExam> => {
+    const { data } = await api.get(`/mock-exams/${id}`);
+    return data;
+  },
+  create: async (payload: MockExamCreate): Promise<MockExam> => {
+    const { data } = await api.post("/mock-exams", payload);
+    return data;
+  },
+  update: async (id: string, payload: MockExamCreate): Promise<MockExam> => {
+    const { data } = await api.put(`/mock-exams/${id}`, payload);
+    return data;
+  },
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/mock-exams/${id}`);
+  },
+  startAttempt: async (id: string): Promise<MockExamAttempt> => {
+    const { data } = await api.post(`/mock-exams/${id}/attempts`);
+    return data;
+  },
+  submitAttempt: async (
+    attemptId: string,
+    payload: { answers: { question_number: number; selected_answer: string | null }[] }
+  ): Promise<MockExamAttempt> => {
+    const { data } = await api.post(`/mock-exams/attempts/${attemptId}/submit`, payload);
+    return data;
+  },
+  getAttemptAnalysis: async (attemptId: string): Promise<MockExamAttemptAnalysis> => {
+    const { data } = await api.get(`/mock-exams/attempts/${attemptId}/analysis`);
+    return data;
+  },
+};
+
 

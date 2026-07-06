@@ -149,6 +149,15 @@ export function QuizResultScreen({
                       <h4 className="font-semibold text-gray-900 mb-1">
                         Soru {index + 1}: {question.question_text}
                       </h4>
+                      {question.image_path && (
+                        <div className="my-2 border border-gray-150 rounded-xl overflow-hidden max-w-md">
+                          <img
+                            src={`http://localhost:8000/api/v1/media/thumbnails/${question.image_path.split("/").pop()}`}
+                            alt="Soru Görseli"
+                            className="w-full object-contain max-h-64"
+                          />
+                        </div>
+                      )}
                       <div className="text-sm text-gray-600 mb-2">
                         {question.points} puan
                       </div>
@@ -186,7 +195,21 @@ export function QuizResultScreen({
                         <span className="text-sm text-blue-700">{question.explanation}</span>
                       </div>
                     )}
+                    {question.solution_file_path && (
+                      <div className="mt-2 text-xs">
+                        <span className="font-semibold text-gray-600">Çözüm Dosyası:</span>{" "}
+                        <a
+                          href={`http://localhost:8000/api/v1/media/${question.solution_file_path.includes('videos') ? 'videos' : question.solution_file_path.includes('documents') ? 'documents' : 'thumbnails'}/${question.solution_file_path.split('/').pop()}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-teal-600 hover:text-teal-700 underline font-medium inline-flex items-center gap-1"
+                        >
+                          Dosyayı Görüntüle / İndir ({question.solution_file_path.split("/").pop()})
+                        </a>
+                      </div>
+                    )}
                   </div>
+
                 </motion.div>
               );
             })}

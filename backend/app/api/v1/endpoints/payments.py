@@ -62,13 +62,168 @@ async def checkout(
     user_name: str | None = None,
     user_phone: str | None = None,
     user_address: str | None = None,
+    package_weeks: int | None = None,
+    package_hours: int | None = None,
+    teacher_id: str | None = None,
+    slot_id: str | None = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
     Sepetten sipariş oluştur ve PayTR iFrame token'ı al.
-    Frontend bu token ile iFrame'i açar.
+    Veya canlı ders paketi için sipariş oluştur.
     """
+    if package_weeks is not None:
+        # 1. Fetch teacher
+        teacher_result = await db.execute(select(User).where(User.id == teacher_id, User.role == "teacher"))
+        teacher = teacher_result.scalar_one_or_none()
+        if not teacher:
+            raise HTTPException(status_code=404, detail="Öğretmen bulunamadı")
+
+        # 2. Calculate subtotal & total
+        hourly_price = teacher.live_class_price or 0.0
+        subtotal = Decimal(str(hourly_price)) * Decimal(str(package_hours)) * Decimal(str(package_weeks))
+        
+        discount_percent = 0
+        if package_weeks == 12: discount_percent = 10
+        elif package_weeks == 24: discount_percent = 15
+        elif package_weeks == 36: discount_percent = 20
+        
+        discount_amount = subtotal * Decimal(str(discount_percent)) / Decimal("100")
+        total = subtotal - discount_amount
+
+        # 3. Create or verify LiveClassReservation (status: pending)
+        from app.models.live_class import TeacherAvailability, LiveClassReservation
+        
+        # Check slot availability
+        slot_result = await db.execute(
+            select(TeacherAvailability).where(
+                TeacherAvailability.id == slot_id,
+                TeacherAvailability.is_booked == False
+            )
+        )
+        slot = slot_result.scalar_one_or_none()
+        if slot:
+            slot.is_booked = True
+            reservation = LiveClassReservation(
+                teacher_id=teacher_id,
+                student_id=current_user.id,
+                availability_id=slot.id,
+                date=slot.date,
+                start_time=slot.start_time,
+                end_time=slot.end_time,
+                price=Decimal(str(hourly_price)),
+                discount_price=None,
+                status="pending",
+                student_notes="Ders paketi rezervasyonu"
+            )
+            db.add(reservation)
+            await db.flush()
+        else:
+            # Check if there is an active reservation already
+            res_check = await db.execute(
+                select(LiveClassReservation).where(
+                    LiveClassReservation.availability_id == slot_id,
+                    LiveClassReservation.student_id == current_user.id
+                )
+            )
+            if not res_check.scalar_one_or_none():
+                raise HTTPException(status_code=400, detail="Seçilen canlı ders slotu uygun değil veya rezerve edilmiş")
+
+        # 4. Create dummy course for package representation if not exists
+        dummy_course_result = await db.execute(
+            select(Course).where(Course.slug == "canli-ders-paketi")
+        )
+        dummy_course = dummy_course_result.scalar_one_or_none()
+        if not dummy_course:
+            import uuid
+            dummy_course_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, "canli-ders-paketi"))
+            dummy_course = Course(
+                id=dummy_course_uuid,
+                title="Canlı Ders Paketi",
+                slug="canli-ders-paketi",
+                price=total,
+                status="published",
+                teacher_id=teacher_id
+            )
+            db.add(dummy_course)
+            await db.flush()
+
+        # 5. Create Order
+        order = Order(
+            order_number=generate_order_number(),
+            user_id=current_user.id,
+            subtotal=subtotal,
+            discount_amount=discount_amount,
+            total=total,
+            status=OrderStatus.PENDING,
+            payment_method=PaymentMethod.CREDIT_CARD,
+            notes=f"package_purchase | slot_id: {slot_id}"
+        )
+        db.add(order)
+        await db.flush()
+
+        # 6. Create OrderItem
+        commission_rate = await get_platform_commission_rate(db)
+        platform_commission, teacher_earnings = calculate_commission(total, commission_rate)
+        db.add(OrderItem(
+            order_id=order.id,
+            course_id=dummy_course.id,
+            price=subtotal,
+            discount_price=discount_amount,
+            final_price=total,
+            platform_commission_rate=commission_rate,
+            platform_commission=platform_commission,
+            teacher_earnings=teacher_earnings,
+        ))
+        await db.flush()
+        await db.commit()
+
+        # Get PayTR token
+        try:
+            user_ip = _get_client_ip(request)
+            user_basket = _build_user_basket([
+                {
+                    "name": f"{package_weeks} Hafta Canlı Ders Paketi ({package_hours} Saat/Hafta)",
+                    "price": total,
+                    "quantity": 1
+                }
+            ])
+            
+            paytr_result = await get_iframe_token(
+                user_ip=user_ip,
+                merchant_oid=order.order_number,
+                email=current_user.email,
+                payment_amount=_amount_to_int(total),
+                user_basket=user_basket,
+                user_name=user_name or current_user.full_name or "Müşteri",
+                user_phone=user_phone or getattr(current_user, "phone", None) or "05000000000",
+                user_address=user_address or "Türkiye",
+                merchant_ok_url=f"{settings.FRONTEND_URL}/payment/success?oid={order.id}",
+                merchant_fail_url=f"{settings.FRONTEND_URL}/payment/fail",
+            )
+            
+            if paytr_result.get("status") != "success":
+                logger.error(f"PayTR token failed for {order.order_number}: {paytr_result}")
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Ödeme sistemi hatası: {paytr_result.get('reason', 'Bilinmeyen hata')}",
+                )
+
+            token = paytr_result["token"]
+            return CheckoutResponse(
+                order_id=order.id,
+                order_number=order.order_number,
+                iframe_token=token,
+                iframe_url=f"{PAYTR_IFRAME_BASE}/{token}",
+                total=f"{total:.2f}",
+            )
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"PayTR token generation failed for order {order.order_number}: {e}")
+            raise HTTPException(status_code=500, detail="Ödeme formu oluşturulurken bir hata oluştu")
+
     # 1. Sepeti çek
     cart_result = await db.execute(
         select(CartItem)
@@ -353,6 +508,18 @@ async def payment_callback(
         try:
             await _create_enrollments_for_order(db, order)
             await _create_teacher_earnings_for_order(db, order)
+            # If it's a package purchase, approve the corresponding LiveClassReservation
+            if order.notes and "slot_id:" in order.notes:
+                parts = order.notes.split("slot_id:")
+                if len(parts) > 1:
+                    slot_id = parts[1].strip()
+                    from app.models.live_class import LiveClassReservation
+                    res_query = await db.execute(
+                        select(LiveClassReservation).where(LiveClassReservation.availability_id == slot_id)
+                    )
+                    reservation = res_query.scalar_one_or_none()
+                    if reservation:
+                        reservation.status = "approved"
             await db.commit()
             logger.info(f"Order {merchant_oid} PAID — enrollments + earnings created")
         except IntegrityError as e:
@@ -361,6 +528,17 @@ async def payment_callback(
             # Yeniden dene — idempotent
             order.status = OrderStatus.PAID
             order.paid_at = datetime.now()
+            if order.notes and "slot_id:" in order.notes:
+                parts = order.notes.split("slot_id:")
+                if len(parts) > 1:
+                    slot_id = parts[1].strip()
+                    from app.models.live_class import LiveClassReservation
+                    res_query = await db.execute(
+                        select(LiveClassReservation).where(LiveClassReservation.availability_id == slot_id)
+                    )
+                    reservation = res_query.scalar_one_or_none()
+                    if reservation:
+                        reservation.status = "approved"
             await db.commit()
 
         # Bildirim gönder (non-blocking)
@@ -389,6 +567,24 @@ async def payment_callback(
             "failed_reason_code": failed_reason_code,
             "failed_reason_msg": failed_reason_msg,
         })
+        # Free slot if package purchase
+        if order.notes and "slot_id:" in order.notes:
+            parts = order.notes.split("slot_id:")
+            if len(parts) > 1:
+                slot_id = parts[1].strip()
+                from app.models.live_class import TeacherAvailability, LiveClassReservation
+                res_query = await db.execute(
+                    select(LiveClassReservation).where(LiveClassReservation.availability_id == slot_id)
+                )
+                reservation = res_query.scalar_one_or_none()
+                if reservation:
+                    reservation.status = "rejected"
+                slot_query = await db.execute(
+                    select(TeacherAvailability).where(TeacherAvailability.id == slot_id)
+                )
+                slot = slot_query.scalar_one_or_none()
+                if slot:
+                    slot.is_booked = False
         await db.commit()
         logger.info(f"Order {merchant_oid} FAILED: {failed_reason_code} - {failed_reason_msg}")
 

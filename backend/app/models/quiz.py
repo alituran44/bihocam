@@ -100,6 +100,9 @@ class QuizQuestion(Base):
     
     # Explanation shown after answer
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
+    image_path: Mapped[str | None] = mapped_column(String(500), nullable=True)  # Soru resmi
+    solution_file_path: Mapped[str | None] = mapped_column(String(500), nullable=True)  # Çözüm dosyası (pdf, doc, resim, video vb.)
+
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

@@ -119,6 +119,13 @@ async def get_iframe_token(
     PayTR'den iFrame token alır.
     Başarılıysa {"status": "success", "token": "..."} döner.
     """
+    if not settings.PAYTR_MERCHANT_ID or settings.PAYTR_MERCHANT_ID == "MOCK":
+        logger.warning(f"PayTR credentials not configured. Returning mock token for order {merchant_oid}")
+        return {
+            "status": "success",
+            "token": f"mock_token_{merchant_oid}"
+        }
+
     if merchant_ok_url is None:
         merchant_ok_url = f"{settings.FRONTEND_URL}/payment/success"
     if merchant_fail_url is None:

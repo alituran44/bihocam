@@ -31,6 +31,27 @@ import Footer from "@/components/Footer";
 import { SEOHead } from "@/components/blog/SEOHead";
 import AdBanner from "@/components/ads/AdBanner";
 
+const getFallbackBlogImage = (slug?: string) => {
+  const images = [
+    "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1518655061766-48f23af930f0?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1558021211-6d1403321394?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1484417894907-623942c8ea29?auto=format&fit=crop&w=600&q=80"
+  ];
+  if (!slug) return images[0];
+  let sum = 0;
+  for (let i = 0; i < slug.length; i++) {
+    sum += slug.charCodeAt(i);
+  }
+  return images[sum % images.length];
+};
+
 export default function BlogListPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
@@ -311,15 +332,14 @@ export default function BlogListPage() {
                             className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl hover:border-slate-200/80 transition-all cursor-pointer group flex flex-col justify-between min-h-[460px]"
                           >
                             <div className="aspect-[21/9] bg-slate-100 relative overflow-hidden flex-shrink-0">
-                              {featuredPosts[0].featured_image_url ? (
-                                <img
-                                  src={featuredPosts[0].featured_image_url}
-                                  alt={featuredPosts[0].title}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-5xl bg-gradient-to-br from-teal-50 to-blue-50">✍️</div>
-                              )}
+                              <img
+                                src={featuredPosts[0].featured_image_url || getFallbackBlogImage(featuredPosts[0].slug)}
+                                alt={featuredPosts[0].title}
+                                onError={(e) => {
+                                  e.currentTarget.src = getFallbackBlogImage(featuredPosts[0].slug);
+                                }}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
                               <span className="absolute top-4 left-4 px-3 py-1.5 bg-slate-900/85 text-white text-[10px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1">
                                 <Sparkles className="w-3 h-3 text-amber-400" /> ÖNE ÇIKAN
                               </span>
@@ -371,15 +391,16 @@ export default function BlogListPage() {
                             onClick={() => router.push(`/blog/${post.slug}`)}
                             className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-md hover:border-slate-200/50 transition-all cursor-pointer group space-y-3"
                           >
-                            {post.featured_image_url && (
-                              <div className="aspect-[21/9] rounded-2xl overflow-hidden bg-slate-50">
-                                <img
-                                  src={post.featured_image_url}
-                                  alt={post.title}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                />
-                              </div>
-                            )}
+                            <div className="aspect-[21/9] rounded-2xl overflow-hidden bg-slate-50">
+                              <img
+                                src={post.featured_image_url || getFallbackBlogImage(post.slug)}
+                                alt={post.title}
+                                onError={(e) => {
+                                  e.currentTarget.src = getFallbackBlogImage(post.slug);
+                                }}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
                             <span className="text-[9px] font-black text-blue-600 uppercase tracking-wider bg-blue-50 px-2 py-0.5 rounded inline-block">
                               {post.categories?.[0]?.name || "Eğitim"}
                             </span>
@@ -428,15 +449,16 @@ export default function BlogListPage() {
                                 className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-lg hover:border-slate-200/50 transition-all cursor-pointer group flex flex-col justify-between min-h-[360px]"
                               >
                                 <div>
-                                  {post.featured_image_url && (
-                                    <div className="aspect-video bg-slate-50 rounded-2xl overflow-hidden mb-4">
-                                      <img
-                                        src={post.featured_image_url}
-                                        alt={post.title}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350"
-                                      />
-                                    </div>
-                                  )}
+                                  <div className="aspect-video bg-slate-50 rounded-2xl overflow-hidden mb-4">
+                                    <img
+                                      src={post.featured_image_url || getFallbackBlogImage(post.slug)}
+                                      alt={post.title}
+                                      onError={(e) => {
+                                        e.currentTarget.src = getFallbackBlogImage(post.slug);
+                                      }}
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350"
+                                    />
+                                  </div>
                                   
                                   <div className="space-y-2">
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">
@@ -492,19 +514,16 @@ export default function BlogListPage() {
                           className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-lg hover:border-slate-200/50 transition-all cursor-pointer group flex flex-col justify-between min-h-[380px]"
                         >
                           <div>
-                            {post.featured_image_url ? (
-                              <div className="aspect-video bg-slate-50 rounded-2xl overflow-hidden mb-4">
-                                <img
-                                  src={post.featured_image_url}
-                                  alt={post.title}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                />
-                              </div>
-                            ) : (
-                              <div className="aspect-video bg-gradient-to-br from-teal-50 to-blue-50 rounded-2xl flex items-center justify-center text-4xl mb-4">
-                                ✍️
-                              </div>
-                            )}
+                            <div className="aspect-video bg-slate-50 rounded-2xl overflow-hidden mb-4">
+                              <img
+                                src={post.featured_image_url || getFallbackBlogImage(post.slug)}
+                                alt={post.title}
+                                onError={(e) => {
+                                  e.currentTarget.src = getFallbackBlogImage(post.slug);
+                                }}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
 
                             <div className="space-y-2">
                               <div className="flex gap-1.5">

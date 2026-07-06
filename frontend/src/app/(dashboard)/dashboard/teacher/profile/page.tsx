@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   teacherProfileApi,
@@ -388,7 +389,7 @@ export default function TeacherProfilePage() {
               {activeTab === "tax-info" && (
                 <TaxInfoTab
                   profile={profile}
-                  onUpdate={(data) => updateProfileMutation.mutate(data)}
+                  onUpdate={(data: any) => updateProfileMutation.mutate(data)}
                   isUpdating={updateProfileMutation.isPending}
                 />
               )}
@@ -1040,29 +1041,67 @@ function ProfileTab({
             
             <div className="space-y-6">
               {/* Promo Video */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <label className="block text-sm font-semibold text-gray-700">
-                  Tanıtım Videosu (YouTube Linki veya MP4 Yükle)
+                  🎥 Tanıtım Videosu
                 </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* YouTube link input */}
-                  <div className="space-y-1">
-                    <span className="text-xs text-gray-500 font-semibold">YouTube Tanıtım Linki</span>
+
+                {/* YouTube URL input */}
+                <div className="space-y-1">
+                  <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">YouTube Linki</span>
+                  <input
+                    type="text"
+                    placeholder="Örn: https://www.youtube.com/watch?v=..."
+                    value={formData.promo_video && (formData.promo_video.startsWith("http://") || formData.promo_video.startsWith("https://")) ? formData.promo_video : ""}
+                    onChange={(e) => setFormData({ ...formData, promo_video: e.target.value })}
+                    className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all text-sm font-medium text-gray-900 shadow-sm"
+                  />
+                </div>
+
+                {/* File upload zone */}
+                <div className="space-y-2">
+                  <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Veya Bilgisayardan Video Yükle (MP4 / WEBM – Maks. 100MB)</span>
+                  <label
+                    htmlFor="promo-video-upload"
+                    className={`flex flex-col items-center justify-center gap-3 w-full rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-200 py-8 px-4 ${
+                      isUploadingPromoVideo
+                        ? "border-teal-400 bg-teal-50/60 cursor-not-allowed"
+                        : "border-gray-300 bg-gray-50 hover:border-teal-400 hover:bg-teal-50/40"
+                    }`}
+                  >
+                    {isUploadingPromoVideo ? (
+                      <div className="w-full max-w-xs space-y-2 text-center">
+                        <svg className="w-10 h-10 text-teal-500 mx-auto animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p className="text-sm font-bold text-teal-600">Yükleniyor... {promoVideoProgress}%</p>
+                        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="h-2 bg-gradient-to-r from-teal-400 to-teal-600 rounded-full transition-all duration-300"
+                            style={{ width: `${promoVideoProgress}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <svg className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <div className="text-center">
+                          <p className="text-sm font-semibold text-gray-600">Videoyu buraya sürükleyin veya seçin</p>
+                          <p className="text-xs text-gray-400 mt-1">MP4, WEBM, OGG · Maksimum 100MB</p>
+                        </div>
+                        <span className="px-4 py-1.5 bg-teal-600 text-white text-xs font-bold rounded-lg hover:bg-teal-700 transition-colors">
+                          Dosya Seç
+                        </span>
+                      </>
+                    )}
                     <input
-                      type="text"
-                      placeholder="Örn: https://www.youtube.com/watch?v=..."
-                      value={formData.promo_video && (formData.promo_video.startsWith("http://") || formData.promo_video.startsWith("https://")) ? formData.promo_video : ""}
-                      onChange={(e) => setFormData({ ...formData, promo_video: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all text-sm font-medium text-gray-900 shadow-sm"
-                    />
-                  </div>
-                  
-                  {/* Local video file upload */}
-                  <div className="space-y-1">
-                    <span className="text-xs text-gray-500 font-semibold">Veya MP4 Video Dosyası Yükleyin (Maks. 100MB)</span>
-                    <input
+                      id="promo-video-upload"
                       type="file"
                       accept="video/mp4,video/webm,video/ogg"
+                      className="hidden"
+                      disabled={isUploadingPromoVideo}
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
@@ -1072,33 +1111,63 @@ function ProfileTab({
                           const res = await mediaApi.uploadPromoVideo(file, (progress) => {
                             setPromoVideoProgress(progress);
                           });
-                          setFormData({ ...formData, promo_video: res.file_path });
-                          toast.success("Tanıtım videosu başarıyla yüklendi.");
+                          setFormData((prev: any) => ({ ...prev, promo_video: res.file_path }));
+                          toast.success("🎉 Tanıtım videosu başarıyla yüklendi.");
                         } catch (err: any) {
                           toast.error(err.response?.data?.detail || "Video yüklenirken hata oluştu.");
                         } finally {
                           setIsUploadingPromoVideo(false);
+                          e.target.value = "";
                         }
                       }}
-                      className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
                     />
-                    {isUploadingPromoVideo && (
-                      <p className="text-xs text-teal-600 font-bold mt-1 animate-pulse">Yükleniyor... %{promoVideoProgress}</p>
-                    )}
-                  </div>
+                  </label>
                 </div>
+
+                {/* Video Preview */}
                 {formData.promo_video && (
-                  <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between">
-                    <span className="text-xs text-slate-600 font-medium truncate max-w-md">
-                      Yüklü Video: {formData.promo_video}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, promo_video: "" })}
-                      className="text-xs text-red-500 hover:text-red-700 font-bold hover:underline"
-                    >
-                      Kaldır
-                    </button>
+                  <div className="mt-2 rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-black">
+                    <div className="relative">
+                      {formData.promo_video.startsWith("http://") || formData.promo_video.startsWith("https://") ? (
+                        <div className="aspect-video">
+                          <iframe
+                            src={
+                              formData.promo_video.includes("youtu.be/")
+                                ? `https://www.youtube.com/embed/${formData.promo_video.split("youtu.be/")[1]?.split("?")[0]}`
+                                : `https://www.youtube.com/embed/${formData.promo_video.split("v=")[1]?.split("&")[0]}`
+                            }
+                            title="Tanıtım Videosu Önizleme"
+                            className="w-full h-full border-0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-video">
+                          <video
+                            src={`http://localhost:8000/media/${formData.promo_video}`}
+                            controls
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev: any) => ({ ...prev, promo_video: "" }))}
+                        className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-red-600/90 hover:bg-red-700 text-white rounded-full shadow-lg transition-colors z-10"
+                        title="Videoyu kaldır"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="px-4 py-2 bg-white flex items-center gap-2">
+                      <svg className="w-4 h-4 text-teal-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-xs text-gray-600 font-medium truncate">{formData.promo_video}</span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1354,6 +1423,8 @@ function ProfileTab({
                     website: profile.social_links?.website || "",
                   },
                   avatar_url: profile.avatar_url || "",
+                  promo_images: profile.promo_images || [],
+                  promo_video: profile.promo_video || "",
                 });
               }}
               className="px-8 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-bold"

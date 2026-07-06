@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -15,6 +15,7 @@ import { coursesApi, publicApi, educationProgramsApi, EducationProgram, blogPubl
 import { useAuthStore } from "@/lib/store";
 import { usePopupAnnouncement } from "@/hooks/usePopupAnnouncement";
 import { Play, Pause, Headphones, Heart, Download } from "lucide-react";
+import PayTRTaksitWidget from "@/components/payment/PayTRTaksitWidget";
 
 // Visual helpers for education program banners
 const getGradientBySlug = (slug: string) => {
@@ -80,12 +81,141 @@ const staggerContainer: any = {
   }
 };
 
+function getYoutubeEmbedUrl(input?: string) {
+  const fallback = "https://www.youtube.com/embed/zpOULjyy-n8"; // BiHocam introduction fallback video (valid generic video)
+  if (!input) return fallback;
+  const trimmed = input.trim();
+  if (trimmed.includes("youtube.com/embed/")) {
+    return trimmed;
+  }
+  let videoId = trimmed;
+  if (trimmed.includes("v=")) {
+    videoId = trimmed.split("v=")[1]?.split("&")[0] || trimmed;
+  } else if (trimmed.includes("youtu.be/")) {
+    videoId = trimmed.split("youtu.be/")[1]?.split("?")[0] || trimmed;
+  }
+  // If it's a 11-char YouTube ID or any string
+  if (videoId.length > 0) {
+    return `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1&controls=1&showinfo=0`;
+  }
+  return fallback;
+}
+
+const getFallbackBlogImage = (slug?: string) => {
+  const images = [
+    "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1518655061766-48f23af930f0?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1558021211-6d1403321394?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1484417894907-623942c8ea29?auto=format&fit=crop&w=600&q=80"
+  ];
+  if (!slug) return images[0];
+  let sum = 0;
+  for (let i = 0; i < slug.length; i++) {
+    sum += slug.charCodeAt(i);
+  }
+  return images[sum % images.length];
+};
+
 export default function Home() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState<string | null>(null);
   const [estimatedEnd, setEstimatedEnd] = useState<string | null>(null);
+
+  // Funnel Quiz States
+  const [quizStep, setQuizStep] = useState(0);
+  const [selectedExam, setSelectedExam] = useState("");
+  const [selectedField, setSelectedField] = useState("");
+  const [selectedHours, setSelectedHours] = useState("");
+  const [selectedLevel, setSelectedLevel] = useState("");
+  const [selectedChallenge, setSelectedChallenge] = useState("");
+  const [selectedStyle, setSelectedStyle] = useState("");
+
+  const [calcHours, setCalcHours] = useState(4);
+  const [calcWeeks, setCalcWeeks] = useState(12);
+  const [calcExam,  setCalcExam]  = useState(""); // secili sinav turu
+  const [calcSubjects, setCalcSubjects] = useState<string[]>([]); // secili dersler
+
+  // Campaigns & Announcements Array
+  const campaigns = [
+    {
+      badge: "KAMPANYA",
+      badgeColor: "bg-rose-500",
+      title: "Yeni Döneme Özel %20 İndirim!",
+      description: "12, 24 ve 36 haftalık canlı ders programlarında büyük indirimler başladı. Ayrıca tüm kredi kartlarına peşin fiyatına 6 taksit avantajıyla bütçenizi zorlamadan başlayın.",
+      actionText: "Hemen Hesapla",
+      actionLink: "#calculator",
+      bgGradient: "from-slate-950 via-indigo-950/80 to-slate-950",
+      icon: "🎯"
+    },
+    {
+      badge: "ÜCRETSİZ TANISMA DERSI",
+      badgeColor: "bg-teal-500",
+      title: "İlk Canlı Tanışma Dersiniz Bizden!",
+      description: "Hangi branşta olursa olsun, dilediğiniz öğretmenle 15 dakikalık tanışma ve seviye tespit dersinizi tamamen ücretsiz gerçekleştirin.",
+      actionText: "Eğitmenleri İncele",
+      actionLink: "/teachers",
+      bgGradient: "from-slate-950 via-teal-950/80 to-slate-950",
+      icon: "🎁"
+    },
+    {
+      badge: "YENİLİK",
+      badgeColor: "bg-indigo-500",
+      title: "Yapay Zeka Destekli Akıllı Öğrenim",
+      description: "BiHocam AI koçluk modülü sayesinde hedeflerinize en uygun çalışma yol haritasını dakikalar içinde oluşturun, performansınızı anlık takip edin.",
+      actionText: "AI Test Et",
+      actionLink: "/tanisma-dersi",
+      bgGradient: "from-indigo-950 via-slate-950 to-indigo-950",
+      icon: "🤖"
+    }
+  ];
+
+  const [activeCampaignSlide, setActiveCampaignSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveCampaignSlide((prev) => (prev + 1) % campaigns.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Sinav turune gore ders listesi
+  const EXAM_SUBJECTS: Record<string, { label: string; emoji: string; subjects: string[] }> = {
+    yks: {
+      label: "YKS Hazirlik", emoji: "🎓",
+      subjects: ["Matematik", "Fizik", "Kimya", "Biyoloji", "Türkçe", "Edebiyat", "Tarih", "Coğrafya", "İngilizce", "Felsefe", "Din Kültürü"],
+    },
+    lgs: {
+      label: "LGS Hazirlik", emoji: "🎯",
+      subjects: ["Matematik", "Fen Bilimleri", "Türkçe", "İnkılap Tarihi", "Din Kültürü", "İngilizce"],
+    },
+    takviye: {
+      label: "Okul Takviye", emoji: "📚",
+      subjects: ["Matematik", "Fen Bilimleri", "Türkçe", "Fizik", "Kimya", "Biyoloji", "Tarih", "Coğrafya", "İngilizce", "Edebiyat"],
+    },
+    yabanci_dil: {
+      label: "Yabancı Dil", emoji: "🌍",
+      subjects: ["İngilizce", "Almanca", "Fransızca", "İspanyolca", "İtalyanca", "Rusça"],
+    },
+    beceri: {
+      label: "Beceri Gelistirme", emoji: "🎨",
+      subjects: ["Müzik", "Kodlama", "Sanat", "Spor", "Dans", "Robotik", "Girişimcilik", "Fotoğrafçılık"],
+    },
+  };
+
+  const toggleCalcSubject = (s: string) =>
+    setCalcSubjects((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
+
+
+  // FAQ Accordion State
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   // Public settings for maintenance mode check
   const { data: publicSettings } = useQuery({
@@ -94,6 +224,19 @@ export default function Home() {
     retry: false,
     refetchInterval: 30000,
   });
+
+  // Net price for PayTR widget — computed AFTER publicSettings is available
+  const calcNetPrice = useMemo(() => {
+    const ps = (publicSettings?.platform as Record<string, any>) || {};
+    const rate   = Number(ps.calc_hourly_rate ?? 800);
+    const d12    = Number(ps.calc_discount_12 ?? 10);
+    const d24    = Number(ps.calc_discount_24 ?? 15);
+    const d36    = Number(ps.calc_discount_36 ?? 20);
+    const disc   = calcWeeks === 4 ? 0 : calcWeeks === 12 ? d12 : calcWeeks === 24 ? d24 : d36;
+    return Math.round(calcHours * calcWeeks * rate * (1 - disc / 100));
+  }, [publicSettings, calcHours, calcWeeks]);
+
+  const platformSettings = useMemo(() => (publicSettings?.platform as Record<string, any>) || {}, [publicSettings]);
 
   useEffect(() => {
     if (publicSettings?.platform) {
@@ -413,7 +556,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             
             {/* ── LEFT COLUMN ── */}
-            <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
+            <div className="lg:col-span-6 space-y-8 text-center lg:text-left">
 
               {/* Badge */}
               <motion.div
@@ -490,13 +633,13 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
-                className="flex flex-nowrap justify-start lg:justify-start gap-2 sm:gap-3 md:gap-4 overflow-x-auto sm:overflow-x-visible no-scrollbar pt-1 pb-3 sm:pb-1 w-full"
+                className="flex flex-col sm:flex-row flex-wrap justify-start items-center gap-3 pt-6 pb-3 w-full"
               >
                 <Link
                   href="/register"
-                  className="group relative px-3.5 sm:px-5 lg:px-6 xl:px-8 py-2.5 sm:py-3.5 xl:py-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-bold rounded-2xl text-xs sm:text-sm lg:text-base overflow-hidden shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/40 transform hover:-translate-y-1 transition-all duration-300 whitespace-nowrap"
+                  className="group relative w-full sm:w-auto px-4 sm:px-5 lg:px-6 py-3 sm:py-3.5 xl:py-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-bold rounded-2xl text-sm lg:text-base overflow-hidden shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/40 transform hover:-translate-y-1 transition-all duration-300 whitespace-nowrap text-center"
                 >
-                  <span className="relative z-10 flex items-center gap-1.5 sm:gap-2">
+                  <span className="relative z-10 flex items-center justify-center gap-2">
                     Ücretsiz Başla
                     <motion.span animate={{ x: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
                       →
@@ -507,14 +650,14 @@ export default function Home() {
 
                 <Link
                   href="/become-instructor"
-                  className="px-3.5 sm:px-5 lg:px-6 xl:px-8 py-2.5 sm:py-3.5 xl:py-4 bg-white text-gray-800 font-bold rounded-2xl border-2 border-gray-200 hover:border-teal-500 hover:text-teal-600 transform hover:-translate-y-1 transition-all duration-300 text-xs sm:text-sm lg:text-base shadow-sm whitespace-nowrap"
+                  className="w-full sm:w-auto px-4 sm:px-5 lg:px-6 py-3 sm:py-3.5 xl:py-4 bg-white text-gray-800 font-bold rounded-2xl border-2 border-gray-200 hover:border-teal-500 hover:text-teal-600 transform hover:-translate-y-1 transition-all duration-300 text-sm lg:text-base shadow-sm whitespace-nowrap text-center"
                 >
                   Eğitmen Olmak İstiyorum
                 </Link>
 
                 <Link
                   href="/tanisma-dersi"
-                  className="px-3.5 sm:px-5 lg:px-6 xl:px-8 py-2.5 sm:py-3.5 xl:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/40 transform hover:-translate-y-1 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap"
+                  className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-4 sm:px-5 lg:px-6 py-3 sm:py-3.5 xl:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/40 transform hover:-translate-y-1 transition-all duration-300 text-sm lg:text-base whitespace-nowrap text-center"
                 >
                   🎯 Tanışma Dersi Al
                 </Link>
@@ -561,10 +704,10 @@ export default function Home() {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1, delay: 0.3 }}
-              className="lg:col-span-5 flex justify-center relative"
+              className="lg:col-span-6 flex justify-center relative lg:-mt-16"
             >
               {/* Outer glow ring */}
-              <div className="relative w-full max-w-[420px]">
+              <div className="relative w-full max-w-[680px]">
                 {/* Spinning orbit ring 1 */}
                 <motion.div
                   className="absolute inset-0 rounded-full border-2 border-dashed border-teal-300/40"
@@ -615,21 +758,69 @@ export default function Home() {
                   </div>
                 </motion.div>
 
-                {/* Main Image with glow */}
-                <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white">
-                  <div className="absolute inset-0 bg-gradient-to-br from-teal-400/20 to-indigo-500/20 z-10" />
-                  <motion.img
-                    src="/teacher_student.png"
-                    alt="BiHocam Eğitim"
-                    className="w-full object-cover"
-                    animate={{ scale: [1, 1.02, 1] }}
-                    transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/teacher_matching.png';
-                    }}
-                  />
-                  {/* Shimmer overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent animate-shimmer pointer-events-none" />
+                {/* Main Visual: Premium Campaigns & Announcements Slider Banner */}
+                <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white bg-slate-950 aspect-video w-full flex flex-col justify-between p-6 sm:p-10 group/banner">
+                  {/* Backdrop glowing background */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${campaigns[activeCampaignSlide].bgGradient} transition-all duration-700 ease-in-out`} />
+                  
+                  {/* Decorative mesh/grid pattern overlay */}
+                  <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:16px_16px] opacity-60 z-10" />
+
+                  {/* Slide Content */}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeCampaignSlide}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.4 }}
+                      className="relative z-10 flex flex-col justify-between h-full space-y-6"
+                    >
+                      {/* Top Row: Badge & Large Icon */}
+                      <div className="flex items-center justify-between">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black text-white tracking-widest uppercase ${campaigns[activeCampaignSlide].badgeColor} shadow-md`}>
+                          {campaigns[activeCampaignSlide].badge}
+                        </span>
+                        <span className="text-4xl filter drop-shadow-md select-none">{campaigns[activeCampaignSlide].icon}</span>
+                      </div>
+
+                      {/* Main Copy */}
+                      <div className="space-y-3 text-left">
+                        <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white leading-tight tracking-tight">
+                          {campaigns[activeCampaignSlide].title}
+                        </h3>
+                        <p className="text-slate-300 text-xs sm:text-sm font-medium leading-relaxed max-w-xl">
+                          {campaigns[activeCampaignSlide].description}
+                        </p>
+                      </div>
+
+                      {/* Call to Action Button */}
+                      <div className="text-left">
+                        <Link
+                          href={campaigns[activeCampaignSlide].actionLink}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-slate-900 font-bold rounded-xl text-xs hover:bg-teal-50 transition-all shadow-lg hover:scale-105 active:scale-95"
+                        >
+                          <span>{campaigns[activeCampaignSlide].actionText}</span>
+                          <span className="text-base">→</span>
+                        </Link>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+
+                  {/* Slide controls: Dots */}
+                  <div className="absolute bottom-4 right-6 flex items-center gap-2 z-20">
+                    {campaigns.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveCampaignSlide(idx)}
+                        className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                          idx === activeCampaignSlide
+                            ? "bg-teal-400 w-6"
+                            : "bg-white/30 hover:bg-white/50"
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
 
                 {/* Online indicator */}
@@ -680,6 +871,7 @@ export default function Home() {
           ))}
         </motion.div>
       </div>
+
 
       {/* ══════════════════════════════════════════════════════ */}
       {/* ANIMATED CATEGORY CARDS                              */}
@@ -782,96 +974,219 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* SİZİ ARAYABİLİRİZ */}
-      <motion.section 
-        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={fadeUpVariants}
-        className="py-12 bg-slate-50"
-      >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gray-200/50 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row gap-8 items-center justify-between">
-            <div className="space-y-4 md:w-1/2">
-               <div className="text-blue-600 font-bold uppercase tracking-wider text-sm">SİZİ ARAYABİLİRİZ</div>
-               <h3 className="text-3xl font-black text-slate-900">Numaranızı bırakabilirsiniz.</h3>
-               <p className="text-slate-700 text-sm font-medium">
-                 Size aşağıdaki kurumsal iletişim hattımızdan ulaşacağız: <br />
-                 <span className="font-bold text-slate-900">+90 (850) 840 55 43</span>
-               </p>
-            </div>
-            <div className="w-full md:w-1/2 space-y-4">
-               <input type="text" placeholder="Adınız ve soyadınız" className="w-full px-5 py-4 rounded-xl border border-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-               <input type="tel" placeholder="Telefon 5xx xxx xx xx" className="w-full px-5 py-4 rounded-xl border border-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-               <button className="w-full bg-orange-400 hover:bg-orange-500 text-white font-bold py-4 rounded-xl shadow-md transition-colors">
-                 Arama Talebi Oluştur
-               </button>
-            </div>
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* PRICING CALCULATOR - BUDGET PLANNER                    */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <section className="py-24 bg-slate-50 relative overflow-hidden border-y border-slate-100">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(20,184,166,0.05),transparent_50%)] pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-16">
+            <span className="inline-block px-4 py-1.5 bg-teal-100 text-teal-700 text-xs font-bold uppercase tracking-widest rounded-full mb-4">Şeffaf Fiyatlandırma</span>
+            <h2 className="text-4xl font-black text-slate-900 mb-4">Eğitim Bütçenizi Kolayca Planlayın</h2>
+            <p className="text-slate-500 font-medium max-w-2xl mx-auto text-base">
+              Gizli ücretler, sürpriz ödemeler yok. Almak istediğiniz ders saatine göre bütçenizi kendiniz belirleyin.
+            </p>
           </div>
+
+          {(() => {
+            const platformSettings = (publicSettings?.platform as Record<string, any>) || {};
+            const hourlyRate = platformSettings.calc_hourly_rate ?? 800;
+            const discount12 = platformSettings.calc_discount_12 ?? 10;
+            const discount24 = platformSettings.calc_discount_24 ?? 15;
+            const discount36 = platformSettings.calc_discount_36 ?? 20;
+
+            const selectedDiscount = calcWeeks === 4 ? 0 : calcWeeks === 12 ? discount12 : calcWeeks === 24 ? discount24 : discount36;
+            const totalHours = calcHours * calcWeeks;
+            const grossPrice = totalHours * hourlyRate;
+            const netPrice = grossPrice * (1 - selectedDiscount / 100);
+            const monthlyPayment = netPrice / 6;
+
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+                {/* Sliders Area */}
+                <div className="lg:col-span-7 bg-white rounded-3xl p-8 shadow-xl border border-slate-100/50 flex flex-col justify-between space-y-8">
+                  {/* Step 1: Sınav / Program Seçimi */}
+                  <div className="space-y-3">
+                    <label className="text-lg font-bold text-slate-800">Sınav / Program Seçin</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {Object.entries(EXAM_SUBJECTS).map(([key, val]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => {
+                            setCalcExam(key === calcExam ? "" : key);
+                            setCalcSubjects([]);
+                          }}
+                          className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl border-2 font-bold text-xs transition-all text-left ${
+                            calcExam === key
+                              ? "border-teal-500 bg-teal-50 text-teal-800 shadow-sm"
+                              : "border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200 hover:bg-slate-100"
+                          }`}
+                        >
+                          <span className="text-lg flex-shrink-0">{val.emoji}</span>
+                          <span className="leading-tight">{val.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Step 2: Ders Seçimi (Sınav seçiliyse görünür) */}
+                  {calcExam && EXAM_SUBJECTS[calcExam] && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-bold text-slate-800">Ders / Branş Tercihiniz</label>
+                        {calcSubjects.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setCalcSubjects([])}
+                            className="text-xs text-rose-500 font-bold hover:underline"
+                          >
+                            Temizle ✕
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {EXAM_SUBJECTS[calcExam].subjects.map((s) => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => toggleCalcSubject(s)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                              calcSubjects.includes(s)
+                                ? "bg-teal-500 text-white border-teal-500 shadow-sm"
+                                : "bg-slate-50 text-slate-600 border-slate-100 hover:border-teal-300 hover:text-teal-600"
+                            }`}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Slider 1: Hours per Week */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="calc-hours-slider" className="text-lg font-bold text-slate-800">Haftalık Birebir Ders Saati</label>
+                      <span className="text-2xl font-black text-teal-600 font-mono">{calcHours} Saat</span>
+                    </div>
+                    <input
+                      id="calc-hours-slider"
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={calcHours}
+                      onChange={(e) => setCalcHours(parseInt(e.target.value))}
+                      className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-teal-500"
+                    />
+                    <div className="flex justify-between text-xs text-slate-400 font-semibold">
+                      <span>1 Saat (Minimum)</span>
+                      <span>5 Saat (Önerilen)</span>
+                      <span>10 Saat (Yoğun)</span>
+                    </div>
+                  </div>
+
+                  {/* Slider 2: Duration in Weeks */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="calc-weeks-select" className="text-lg font-bold text-slate-800">Toplam Program Süresi</label>
+                      <span className="text-2xl font-black text-teal-600 font-mono">{calcWeeks} Hafta</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {[
+                        { label: "4 Hafta (1 Ay)", value: 4, discount: 0 },
+                        { label: "12 Hafta (3 Ay)", value: 12, discount: discount12 },
+                        { label: "24 Hafta (6 Ay)", value: 24, discount: discount24 },
+                        { label: "36 Hafta (Eğitim Dönemi)", value: 36, discount: discount36 },
+                      ].map((item) => (
+                        <button
+                          key={item.value}
+                          id={`calc-weeks-select-${item.value}`}
+                          type="button"
+                          onClick={() => setCalcWeeks(item.value)}
+                          className={`p-4 rounded-2xl border-2 font-bold text-xs transition-all relative flex flex-col items-center justify-center gap-1.5 ${
+                            calcWeeks === item.value
+                              ? "border-teal-500 bg-teal-50/20 text-teal-800"
+                              : "border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200"
+                          }`}
+                        >
+                          {item.discount > 0 && (
+                            <span className="absolute -top-2.5 bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+                              %{item.discount} İndirim
+                            </span>
+                          )}
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-teal-50/30 rounded-2xl p-4 border border-teal-100/30 flex items-start gap-3">
+                    <span className="text-xl">💡</span>
+                    <p className="text-xs text-teal-800 leading-relaxed font-medium">
+                      Uzun vadeli programlarda <strong>peşin fiyatına taksit</strong> ve <strong>%{discount36}'ye varan ek saat indirimleri</strong> otomatik olarak bütçenize yansıtılır. Memnun kalınmadığı takdirde kalan saatlerin ücreti koşulsuz iade edilir.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Calculations Card Area */}
+                <div className="lg:col-span-5 bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-3xl p-8 shadow-xl flex flex-col justify-between relative overflow-hidden">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.15),transparent_60%)] pointer-events-none" />
+                  
+                  <div className="space-y-6 relative z-10">
+                    <h3 className="text-xl font-bold text-slate-200">Planlama Özeti</h3>
+                    
+                    <div className="space-y-4 border-b border-slate-800 pb-6 text-sm font-semibold">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Toplam Canlı Ders</span>
+                        <span>{totalHours} Saat</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Saatlik Taban Ücret</span>
+                        <span>{hourlyRate.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                      </div>
+                      {selectedDiscount > 0 && (
+                        <div className="flex justify-between text-rose-400 font-bold">
+                          <span>Süreye Özel İndirim</span>
+                          <span>-%{selectedDiscount}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Tahmini Toplam Tutar</span>
+                      <div className="text-4xl font-black tracking-tight text-white font-mono">
+                        {Math.round(netPrice).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-semibold mt-1">
+                        *Fiyatlar öğretmenlerin tecrübe seviyesine göre değişiklik gösterebilir.
+                      </p>
+                    </div>
+
+                    {/* PayTR Taksit Tablosu */}
+                    <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-800/30">
+                      <div className="text-xs font-bold text-slate-400 uppercase mb-3">Taksit Seçenekleri</div>
+                      <PayTRTaksitWidget amount={calcNetPrice} />
+                    </div>
+                  </div>
+
+                  <div className="mt-8 relative z-10">
+                    <Link
+                      href={`/teachers?hours=${calcHours}&weeks=${calcWeeks}&budget=${Math.round(netPrice)}&discount=${selectedDiscount}&branch=${calcExam}&subjects=${encodeURIComponent(calcSubjects.join(','))}`}
+                      className="w-full block text-center bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-teal-500/20 hover:shadow-teal-500/30 text-sm"
+                    >
+                      Bu Planla Eğitmen Keşfet
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
-      </motion.section>
+      </section>
 
-      {/* Benefit Cards Section (From screenshot) */}
 
-      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <h2 className="text-4xl font-black text-gray-900 tracking-tight">Kariyerinizi ve Eğitiminizi Zirveye Taşıyın</h2>
-            <p className="text-gray-500 font-semibold text-sm">BiHocam'ın sunduğu ayrıcalıklı eğitmenlik ve öğrenme araçları ile dersleriniz çok daha verimli.</p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Card 1 - Pink */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-pink-500 via-pink-600 to-rose-600 rounded-[2rem] p-8 text-white shadow-xl flex flex-col justify-between group hover:scale-[1.02] transition-transform duration-300">
-              <div className="space-y-4">
-                <h3 className="text-2xl font-black leading-tight">Senin en iyi öğrencileri bulmanı sağlıyoruz.</h3>
-                <p className="text-pink-50 text-sm font-medium leading-relaxed">
-                  Böylece en iyi yaptığınız işi ders öğretmenliği yapabilirsiniz. istediğiniz zaman, istediğiniz yerde ders verebilirsiniz. Özgeçmişinizi güçlendirerek mesleki deneyim kazanabilirsiniz.
-                </p>
-              </div>
-              <div className="mt-8 flex justify-center">
-                <img
-                  src="/teacher_matching.png"
-                  alt="Student Matching"
-                  className="h-40 object-contain drop-shadow-2xl rounded-2xl group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-            </div>
-
-            {/* Card 2 - Green */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-teal-600 to-teal-700 rounded-[2rem] p-8 text-white shadow-xl flex flex-col justify-between group hover:scale-[1.02] transition-transform duration-300">
-              <div className="space-y-4">
-                <h3 className="text-2xl font-black leading-tight">Yoğun İşlerle Biz İlgileneceğiz</h3>
-                <p className="text-emerald-50 text-sm font-medium leading-relaxed">
-                  Yapay zeka destekleri araçlarımız ile ders hazırlığı ve tekrarında size destek olurken siz öğrencileriniz ile daha yakından ilgilenebilirsiniz.
-                </p>
-              </div>
-              <div className="mt-8 flex justify-center">
-                <img
-                  src="/ai_helper.png"
-                  alt="AI helpers"
-                  className="h-40 object-contain drop-shadow-2xl rounded-2xl group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-            </div>
-
-            {/* Card 3 - Yellow */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 via-orange-500 to-amber-500 rounded-[2rem] p-8 text-gray-900 shadow-xl flex flex-col justify-between group hover:scale-[1.02] transition-transform duration-300">
-              <div className="space-y-4">
-                <h3 className="text-2xl font-black leading-tight">Mükemmel Yarı zamanlı iş ve kariyer başlangıcı</h3>
-                <p className="text-orange-950 text-sm font-medium leading-relaxed">
-                  Öğretmenlerimizin çoğunluğu halihazırda yarı zamanlı bir işte çalışıyor. Bu da ders vermeyi yan iş olarak harika bir seçenek haline getiriyor.
-                </p>
-              </div>
-              <div className="mt-8 flex justify-center">
-                <img
-                  src="/parttime_career.png"
-                  alt="Part-time Career"
-                  className="h-40 object-contain drop-shadow-2xl rounded-2xl group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.section>
 
       {/* Ads placements Banners */}
       <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-8 bg-slate-50">
@@ -985,6 +1300,129 @@ export default function Home() {
           </div>
         </div>
       </motion.section>
+
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* WHY BIHOCAM? - COMPARISON TABLE                       */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <section className="py-24 bg-white relative overflow-hidden border-t border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-16">
+            <span className="inline-block px-4 py-1.5 bg-teal-100 text-teal-700 text-xs font-bold uppercase tracking-widest rounded-full mb-4">Şeffaf Karşılaştırma</span>
+            <h2 className="text-4xl font-black text-slate-900 mb-4">Neden BiHocam'ı Tercih Etmelisiniz?</h2>
+            <p className="text-slate-500 font-medium max-w-2xl mx-auto text-base">
+              Geleneksel yöntemlerin kısıtlamalarından kurtulun. BiHocam ile geleceğin eğitimini bugünden yaşayın.
+            </p>
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-hidden rounded-3xl border border-slate-100 shadow-xl">
+            <table className="w-full text-left border-collapse bg-white">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-100">
+                  <th className="p-6 text-sm font-bold text-slate-400 uppercase tracking-wider w-1/4">Özellikler</th>
+                  <th className="p-6 text-sm font-black text-teal-600 uppercase tracking-wider w-1/4 bg-teal-50/30 border-x border-teal-100/50 text-center">BiHocam Birebir</th>
+                  <th className="p-6 text-sm font-bold text-slate-500 uppercase tracking-wider w-1/4 text-center">Fiziksel Özel Ders</th>
+                  <th className="p-6 text-sm font-bold text-slate-500 uppercase tracking-wider w-1/4 text-center">Geleneksel Dershane</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                {[
+                  { name: "Saatlik Ders Ücreti", bihocam: "Ekonomik & Esnek Ödeme", ozel: "Çok Yüksek & Peşin", dershane: "Yıllık Sabit Yüksek Paket" },
+                  { name: "Eğitmen Seçimi", bihocam: "✓ 100+ Onaylı Hoca Arasından Özgürce", ozel: "✗ Referansla Sınırlı Tanıdık Hocalar", dershane: "✗ Atanmış Öğretmen (Seçim Yok)" },
+                  { name: "Ders Kaydı ve Tekrarı", bihocam: "✓ Sınırsız & İstediğin Zaman Tekrar İzle", ozel: "✗ Ders Anında Biter, Tekrarı Yok", dershane: "✗ Kaçırılan Dersin Telafisi Yok" },
+                  { name: "Yapay Zeka Destekli Rapor", bihocam: "✓ Haftalık Detaylı Gelişim Raporları", ozel: "✗ Sadece Sözlü Geri Bildirim", dershane: "✗ Yılda Birkaç Kez Toplu Sınav Raporu" },
+                  { name: "Ulaşım / Zaman Kaybı", bihocam: "✓ 0 Dakika (Ev Konforunda Online)", ozel: "✗ Trafikte Günde 1-2 Saat Kayıp", dershane: "✗ Her Gün Git-Gel Yol Yorgunluğu" },
+                  { name: "Güvenlik & Doğrulama", bihocam: "✓ Diploma, Sabıka ve Mülakat Kontrollü", ozel: "✗ Belgesiz / Kontrolsüz Güven İlişkisi", dershane: "✓ Kurumsal Denetimli Öğretmen" },
+                ].map((row, idx) => (
+                  <tr key={idx} className="hover:bg-slate-50/30 transition-colors">
+                    <td className="p-6 text-slate-900 font-bold text-sm">{row.name}</td>
+                    <td className="p-6 text-teal-700 font-black text-sm bg-teal-50/20 border-x border-teal-100/30 text-center">{row.bihocam}</td>
+                    <td className="p-6 text-slate-500 text-sm text-center">{row.ozel}</td>
+                    <td className="p-6 text-slate-500 text-sm text-center">{row.dershane}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card Grid View */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:hidden">
+            {/* BiHocam Card */}
+            <div className="bg-gradient-to-b from-teal-50/50 to-white rounded-3xl p-6 border-2 border-teal-500 shadow-lg relative overflow-hidden">
+              <div className="absolute right-0 top-0 bg-teal-500 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-bl-2xl tracking-wider">Önerilen</div>
+              <h3 className="text-xl font-black text-teal-800 mb-4">BiHocam Birebir</h3>
+              <ul className="space-y-3.5 text-sm font-semibold text-slate-700">
+                <li className="flex items-start gap-2.5">
+                  <span className="text-teal-500 text-lg leading-none">✓</span>
+                  <span><strong>Ekonomik & Esnek:</strong> Bütçenize en uygun saat paketini kendiniz belirleyin.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-teal-500 text-lg leading-none">✓</span>
+                  <span><strong>Seçim Özgürlüğü:</strong> 100+ onaylı, tecrübeli öğretmen arasından dilediğinizi seçin.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-teal-500 text-lg leading-none">✓</span>
+                  <span><strong>Sınırsız Tekrar:</strong> İşlenen tüm dersleri kaydedip dilediğiniz an tekrar izleyin.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-teal-500 text-lg leading-none">✓</span>
+                  <span><strong>Yapay Zeka Takibi:</strong> Haftalık gelişim raporlarıyla ilerlemenizi adım adım izleyin.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-teal-500 text-lg leading-none">✓</span>
+                  <span><strong>Ev Konforu:</strong> Yol stresi, yorgunluk ve ulaşım maliyeti olmadan ders yapın.</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Fiziksel Ozel Ders Card */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-md">
+              <h3 className="text-xl font-bold text-slate-800 mb-4">Fiziksel Özel Ders</h3>
+              <ul className="space-y-3.5 text-sm text-slate-600 font-medium">
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span><strong>Çok Yüksek Maliyet:</strong> Saatlik ders ücretleri ve ulaşım maliyetleri yüksektir.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span><strong>Kısıtlı Seçim:</strong> Sadece yakın çevreden tavsiye ile öğretmen bulabilirsiniz.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span><strong>Tekrar İzleme Yok:</strong> Ders bittiği an her şey unutulur, tekrar izleme şansı yoktur.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span><strong>Yol Yorgunluğu:</strong> Öğretmenin veya öğrencinin git-gel yapması vakit kaybettirir.</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Geleneksel Dershane Card */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-md">
+              <h3 className="text-xl font-bold text-slate-800 mb-4">Geleneksel Dershane</h3>
+              <ul className="space-y-3.5 text-sm text-slate-600 font-medium">
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span><strong>Katı Yıllık Senetler:</strong> Memnun kalmasanız dahi yıllık taahhüt ödemek zorundasınız.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span><strong>Atanmış Eğitmen:</strong> Hangi hocanın derse gireceğini kurum belirler, seçemezsiniz.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span><strong>Kalabalık Sınıflar:</strong> 15-20 kişilik sınıflarda soru sorma şansı oldukça düşüktür.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span><strong>Zaman Kaybı:</strong> Her gün dershaneye gidiş-dönüş saatler sürer ve fiziksel yorgunluk verir.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Popular Categories Grid */}
       <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-slate-50">
@@ -1368,6 +1806,32 @@ export default function Home() {
         </motion.section>
       )}
 
+      {/* SİZİ ARAYABİLİRİZ */}
+      <motion.section 
+        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={fadeUpVariants}
+        className="py-12 bg-slate-50"
+      >
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-gray-200/50 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row gap-8 items-center justify-between">
+            <div className="space-y-4 md:w-1/2">
+               <div className="text-blue-600 font-bold uppercase tracking-wider text-sm">SİZİ ARAYABİLİRİZ</div>
+               <h3 className="text-3xl font-black text-slate-900">Numaranızı bırakabilirsiniz.</h3>
+               <p className="text-slate-700 text-sm font-medium">
+                 Size aşağıdaki kurumsal iletişim hattımızdan ulaşacağız: <br />
+                 <span className="font-bold text-slate-900">+90 (850) 840 55 43</span>
+               </p>
+            </div>
+            <div className="w-full md:w-1/2 space-y-4">
+               <input type="text" placeholder="Adınız ve soyadınız" className="w-full px-5 py-4 rounded-xl border border-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+               <input type="tel" placeholder="Telefon 5xx xxx xx xx" className="w-full px-5 py-4 rounded-xl border border-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+               <button className="w-full bg-orange-400 hover:bg-orange-500 text-white font-bold py-4 rounded-xl shadow-md transition-colors">
+                 Arama Talebi Oluştur
+               </button>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
       {/* Become an Instructor Dedicated Promo Section (dersheryerde.com Vibe) */}
       <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-white relative overflow-hidden">
         <div className="absolute -top-32 -right-32 w-[30rem] h-[30rem] bg-indigo-50 rounded-full blur-3xl -z-10"></div>
@@ -1413,9 +1877,12 @@ export default function Home() {
 
               <div className="flex justify-center">
                 <img
-                  src="/parttime_career.png"
-                  alt="Öğretmen Ol"
-                  className="max-h-96 object-contain drop-shadow-2xl rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm"
+                  src="https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?auto=format&fit=crop&w=600&q=80"
+                  alt="Bilgisayar Başında Ders Anlatan Öğretmen"
+                  onError={(e) => {
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1531497865144-0464ef8fb9a9?auto=format&fit=crop&w=600&q=80";
+                  }}
+                  className="w-full h-[320px] md:h-[400px] object-cover drop-shadow-2xl rounded-[2.5rem] border border-white/10 shadow-2xl"
                 />
               </div>
             </div>
@@ -1449,15 +1916,14 @@ export default function Home() {
                     <div>
                       {/* Featured Image */}
                       <div className="aspect-video bg-gradient-to-br from-teal-500 to-indigo-600 relative overflow-hidden">
-                        {post.featured_image_url ? (
-                          <img
-                            src={post.featured_image_url}
-                            alt={post.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-white/50 text-5xl font-black">✍️</div>
-                        )}
+                        <img
+                          src={post.featured_image_url || getFallbackBlogImage(post.slug)}
+                          alt={post.title}
+                          onError={(e) => {
+                            e.currentTarget.src = getFallbackBlogImage(post.slug);
+                          }}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
                         {post.categories && post.categories.length > 0 && (
                           <span className="absolute top-3 left-3 px-2.5 py-1 bg-teal-500 text-white text-[10px] font-bold rounded-lg shadow-md uppercase tracking-wider">
                             {post.categories[0].name}
@@ -1506,6 +1972,76 @@ export default function Home() {
           </div>
         </motion.section>
       )}
+
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* FAQ SECTION - OBJECTION BUSTER ACCORDION                */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <section className="py-24 bg-white relative overflow-hidden border-t border-slate-100">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-16">
+            <span className="inline-block px-4 py-1.5 bg-teal-100 text-teal-700 text-xs font-bold uppercase tracking-widest rounded-full mb-4">Aklınızdaki Sorular</span>
+            <h2 className="text-4xl font-black text-slate-900 mb-4">Sıkça Sorulan Sorular</h2>
+            <p className="text-slate-500 font-medium max-w-2xl mx-auto text-base">
+              Canlı ders süreçleri, ödemeler ve eğitmenler hakkında merak ettiğiniz tüm detaylar.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: "Canlı dersler için bilgisayarıma ek bir uygulama kurmam gerekiyor mu?",
+                a: "Hayır. BiHocam canlı dersleri tamamen tarayıcınız üzerinden çalışacak şekilde geliştirilmiştir. Zoom, Skype veya benzeri herhangi bir ek program indirmenize veya kurmanıza gerek kalmadan, tek tıkla derse bağlanır, interaktif beyaz tahtayı ve kaynakları kullanırsınız."
+              },
+              {
+                q: "Eğitmenlerinizin kalitesinden ve tecrübesinden nasıl emin oluyorsunuz?",
+                a: "Platformumuzda ders veren her öğretmen; kimlik, diploma/öğretmenlik belgesi doğrulaması, adli sicil kaydı kontrolü ve BiHocam eğitim kurulunun gerçekleştirdiği deneme dersi mülakatı aşamalarını başarıyla geçmek zorundadır. Sadece bu süreçleri geçen seçkin öğretmenler platformda yer alabilir."
+              },
+              {
+                q: "Memnun kalmadığım takdirde ders ücretimi iade alabilir miyim?",
+                a: "Evet, kesinlikle. İlk 15 dakikalık ücretsiz tanışma dersi ile öğretmeninizle uyumu test edersiniz. Eğer herhangi bir sebeple devam etmek istemezseniz veya aldığınız saat paketlerinden memnun kalmazsanız, kalan ders saatleriniz için koşulsuz ve kesintisiz %100 ücret iadesi talep edebilirsiniz."
+              },
+              {
+                q: "Ödemeler nasıl yapılıyor? Taksit seçeneği var mı?",
+                a: "Ödemeleriniz BDDK onaylı İyzico altyapısı üzerinden 3D Secure güvencesiyle gerçekleştirilir. Tüm kredi kartları ile peşin fiyatına taksit veya banka kartlarıyla güvenli peşin ödeme yapabilirsiniz."
+              },
+              {
+                q: "Satın aldığım ders saatlerini ne kadar süre içinde kullanmalıyım?",
+                a: "Satın aldığınız ders saatleri eğitim-öğretim yılı sonuna kadar dilediğiniz gün ve saatte kullanılabilir. Saatlerinizde herhangi bir haftalık veya aylık zorunlu yanma süresi bulunmamaktadır, planlamayı öğretmeninizle esnekçe yapabilirsiniz."
+              }
+            ].map((faq, idx) => (
+              <div
+                key={idx}
+                className="border border-slate-100 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all duration-200"
+              >
+                <button
+                  type="button"
+                  onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
+                  className="w-full p-6 text-left flex items-center justify-between gap-4 font-bold text-slate-800 hover:text-teal-600 transition-colors"
+                >
+                  <span>{faq.q}</span>
+                  <span className="text-xl text-teal-600 font-mono select-none">
+                    {activeFaq === idx ? "−" : "+"}
+                  </span>
+                </button>
+                <AnimatePresence initial={false}>
+                  {activeFaq === idx && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: "easeInOut" }}
+                    >
+                      <div className="px-6 pb-6 text-slate-600 text-sm leading-relaxed border-t border-slate-50 pt-4 font-medium bg-slate-50/20">
+                        {faq.a}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Teal/Emerald Registration CTA Banner Section */}
       <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-12 bg-gradient-to-r from-teal-600 to-emerald-600 border-y border-teal-700/10">

@@ -28,6 +28,7 @@ interface QuizListItem {
   passing_score: number;
   time_limit_minutes?: number;
   max_attempts?: number;
+  number_of_options?: number;
   created_at: string;
 }
 
@@ -40,6 +41,8 @@ interface QuizQuestion {
   correct_answer: string;
   points: number;
   explanation?: string | null;
+  image_path?: string | null;
+  solution_file_path?: string | null;
 }
 
 export default function TeacherQuizzesPage() {
@@ -84,9 +87,15 @@ export default function TeacherQuizzesPage() {
   const [optionB, setOptionB] = useState("");
   const [optionC, setOptionC] = useState("");
   const [optionD, setOptionD] = useState("");
+  const [optionE, setOptionE] = useState("");
+  const [questionImagePath, setQuestionImagePath] = useState("");
+  const [isUploadingQuestionImage, setIsUploadingQuestionImage] = useState(false);
+  const [solutionFilePath, setSolutionFilePath] = useState("");
+  const [isUploadingSolutionFile, setIsUploadingSolutionFile] = useState(false);
   const [correctAnswer, setCorrectAnswer] = useState("");
   const [points, setPoints] = useState(10);
   const [explanation, setExplanation] = useState("");
+
 
   // Assignment Modal States
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -300,6 +309,43 @@ export default function TeacherQuizzesPage() {
     }
   };
 
+  const handleQuestionImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (!file.type.startsWith("image/")) {
+        toast.error("Lütfen geçerli bir resim dosyası seçin.");
+        return;
+      }
+      setIsUploadingQuestionImage(true);
+      try {
+        const result = await mediaApi.uploadGeneralImage(file);
+        setQuestionImagePath(result.path);
+        toast.success("Soru resmi başarıyla yüklendi.");
+      } catch (err: any) {
+        toast.error("Resim yüklenirken bir hata oluştu.");
+      } finally {
+        setIsUploadingQuestionImage(false);
+      }
+    }
+  };
+
+  const handleSolutionFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setIsUploadingSolutionFile(true);
+      try {
+        const result = await mediaApi.uploadGeneralFile(file);
+        setSolutionFilePath(result.path);
+        toast.success("Çözüm dosyası başarıyla yüklendi.");
+      } catch (err: any) {
+        toast.error("Dosya yüklenirken bir hata oluştu.");
+      } finally {
+        setIsUploadingSolutionFile(false);
+      }
+    }
+  };
+
+
   const resetQuestionForm = () => {
     setQuestionText("");
     setQuestionType("multiple_choice");
@@ -307,6 +353,9 @@ export default function TeacherQuizzesPage() {
     setOptionB("");
     setOptionC("");
     setOptionD("");
+    setOptionE("");
+    setQuestionImagePath("");
+    setSolutionFilePath("");
     setCorrectAnswer("");
     setPoints(10);
     setExplanation("");
@@ -385,6 +434,7 @@ export default function TeacherQuizzesPage() {
 
     let optionsPayload: any = null;
     if (questionType === "multiple_choice") {
+      const numOptions = activeQuizForQuestions?.number_of_options || 4;
       if (!optionA.trim() || !optionB.trim()) {
         toast.error("Çoktan seçmeli soru için en az A ve B seçeneklerini doldurmalısınız.");
         return;
@@ -393,8 +443,28 @@ export default function TeacherQuizzesPage() {
         A: optionA,
         B: optionB,
       };
-      if (optionC.trim()) optionsPayload.C = optionC;
-      if (optionD.trim()) optionsPayload.D = optionD;
+      
+      if (numOptions >= 3) {
+        if (!optionC.trim()) {
+          toast.error("Lütfen Seçenek C'yi doldurun.");
+          return;
+        }
+        optionsPayload.C = optionC;
+      }
+      if (numOptions >= 4) {
+        if (!optionD.trim()) {
+          toast.error("Lütfen Seçenek D'yi doldurun.");
+          return;
+        }
+        optionsPayload.D = optionD;
+      }
+      if (numOptions >= 5) {
+        if (!optionE.trim()) {
+          toast.error("Lütfen Seçenek E'yi doldurun.");
+          return;
+        }
+        optionsPayload.E = optionE;
+      }
     }
 
     addQuestionMutation.mutate({
@@ -404,8 +474,11 @@ export default function TeacherQuizzesPage() {
       correct_answer: correctAnswer,
       points,
       explanation: explanation || null,
+      image_path: questionImagePath || null,
+      solution_file_path: solutionFilePath || null,
     });
   };
+
 
   const handleDeleteQuiz = (quizId: string) => {
     if (confirm("Bu testi ve içindeki tüm soruları silmek istediğinize emin misiniz? Öğrencilerin tüm sınav denemeleri de silinecektir.")) {
@@ -839,7 +912,7 @@ export default function TeacherQuizzesPage() {
                         </div>
                       </div>
 
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-gray-500">Soru Metni *</label>
                         <input
                           type="text"
@@ -849,74 +922,136 @@ export default function TeacherQuizzesPage() {
                           onChange={(e) => setQuestionText(e.target.value)}
                           className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
                         />
+                        <div className="flex flex-col gap-2 mt-1">
+                          <label className="text-[10px] text-gray-400 font-semibold">Soru Görseli Ekle (İsteğe bağlı):</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              id="question-img-upload"
+                              onChange={handleQuestionImageUpload}
+                              className="hidden"
+                            />
+                            <label
+                              htmlFor="question-img-upload"
+                              className="cursor-pointer px-3 py-1.5 border border-teal-500 text-teal-600 hover:bg-teal-50 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                            >
+                              {isUploadingQuestionImage ? "Yükleniyor..." : "📷 Görsel Yükle"}
+                            </label>
+                            {questionImagePath && (
+                              <div className="flex items-center gap-2 bg-teal-50 border border-teal-150 px-2 py-1 rounded-lg text-xs">
+                                <span className="text-teal-700 font-medium truncate max-w-[200px]">Resim Yüklendi</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setQuestionImagePath("")}
+                                  className="text-red-500 hover:text-red-700 font-bold"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          {questionImagePath && (
+                            <div className="mt-1 border border-gray-200 rounded-lg overflow-hidden max-w-[150px]">
+                              <img
+                                src={`http://localhost:8000/api/v1/media/thumbnails/${questionImagePath.split("/").pop()}`}
+                                alt="Soru görsel önizleme"
+                                className="w-full h-auto object-contain max-h-[100px]"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Options block for Multiple Choice */}
-                      {questionType === "multiple_choice" && (
-                        <div className="bg-white border border-gray-150 rounded-xl p-4 space-y-3">
-                          <h5 className="font-bold text-[10px] text-gray-400 uppercase tracking-wider">Seçenekleri Doldurun</h5>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded border">A</span>
-                              <input
-                                type="text"
-                                required
-                                placeholder="Seçenek A"
-                                value={optionA}
-                                onChange={(e) => setOptionA(e.target.value)}
-                                className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-teal-500"
-                              />
+                      {questionType === "multiple_choice" && (() => {
+                        const numOptions = activeQuizForQuestions?.number_of_options || 4;
+                        return (
+                          <div className="bg-white border border-gray-150 rounded-xl p-4 space-y-3">
+                            <h5 className="font-bold text-[10px] text-gray-400 uppercase tracking-wider">Seçenekleri Doldurun</h5>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded border">A</span>
+                                <input
+                                  type="text"
+                                  required
+                                  placeholder="Seçenek A"
+                                  value={optionA}
+                                  onChange={(e) => setOptionA(e.target.value)}
+                                  className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-teal-500"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded border">B</span>
+                                <input
+                                  type="text"
+                                  required
+                                  placeholder="Seçenek B"
+                                  value={optionB}
+                                  onChange={(e) => setOptionB(e.target.value)}
+                                  className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-teal-500"
+                                />
+                              </div>
+                              {numOptions >= 3 && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded border">C</span>
+                                  <input
+                                    type="text"
+                                    required
+                                    placeholder="Seçenek C"
+                                    value={optionC}
+                                    onChange={(e) => setOptionC(e.target.value)}
+                                    className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-teal-500"
+                                  />
+                                </div>
+                              )}
+                              {numOptions >= 4 && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded border">D</span>
+                                  <input
+                                    type="text"
+                                    required
+                                    placeholder="Seçenek D"
+                                    value={optionD}
+                                    onChange={(e) => setOptionD(e.target.value)}
+                                    className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-teal-500"
+                                  />
+                                </div>
+                              )}
+                              {numOptions >= 5 && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded border">E</span>
+                                  <input
+                                    type="text"
+                                    required
+                                    placeholder="Seçenek E"
+                                    value={optionE}
+                                    onChange={(e) => setOptionE(e.target.value)}
+                                    className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-teal-500"
+                                  />
+                                </div>
+                              )}
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded border">B</span>
-                              <input
-                                type="text"
-                                required
-                                placeholder="Seçenek B"
-                                value={optionB}
-                                onChange={(e) => setOptionB(e.target.value)}
-                                className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-teal-500"
-                              />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded border">C</span>
-                              <input
-                                type="text"
-                                placeholder="Seçenek C (Opsiyonel)"
-                                value={optionC}
-                                onChange={(e) => setOptionC(e.target.value)}
-                                className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-teal-500"
-                              />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded border">D</span>
-                              <input
-                                type="text"
-                                placeholder="Seçenek D (Opsiyonel)"
-                                value={optionD}
-                                onChange={(e) => setOptionD(e.target.value)}
-                                className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-teal-500"
-                              />
-                            </div>
-                          </div>
 
-                          <div className="space-y-1 mt-2">
-                            <label className="text-[10px] font-bold text-gray-500">Doğru Cevap Seçeneği *</label>
-                            <select
-                              required
-                              value={correctAnswer}
-                              onChange={(e) => setCorrectAnswer(e.target.value)}
-                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:outline-none"
-                            >
-                              <option value="">Seçiniz...</option>
-                              <option value="A">A</option>
-                              <option value="B">B</option>
-                              {optionC.trim() && <option value="C">C</option>}
-                              {optionD.trim() && <option value="D">D</option>}
-                            </select>
+                            <div className="space-y-1 mt-2">
+                              <label className="text-[10px] font-bold text-gray-500">Doğru Cevap Seçeneği *</label>
+                              <select
+                                required
+                                value={correctAnswer}
+                                onChange={(e) => setCorrectAnswer(e.target.value)}
+                                className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:outline-none"
+                              >
+                                <option value="">Seçiniz...</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                {numOptions >= 3 && <option value="C">C</option>}
+                                {numOptions >= 4 && <option value="D">D</option>}
+                                {numOptions >= 5 && <option value="E">E</option>}
+                              </select>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
 
                       {/* True/False correct answer selection */}
                       {questionType === "true_false" && (
@@ -951,7 +1086,7 @@ export default function TeacherQuizzesPage() {
                         </div>
                       )}
 
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-gray-500">Açıklama / Çözüm (Öğrenci sınavı bitirdikten sonra gösterilir - İsteğe bağlı)</label>
                         <input
                           type="text"
@@ -960,7 +1095,40 @@ export default function TeacherQuizzesPage() {
                           onChange={(e) => setExplanation(e.target.value)}
                           className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
                         />
+                        <div className="flex flex-col gap-2 mt-1">
+                          <label className="text-[10px] text-gray-400 font-semibold">Çözüm Dosyası Ekle (PDF, Word, Resim veya Video - İsteğe bağlı):</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="file"
+                              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,image/*,video/*"
+                              id="solution-file-upload"
+                              onChange={handleSolutionFileUpload}
+                              className="hidden"
+                            />
+                            <label
+                              htmlFor="solution-file-upload"
+                              className="cursor-pointer px-3 py-1.5 border border-teal-500 text-teal-600 hover:bg-teal-50 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                            >
+                              {isUploadingSolutionFile ? "Yükleniyor..." : "📎 Dosya Yükle"}
+                            </label>
+                            {solutionFilePath && (
+                              <div className="flex items-center gap-2 bg-teal-50 border border-teal-150 px-2 py-1 rounded-lg text-xs">
+                                <span className="text-teal-700 font-medium truncate max-w-[200px]">
+                                  {solutionFilePath.split("/").pop()}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setSolutionFilePath("")}
+                                  className="text-red-500 hover:text-red-700 font-bold"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
+
 
                       <div className="flex justify-end gap-2 text-xs pt-2">
                         <button
@@ -1059,6 +1227,16 @@ export default function TeacherQuizzesPage() {
                           {q.question_text}
                         </p>
 
+                        {q.image_path && (
+                          <div className="my-2 border border-gray-150 rounded-xl overflow-hidden max-w-md">
+                            <img
+                              src={`http://localhost:8000/api/v1/media/thumbnails/${q.image_path.split("/").pop()}`}
+                              alt="Soru Görseli"
+                              className="w-full object-contain max-h-64"
+                            />
+                          </div>
+                        )}
+
                         {/* Options preview for multiple choice */}
                         {q.question_type === "multiple_choice" && q.options && (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
@@ -1100,7 +1278,21 @@ export default function TeacherQuizzesPage() {
                               <span className="font-semibold text-gray-600 not-italic">Açıklama:</span> "{q.explanation}"
                             </p>
                           )}
+                          {q.solution_file_path && (
+                            <div className="mt-2 text-xs">
+                              <span className="font-semibold text-gray-600">Çözüm Dosyası:</span>{" "}
+                              <a
+                                href={`http://localhost:8000/api/v1/media/${q.solution_file_path.includes('videos') ? 'videos' : q.solution_file_path.includes('documents') ? 'documents' : 'thumbnails'}/${q.solution_file_path.split('/').pop()}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-teal-600 hover:text-teal-700 underline font-medium inline-flex items-center gap-1"
+                              >
+                                Dosyayı Görüntüle / İndir ({q.solution_file_path.split("/").pop()})
+                              </a>
+                            </div>
+                          )}
                         </div>
+
 
                         <button
                           onClick={() => handleDeleteQuestion(q.id)}

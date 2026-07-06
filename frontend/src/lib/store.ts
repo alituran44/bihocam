@@ -11,6 +11,9 @@ interface User {
   avatar_url?: string | null;
   phone?: string | null;
   bio?: string | null;
+  live_class_price?: number | null;
+  live_class_discount_price?: number | null;
+  live_class_link?: string | null;
 }
 
 interface AuthState {
@@ -18,6 +21,7 @@ interface AuthState {
   isAuthenticated: boolean;
   setUser: (user: User | null) => void;
   logout: () => void;
+  checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -36,6 +40,15 @@ export const useAuthStore = create<AuthState>()(
           });
         }
         set({ user: null, isAuthenticated: false });
+      },
+      checkAuth: async () => {
+        try {
+          const { authApi } = await import("./api");
+          const user = await authApi.getMe();
+          set({ user, isAuthenticated: !!user });
+        } catch (error) {
+          // Silent fallback or logout if 401 (interceptor handles this)
+        }
       },
     }),
     {

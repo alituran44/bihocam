@@ -242,11 +242,15 @@ async def get_approved_popcasts(
     skip: int = 0,
     limit: int = 20,
     search: Optional[str] = Query(None),
+    teacher_id: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
     """Tüm onaylanmış popcast'leri listeler (öğrenciler ve ziyaretçiler için)"""
     query = select(Popcast).options(selectinload(Popcast.teacher)).where(Popcast.status == PopcastStatus.APPROVED)
+    
+    if teacher_id:
+        query = query.where(Popcast.teacher_id == teacher_id)
     
     if search:
         query = query.where(

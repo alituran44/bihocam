@@ -7,6 +7,7 @@ import { siteSettingsApi, type SiteSettingsData } from "@/lib/api";
 export default function AdminSettingsGeneralPage() {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [platformData, setPlatformData] = useState<Record<string, any>>({});
   const [message, setMessage] = useState<string | null>(null);
 
   const { data: settings, isLoading } = useQuery({
@@ -17,6 +18,9 @@ export default function AdminSettingsGeneralPage() {
   useEffect(() => {
     if (settings?.general) {
       setFormData(settings.general as Record<string, string>);
+    }
+    if (settings?.platform) {
+      setPlatformData(settings.platform as Record<string, any>);
     }
   }, [settings]);
 
@@ -31,7 +35,7 @@ export default function AdminSettingsGeneralPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateMutation.mutate({ general: formData });
+    updateMutation.mutate({ general: formData, platform: platformData });
   };
 
   if (isLoading) {
@@ -246,6 +250,117 @@ export default function AdminSettingsGeneralPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 placeholder="+90 212 000 00 00"
               />
+            </div>
+          </div>
+
+          {/* Pricing Calculator Settings */}
+          <div className="bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-500 px-8 py-6 rounded-t-2xl -mx-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">Akıllı Ücret Hesaplayıcı Ayarları</h2>
+                <p className="text-teal-100 text-sm mt-0.5">Ana sayfadaki bütçe hesaplama motoru değerleri</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Saatlik Taban Ücret (TL) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={platformData.calc_hourly_rate ?? 800}
+                onChange={(e) => setPlatformData({ ...platformData, calc_hourly_rate: parseFloat(e.target.value) })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                min="0"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                12 Haftalık Paket İndirim Oranı (%) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={platformData.calc_discount_12 ?? 10}
+                onChange={(e) => setPlatformData({ ...platformData, calc_discount_12: parseFloat(e.target.value) })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                min="0"
+                max="100"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                24 Haftalık Paket İndirim Oranı (%) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={platformData.calc_discount_24 ?? 15}
+                onChange={(e) => setPlatformData({ ...platformData, calc_discount_24: parseFloat(e.target.value) })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                min="0"
+                max="100"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                36 Haftalık Paket İndirim Oranı (%) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={platformData.calc_discount_36 ?? 20}
+                onChange={(e) => setPlatformData({ ...platformData, calc_discount_36: parseFloat(e.target.value) })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                min="0"
+                max="100"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Introduction Video Settings */}
+          <div className="bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-500 px-8 py-6 rounded-t-2xl -mx-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">Tanıtım Videosu Ayarları</h2>
+                <p className="text-teal-100 text-sm mt-0.5">Ana sayfadaki tanıtım videosunun bağlantısını yönetin</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 pb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                YouTube Video ID veya Embed Bağlantısı
+              </label>
+              <input
+                type="text"
+                value={platformData.intro_video_url ?? "xYDScJqsj9k"}
+                onChange={(e) => setPlatformData({ ...platformData, intro_video_url: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                placeholder="Örn: xYDScJqsj9k veya https://www.youtube.com/embed/xYDScJqsj9k"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Video çalışmıyorsa geçerli bir YouTube Video ID'si (11 haneli kod) veya doğrudan YouTube embed URL'si girin.
+              </p>
             </div>
           </div>
 

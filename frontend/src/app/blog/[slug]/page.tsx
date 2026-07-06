@@ -72,11 +72,11 @@ export default function BlogPostDetailPage() {
   const readingTime = Math.ceil(wordCount / 200);
 
   // Generate SEO metadata
-  const seoTitle = post.seo?.seo_meta_title || post.title;
-  const seoDescription = post.seo?.seo_meta_description || post.excerpt || "";
-  const seoKeywords = post.seo?.seo_meta_keywords || "";
-  const ogImage = post.seo?.seo_og_image_url || post.featured_image_url || "";
-  const canonicalUrl = post.seo?.seo_canonical_url || `/blog/${post.slug}`;
+  const seoTitle = post.seo_meta_title || post.title;
+  const seoDescription = post.seo_meta_description || post.excerpt || "";
+  const seoKeywords = post.seo_meta_keywords || "";
+  const ogImage = post.seo_og_image_url || post.featured_image_url || "";
+  const canonicalUrl = post.seo_canonical_url || `/blog/${post.slug}`;
 
   // Generate Schema.org JSON-LD
   const schemaJson = {
@@ -115,8 +115,8 @@ export default function BlogPostDetailPage() {
         description={seoDescription}
         keywords={seoKeywords}
         canonicalUrl={canonicalUrl}
-        ogTitle={post.seo?.seo_og_title || post.title}
-        ogDescription={post.seo?.seo_og_description || post.excerpt || ""}
+        ogTitle={post.seo_og_title || post.title}
+        ogDescription={post.seo_og_description || post.excerpt || ""}
         ogImage={ogImage}
         ogType="article"
         schemaJson={schemaJson}

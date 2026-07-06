@@ -167,3 +167,61 @@ async def logout(response: Response):
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.get("/demo-accounts")
+async def get_demo_accounts():
+    """Geliştirme modunda demo hesaplarını döndürür, üretim modunda gizler (S8)"""
+    if settings.DEBUG:
+        return [
+            {"label": "Admin", "email": "admin@bihocam.com", "password": "admin123456", "color": "bg-violet-100 text-violet-700"},
+            {"label": "Ogretmen", "email": "bilgi@bihocam.com", "password": "teacher123456", "color": "bg-teal-100 text-teal-700"},
+            {"label": "Ogrenci", "email": "beritankorkusuz@icloud.com", "password": "student123456", "color": "bg-orange-100 text-orange-700"},
+        ]
+    return []
+
+
+from pydantic import BaseModel
+
+class PublicPasswordResetPayload(BaseModel):
+    token: str
+    new_password: str
+
+
+@router.post("/reset-password")
+async def public_reset_password(
+    payload: PublicPasswordResetPayload,
+    db: AsyncSession = Depends(get_db)
+):
+    """Kullanıcı şifre sıfırlama magic link tüketimi (S1)"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Geçersiz veya süresi dolmuş şifre sıfırlama linki"
+    )
+    try:
+        decoded_payload = jwt.decode(payload.token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id: str = decoded_payload.get("sub")
+        token_type: str = decoded_payload.get("type")
+        if user_id is None or token_type != "password_reset":
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    user = await get_user_by_id(db, user_id)
+    if user is None or not user.is_active:
+        raise credentials_exception
+
+    if len(payload.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Şifre en az 8 karakter olmalıdır")
+
+    from app.core.security import get_password_hash
+    user.hashed_password = get_password_hash(payload.new_password)
+    
+    try:
+        await db.commit()
+        return {"message": "Şifreniz başarıyla sıfırlandı. Yeni şifrenizle giriş yapabilirsiniz."}
+    except Exception as e:
+        await db.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"Error in password reset endpoint: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Şifre güncellenirken bir hata oluştu.")

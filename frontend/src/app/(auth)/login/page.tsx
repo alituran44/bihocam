@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authApi } from "@/lib/api";
@@ -14,6 +14,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [demoAccounts, setDemoAccounts] = useState<any[]>([]);
+
+  const showDemoAccounts = process.env.NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS === "true";
+
+  useEffect(() => {
+    if (showDemoAccounts) {
+      authApi.getDemoAccounts()
+        .then((data) => setDemoAccounts(data))
+        .catch(() => {});
+    }
+  }, [showDemoAccounts]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,13 +54,7 @@ export default function LoginPage() {
     }
   };
 
-  const showDemoAccounts = process.env.NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS === "true";
 
-  const demoAccounts = [
-    { label: "Admin", email: "admin@bihocam.com", password: "admin123456", color: "bg-violet-100 text-violet-700" },
-    { label: "Ogretmen", email: "ahmet.yilmaz@bihocam.com", password: "teacher123456", color: "bg-teal-100 text-teal-700" },
-    { label: "Ogrenci", email: "ogrenci1@bihocam.com", password: "student123456", color: "bg-orange-100 text-orange-700" },
-  ];
 
   return (
     <div className="w-full max-w-md">

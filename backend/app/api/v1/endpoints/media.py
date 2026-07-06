@@ -52,6 +52,24 @@ MAX_AVATAR_SIZE = settings.MAX_AVATAR_SIZE_MB * 1024 * 1024  # Convert MB to byt
 MAX_DOCUMENT_SIZE = settings.MAX_DOCUMENT_SIZE_MB * 1024 * 1024  # Convert MB to bytes
 
 
+def check_file_size(file: UploadFile, max_size_bytes: int) -> int:
+    file_size = getattr(file, "size", None)
+    if file_size is None:
+        try:
+            file.file.seek(0, 2)
+            file_size = file.file.tell()
+            file.file.seek(0)
+        except Exception:
+            file_size = 0
+    if file_size > max_size_bytes:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Dosya boyutu çok büyük. Maksimum: {max_size_bytes / (1024 * 1024):.1f}MB"
+        )
+    return file_size
+
+
+
 def require_teacher_or_admin(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role not in [UserRole.ADMIN, UserRole.TEACHER, UserRole.ORGANIZATION]:
         raise HTTPException(status_code=403, detail="Öğretmen veya admin yetkisi gerekli")
@@ -90,14 +108,10 @@ async def upload_lesson_video(
             detail=f"Geçersiz dosya formatı. İzin verilen formatlar: {', '.join(ALLOWED_VIDEO_EXTENSIONS)}"
         )
     
-    # Dosya boyutu kontrolü
+    # Dosya boyutu kontrolü (DoS koruması)
+    file_size = check_file_size(file, MAX_VIDEO_SIZE)
+    
     file_content = await file.read()
-    file_size = len(file_content)
-    if file_size > MAX_VIDEO_SIZE:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Dosya boyutu çok büyük. Maksimum: {settings.MAX_VIDEO_SIZE_MB}MB"
-        )
     
     # EP10-BE-14: Quota kontrolü
     try:
@@ -257,24 +271,7 @@ async def stream_video(
         )
         lesson = lesson_result.scalar_one_or_none()
     
-    # Eğer hala lesson bulunamazsa, güvenlik için erişim izni verme
-    if not lesson:
-        # Debug: Try to find any lesson with this filename in content_path
-        all_lessons_result = await db.execute(
-            select(Lesson)
-            .options(selectinload(Lesson.course))
-            .where(Lesson.content_path.like(f"%{decoded_filename}%"))
-        )
-        lessons = all_lessons_result.scalars().all()
-        if lessons:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.warning(f"Video not found with exact match. Filename: {decoded_filename}, Storage key: {storage_key}")
-            logger.warning(f"Found {len(lessons)} lessons with similar content_path:")
-            for l in lessons:
-                logger.warning(f"  - Lesson {l.id}: content_path={l.content_path}")
-            # Use first match as fallback
-            lesson = lessons[0]
+
     
     if not lesson:
         # Final check: does the file exist in storage?
@@ -473,14 +470,10 @@ async def upload_user_avatar(
             detail=f"Geçersiz dosya formatı. İzin verilen formatlar: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}"
         )
     
-    # Dosya boyutu kontrolü
+    # Dosya boyutu kontrolü (DoS koruması)
+    file_size = check_file_size(file, MAX_AVATAR_SIZE)
+    
     file_content = await file.read()
-    file_size = len(file_content)
-    if file_size > MAX_AVATAR_SIZE:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Dosya boyutu çok büyük. Maksimum: {settings.MAX_AVATAR_SIZE_MB}MB"
-        )
     
     # Resmi optimize et (PIL ile)
     try:
@@ -501,7 +494,9 @@ async def upload_user_avatar(
         file_content = output.getvalue()
         file_ext = ".webp"
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Resim işlenirken hata oluştu: {str(e)}")
+        import logging
+        logging.getLogger(__name__).error(f"Image processing error: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail="Resim işlenirken hata oluştu.")
     
     # Eski avatar varsa sil
     if current_user.avatar_url:
@@ -641,14 +636,10 @@ async def upload_lesson_document(
             detail=f"Geçersiz dosya formatı. İzin verilen formatlar: {', '.join(ALLOWED_DOCUMENT_EXTENSIONS)}"
         )
     
-    # Dosya boyutu kontrolü
+    # Dosya boyutu kontrolü (DoS koruması)
+    file_size = check_file_size(file, MAX_DOCUMENT_SIZE)
+    
     file_content = await file.read()
-    file_size = len(file_content)
-    if file_size > MAX_DOCUMENT_SIZE:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Dosya boyutu çok büyük. Maksimum: {settings.MAX_DOCUMENT_SIZE_MB}MB"
-        )
     
     # CRITICAL: Magic-byte MIME doğrulama
     try:
@@ -823,26 +814,6 @@ async def get_document(
         )
         lesson = lesson_result.scalar_one_or_none()
     
-    # Debug: Eğer hala bulunamazsa, tüm content_path'leri kontrol et
-    if not lesson:
-        # Try to find any lesson with this filename in content_path
-        all_lessons_result = await db.execute(
-            select(Lesson)
-            .options(selectinload(Lesson.course))
-            .where(Lesson.content_path.like(f"%{decoded_filename}%"))
-        )
-        lessons = all_lessons_result.scalars().all()
-        if lessons:
-            # Log for debugging
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.warning(f"Document not found with exact match. Filename: {decoded_filename}, Storage key: {storage_key}")
-            logger.warning(f"Found {len(lessons)} lessons with similar content_path:")
-            for l in lessons:
-                logger.warning(f"  - Lesson {l.id}: content_path={l.content_path}")
-            # Use first match as fallback
-            lesson = lessons[0]
-    
     if not lesson:
         # TeacherApplication kontrolü yap
         from app.models.teacher_application import TeacherApplication
@@ -852,10 +823,7 @@ async def get_document(
             or_(
                 TeacherApplication.cv_path == storage_key,
                 TeacherApplication.graduation_cert_path == storage_key,
-                TeacherApplication.criminal_record_path == storage_key,
-                TeacherApplication.cv_path.like(f"%{decoded_filename}%"),
-                TeacherApplication.graduation_cert_path.like(f"%{decoded_filename}%"),
-                TeacherApplication.criminal_record_path.like(f"%{decoded_filename}%")
+                TeacherApplication.criminal_record_path == storage_key
             )
         )
         app_result = await db.execute(stmt)
@@ -1393,9 +1361,11 @@ async def upload_course_thumbnail(
         processed_content = output.getvalue()
         
     except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Thumbnail image processing error: {e}", exc_info=True)
         raise HTTPException(
             status_code=400,
-            detail=f"Resim işlenirken hata oluştu: {str(e)}"
+            detail="Resim işlenirken hata oluştu."
         )
     
     # EP10-BE-14: Quota kontrolü (thumbnail için küçük dosya, ama yine de kontrol)
@@ -1642,6 +1612,90 @@ async def upload_general_document(
         "url": f"/api/v1/media/documents/{filename}",
         "size": upload_result.file_size,
     }
+
+
+@router.post("/upload-file")
+async def upload_general_file(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    storage: StorageBackend = Depends(get_storage),
+):
+    """
+    Genel dosya yükleme endpoint'i (Quiz açıklamaları, çözüm dokümanları/videoları vb. için)
+    - Resim, video, PDF veya DOC yüklemeyi destekler.
+    - Uzantısına göre doğru klasöre (thumbnails, videos, documents) kaydeder.
+    """
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Dosya adı belirtilmedi")
+        
+    file_ext = Path(file.filename).suffix.lower()
+    
+    # İzin verilen tüm uzantılar
+    allowed_exts = {
+        ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx",
+        ".mp4", ".webm", ".ogg", ".mov", ".avi",
+        ".jpg", ".jpeg", ".png", ".gif", ".webp"
+    }
+    
+    if file_ext not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Geçersiz dosya formatı. İzin verilen formatlar: PDF, Word, PowerPoint, Excel, Görsel ve Videolar."
+        )
+        
+    file_content = await file.read()
+    
+    # Boyut kontrolü (Video için 500MB, diğerleri için 50MB)
+    is_video = file_ext in {".mp4", ".webm", ".ogg", ".mov", ".avi"}
+    max_size = (settings.MAX_VIDEO_SIZE_MB if is_video else settings.MAX_DOCUMENT_SIZE_MB) * 1024 * 1024
+    if len(file_content) > max_size:
+        max_mb = settings.MAX_VIDEO_SIZE_MB if is_video else settings.MAX_DOCUMENT_SIZE_MB
+        raise HTTPException(
+            status_code=400,
+            detail=f"Dosya boyutu çok büyük. Maksimum {max_mb}MB olmalıdır."
+        )
+        
+    from datetime import datetime
+    import hashlib
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    content_hash = hashlib.md5(file_content).hexdigest()[:8]
+    
+    # Uzantıya göre kaydetme dizini ve url belirleme
+    is_image = file_ext in {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+    
+    if is_image:
+        filename = f"img_{timestamp}_{content_hash}{file_ext}"
+        destination_path = f"{settings.THUMBNAILS_DIR}/{filename}"
+        url_path = f"/api/v1/media/thumbnails/{filename}"
+    elif is_video:
+        filename = f"vid_{timestamp}_{content_hash}{file_ext}"
+        destination_path = f"{settings.VIDEOS_DIR}/{filename}"
+        url_path = f"/api/v1/media/videos/{filename}"
+    else:
+        filename = f"doc_{timestamp}_{content_hash}{file_ext}"
+        destination_path = f"{settings.DOCUMENTS_DIR}/{filename}"
+        url_path = f"/api/v1/media/documents/{filename}"
+        
+    upload_result = await storage.upload(
+        file_content=file_content,
+        destination_path=destination_path,
+        content_type=MIME_TYPE_MAP.get(file_ext, "application/octet-stream"),
+    )
+    
+    access_url = f"{settings.FRONTEND_URL.rstrip('/')}{url_path}"
+    if settings.STORAGE_BACKEND != "local":
+        access_url = upload_result.access_url
+        
+    return {
+        "message": "Dosya başarıyla yüklendi",
+        "filename": filename,
+        "path": upload_result.storage_key,
+        "url": url_path,
+        "full_url": access_url,
+        "size": upload_result.file_size,
+    }
+
 
 
 @router.get("/thumbnails/{filename}")

@@ -352,11 +352,21 @@ export function QuizTakingInterface({
                     <h4 className="text-xl font-semibold text-gray-900 mb-2">
                       {currentQuestion.question_text}
                     </h4>
+                    {currentQuestion.image_path && (
+                      <div className="my-4 border border-gray-200 rounded-xl overflow-hidden max-w-full">
+                        <img 
+                          src={`http://localhost:8000/api/v1/media/thumbnails/${currentQuestion.image_path.split('/').pop()}`} 
+                          alt="Soru Görseli" 
+                          className="w-full object-contain max-h-[300px]" 
+                        />
+                      </div>
+                    )}
                     <div className="text-sm text-gray-500">
                       {currentQuestion.points} puan • {currentQuestion.question_type === "multiple_choice" ? "Çoktan Seçmeli" : currentQuestion.question_type === "true_false" ? "Doğru/Yanlış" : "Kısa Cevap"}
                     </div>
                   </div>
                 </div>
+
 
                 {/* Answer Input */}
                 <div className="mt-6">

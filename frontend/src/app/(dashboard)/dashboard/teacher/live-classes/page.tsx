@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { teachersApi, siteSettingsApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
@@ -51,6 +51,15 @@ export default function TeacherLiveClassesPage() {
 
   const [settingsSuccess, setSettingsSuccess] = useState(false);
   const [slotError, setSlotError] = useState("");
+  const [minDate, setMinDate] = useState("");
+
+  useEffect(() => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    setMinDate(`${yyyy}-${mm}-${dd}`);
+  }, []);
 
   // Get teacher availability
   const { data: slots, isLoading: slotsLoading } = useQuery<AvailabilitySlot[]>({
@@ -255,7 +264,7 @@ export default function TeacherLiveClassesPage() {
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Ders Tarihi</label>
                 <input
                   type="date"
-                  min={new Date().toISOString().split("T")[0]}
+                  min={minDate}
                   value={slotDate}
                   onChange={(e) => setSlotDate(e.target.value)}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200/80 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 font-semibold text-slate-800"

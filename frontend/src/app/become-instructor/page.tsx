@@ -289,40 +289,61 @@ export default function BecomeInstructorPage() {
           <AdBanner placementCode="become_instructor_banner" className="mb-6" />
 
           {/* Benefit Cards Banner */}
+          <div className="text-center mb-10">
+            <h2 className="text-4xl font-extrabold text-[#1f295b] tracking-tight">
+              Neden öğretmen olmalısınız?
+            </h2>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="relative overflow-hidden bg-gradient-to-br from-pink-500 via-pink-600 to-rose-600 rounded-[2rem] p-8 text-white shadow-xl flex flex-col justify-between group hover:scale-[1.02] transition-all duration-300">
-              <div className="space-y-4">
-                <h3 className="text-2xl font-black leading-tight">Senin en iyi öğrencileri bulmanı sağlıyoruz.</h3>
-                <p className="text-pink-50 text-sm font-medium leading-relaxed">
-                  Böylece en iyi yaptığınız işi ders öğretmenliği yapabilirsiniz. istediğiniz zaman, istediğiniz yerde ders verebilirsiniz.
+            {/* Card 1 */}
+            <div className="relative overflow-hidden bg-[#ec73ce] rounded-[2rem] p-8 text-black shadow-lg flex flex-col justify-between group hover:scale-[1.02] transition-all duration-300">
+              <div className="space-y-4 text-center">
+                <h3 className="text-2xl font-black leading-tight text-black">
+                  Senin en iyi öğrencileri bulmanı sağlıyoruz.
+                </h3>
+                <p className="text-black text-sm font-semibold leading-relaxed">
+                  Böylece en iyi yaptığınız işi ders öğretmenliği yapabilirsiniz. istediğiniz zaman, istediğiniz yerde ders verebilirsiniz. Özgeçmişinizi güçlendirerek mesleki deneyim kazanabilirsiniz.
                 </p>
               </div>
               <div className="mt-8 flex justify-center">
-                <img src="/teacher_matching.png" alt="Öğrenci Eşleştirme" className="h-40 object-contain drop-shadow-2xl rounded-2xl group-hover:scale-105 transition-transform" />
+                <div className="bg-white border border-slate-900 rounded-[1.5rem] p-1 overflow-hidden h-44 w-72 flex items-center justify-center shadow-inner">
+                  <img src="/teacher_student.png" alt="Öğrenci Eşleştirme" className="h-full w-full object-cover rounded-[1.2rem] group-hover:scale-105 transition-transform" />
+                </div>
               </div>
             </div>
 
-            <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-teal-600 to-teal-700 rounded-[2rem] p-8 text-white shadow-xl flex flex-col justify-between group hover:scale-[1.02] transition-all duration-300">
-              <div className="space-y-4">
-                <h3 className="text-2xl font-black leading-tight">Yoğun İşlerle Biz İlgileneceğiz</h3>
-                <p className="text-emerald-50 text-sm font-medium leading-relaxed">
+            {/* Card 2 */}
+            <div className="relative overflow-hidden bg-[#b8f95c] rounded-[2rem] p-8 text-black shadow-lg flex flex-col justify-between group hover:scale-[1.02] transition-all duration-300">
+              <div className="space-y-4 text-center">
+                <h3 className="text-2xl font-black leading-tight text-black">
+                  Yoğun İşlerle Biz İlgileneceğiz
+                </h3>
+                <p className="text-black text-sm font-semibold leading-relaxed">
                   Yapay zeka destekleri araçlarımız ile ders hazırlığı ve tekrarında size destek olurken siz öğrencileriniz ile daha yakından ilgilenebilirsiniz.
                 </p>
               </div>
               <div className="mt-8 flex justify-center">
-                <img src="/ai_helper.png" alt="Yapay Zeka Destekleri" className="h-40 object-contain drop-shadow-2xl rounded-2xl group-hover:scale-105 transition-transform" />
+                <div className="bg-white border border-slate-900 rounded-[1.5rem] p-1 overflow-hidden h-44 w-72 flex items-center justify-center shadow-inner">
+                  <img src="/online_learning.png" alt="Yapay Zeka Destekleri" className="h-full w-full object-cover rounded-[1.2rem] group-hover:scale-105 transition-transform" />
+                </div>
               </div>
             </div>
 
-            <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 via-orange-500 to-amber-500 rounded-[2rem] p-8 text-gray-900 shadow-xl flex flex-col justify-between group hover:scale-[1.02] transition-all duration-300">
-              <div className="space-y-4">
-                <h3 className="text-2xl font-black leading-tight">Mükemmel Yarı zamanlı iş ve kariyer başlangıcı</h3>
-                <p className="text-orange-950 text-sm font-medium leading-relaxed">
+            {/* Card 3 */}
+            <div className="relative overflow-hidden bg-[#fddb55] rounded-[2rem] p-8 text-black shadow-lg flex flex-col justify-between group hover:scale-[1.02] transition-all duration-300">
+              <div className="space-y-4 text-center">
+                <h3 className="text-2xl font-black leading-tight text-black">
+                  Mükemmel Yarı zamanlı iş ve kariyer başlangıcı
+                </h3>
+                <p className="text-black text-sm font-semibold leading-relaxed">
                   Öğretmenlerimizin çoğunluğu halihazırda yarı zamanlı bir işte çalışıyor. Bu da ders vermeyi yan iş olarak harika bir seçenek haline getiriyor.
                 </p>
               </div>
               <div className="mt-8 flex justify-center">
-                <img src="/parttime_career.png" alt="Kariyer Başlangıcı" className="h-40 object-contain drop-shadow-2xl rounded-2xl group-hover:scale-105 transition-transform" />
+                <div className="bg-white border border-slate-900 rounded-[1.5rem] p-1 overflow-hidden h-44 w-72 flex items-center justify-center shadow-inner">
+                  <img src="/calm_student.png" alt="Kariyer Başlangıcı" className="h-full w-full object-cover rounded-[1.2rem] group-hover:scale-105 transition-transform" />
+                </div>
               </div>
             </div>
           </div>

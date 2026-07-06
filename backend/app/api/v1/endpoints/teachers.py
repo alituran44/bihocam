@@ -293,92 +293,6 @@ async def update_my_profile(
     )
 
 
-# ========== LIVE CLASS SCHEDULING & RESERVATION ENDPOINTS ==========
-
-@router.get("/{teacher_id}/availability", response_model=list[TeacherAvailabilityResponse])
-async def get_teacher_availability_public(
-    teacher_id: str,
-    db: AsyncSession = Depends(get_db),
-):
-    """Public: Bir öğretmenin henüz rezerve edilmemiş boş slotlarını getirir."""
-    from datetime import date
-    today_str = date.today().strftime("%Y-%m-%d")
-    
-    result = await db.execute(
-        select(TeacherAvailability)
-        .where(
-            TeacherAvailability.teacher_id == teacher_id,
-            TeacherAvailability.is_booked == False,
-            TeacherAvailability.date >= today_str
-        )
-        .order_by(TeacherAvailability.date.asc(), TeacherAvailability.start_time.asc())
-    )
-    return result.scalars().all()
-
-
-@router.post("/{teacher_id}/book-live-class", response_model=LiveClassReservationResponse)
-async def book_live_class(
-    teacher_id: str,
-    payload: LiveClassReservationCreate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Authenticated: Öğrenci seçtiği boş slot için canlı ders rezervasyon talebi gönderir."""
-    slot_result = await db.execute(
-        select(TeacherAvailability).where(
-            TeacherAvailability.id == payload.availability_id,
-            TeacherAvailability.teacher_id == teacher_id,
-            TeacherAvailability.is_booked == False
-        )
-    )
-    slot = slot_result.scalar_one_or_none()
-    if not slot:
-        raise HTTPException(status_code=400, detail="Seçilen canlı ders slotu uygun değil veya daha önce rezerve edilmiş")
-        
-    teacher_result = await db.execute(
-        select(User).where(User.id == teacher_id, User.role == UserRole.TEACHER)
-    )
-    teacher = teacher_result.scalar_one_or_none()
-    if not teacher:
-        raise HTTPException(status_code=404, detail="Öğretmen bulunamadı")
-
-    price = teacher.live_class_price or 0.0
-    discount_price = teacher.live_class_discount_price
-    
-    slot.is_booked = True
-    
-    reservation = LiveClassReservation(
-        teacher_id=teacher_id,
-        student_id=current_user.id,
-        availability_id=slot.id,
-        date=slot.date,
-        start_time=slot.start_time,
-        end_time=slot.end_time,
-        price=price,
-        discount_price=discount_price,
-        status="pending",
-        student_notes=payload.student_notes
-    )
-    
-    db.add(reservation)
-    try:
-        await db.commit()
-        await db.refresh(reservation)
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(status_code=500, detail=f"Rezervasyon oluşturulurken bir hata oluştu: {str(e)}")
-        
-    res_detail = await db.execute(
-        select(LiveClassReservation)
-        .options(
-            selectinload(LiveClassReservation.teacher),
-            selectinload(LiveClassReservation.student)
-        )
-        .where(LiveClassReservation.id == reservation.id)
-    )
-    return res_detail.scalar_one()
-
-
 @router.get("/me/availability", response_model=list[TeacherAvailabilityResponse])
 async def get_my_availability(
     current_user: User = Depends(require_teacher_or_admin),
@@ -471,6 +385,94 @@ async def delete_my_availability(
     await db.delete(slot)
     await db.commit()
     return {"message": "Müsaitlik slotu başarıyla silindi"}
+
+
+# ========== LIVE CLASS SCHEDULING & RESERVATION ENDPOINTS ==========
+
+@router.get("/{teacher_id}/availability", response_model=list[TeacherAvailabilityResponse])
+async def get_teacher_availability_public(
+    teacher_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Public: Bir öğretmenin henüz rezerve edilmemiş boş slotlarını getirir."""
+    from datetime import date
+    today_str = date.today().strftime("%Y-%m-%d")
+    
+    result = await db.execute(
+        select(TeacherAvailability)
+        .where(
+            TeacherAvailability.teacher_id == teacher_id,
+            TeacherAvailability.is_booked == False
+        )
+        .order_by(TeacherAvailability.date.asc(), TeacherAvailability.start_time.asc())
+    )
+    return result.scalars().all()
+
+
+@router.post("/{teacher_id}/book-live-class", response_model=LiveClassReservationResponse)
+async def book_live_class(
+    teacher_id: str,
+    payload: LiveClassReservationCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Authenticated: Öğrenci seçtiği boş slot için canlı ders rezervasyon talebi gönderir."""
+    slot_result = await db.execute(
+        select(TeacherAvailability).where(
+            TeacherAvailability.id == payload.availability_id,
+            TeacherAvailability.teacher_id == teacher_id,
+            TeacherAvailability.is_booked == False
+        )
+    )
+    slot = slot_result.scalar_one_or_none()
+    if not slot:
+        raise HTTPException(status_code=400, detail="Seçilen canlı ders slotu uygun değil veya daha önce rezerve edilmiş")
+        
+    teacher_result = await db.execute(
+        select(User).where(User.id == teacher_id, User.role == UserRole.TEACHER)
+    )
+    teacher = teacher_result.scalar_one_or_none()
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Öğretmen bulunamadı")
+
+    price = teacher.live_class_price or 0.0
+    discount_price = teacher.live_class_discount_price
+    
+    slot.is_booked = True
+    
+    reservation = LiveClassReservation(
+        teacher_id=teacher_id,
+        student_id=current_user.id,
+        availability_id=slot.id,
+        date=slot.date,
+        start_time=slot.start_time,
+        end_time=slot.end_time,
+        price=price,
+        discount_price=discount_price,
+        status="pending",
+        student_notes=payload.student_notes
+    )
+    
+    db.add(reservation)
+    try:
+        await db.commit()
+        await db.refresh(reservation)
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Rezervasyon oluşturulurken bir hata oluştu: {str(e)}")
+        
+    res_detail = await db.execute(
+        select(LiveClassReservation)
+        .options(
+            selectinload(LiveClassReservation.teacher),
+            selectinload(LiveClassReservation.student)
+        )
+        .where(LiveClassReservation.id == reservation.id)
+    )
+    return res_detail.scalar_one()
+
+
+
 
 
 @router.get("/me/reservations", response_model=list[LiveClassReservationResponse])

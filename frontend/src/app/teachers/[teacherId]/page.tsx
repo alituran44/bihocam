@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Avatar from "@/components/Avatar";
-import { teachersApi, blogPublicApi, homeworksApi, quizzesApi } from "@/lib/api";
+import { teachersApi, blogPublicApi, homeworksApi, quizzesApi, courseReviewsApi, popcastsApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import { toast } from "sonner";
 
@@ -86,20 +86,75 @@ type LibraryItem = {
   created_at: string;
 };
 
+const DISCOUNT_MAP: Record<number, number> = { 4: 0, 12: 10, 24: 15, 36: 20 };
+
+const WEEK_OPTIONS = [
+  { weeks: 4,  label: "4 Hafta",  sub: "1 Ay" },
+  { weeks: 12, label: "12 Hafta", sub: "3 Ay" },
+  { weeks: 24, label: "24 Hafta", sub: "6 Ay" },
+  { weeks: 36, label: "36 Hafta", sub: "Eğitim Dönemi" },
+];
+
+function calcPackage(hourlyPrice: number, hours: number, weeks: number) {
+  const discount = DISCOUNT_MAP[weeks] ?? 0;
+  const total = hourlyPrice * hours * weeks * (1 - discount / 100);
+  return { total: Math.round(total), discount };
+}
+
 export default function TeacherProfilePage() {
   const queryClient = useQueryClient();
   const params = useParams();
+  const router = useRouter();
   const teacherId = params.teacherId as string;
 
   const { isAuthenticated, user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<"about" | "courses" | "book" | "blog" | "library" | "homeworks" | "quizzes">("about");
+  const [activeTab, setActiveTab] = useState<"about" | "courses" | "book" | "blog" | "library" | "homeworks" | "quizzes" | "videos" | "popcasts">("about");
 
   // Selected date for calendar: "YYYY-MM-DD"
-  const [selectedDate, setSelectedDate] = useState<string>("2026-05-24");
+  const [selectedDate, setSelectedDate] = useState<string>("2026-07-01");
+  const [currentYear, setCurrentYear] = useState<number>(2026);
+  const [currentMonth, setCurrentMonth] = useState<number>(7);
   const [selectedSlotId, setSelectedSlotId] = useState<string>("");
   const [studentNotes, setStudentNotes] = useState<string>("");
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState("");
+
+  const getDaysInMonth = (y: number, m: number) => {
+    return new Date(y, m, 0).getDate();
+  };
+
+  const getFirstDayOffset = (y: number, m: number) => {
+    const firstDay = new Date(y, m - 1, 1).getDay(); // 0: Sun, 1: Mon, ...
+    return firstDay === 0 ? 6 : firstDay - 1; // Map Sunday to 6, Monday to 0
+  };
+
+  const handlePrevMonth = () => {
+    if (currentMonth === 1) {
+      setCurrentMonth(12);
+      setCurrentYear((prev) => prev - 1);
+    } else {
+      setCurrentMonth((prev) => prev - 1);
+    }
+    setSelectedSlotId("");
+  };
+
+  const handleNextMonth = () => {
+    if (currentMonth === 12) {
+      setCurrentMonth(1);
+      setCurrentYear((prev) => prev + 1);
+    } else {
+      setCurrentMonth((prev) => prev + 1);
+    }
+    setSelectedSlotId("");
+  };
+
+  const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+  const offset = getFirstDayOffset(currentYear, currentMonth);
+
+  const MONTH_NAMES = [
+    "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+    "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+  ];
 
   const [isFollowing, setIsFollowing] = useState(false);
 
@@ -110,6 +165,19 @@ export default function TeacherProfilePage() {
   const [activeHomeworkForSubmit, setActiveHomeworkForSubmit] = useState<any | null>(null);
   const [submittingText, setSubmittingText] = useState("");
   const [isSubmittingHomework, setIsSubmittingHomework] = useState(false);
+
+  // New UI & Review states
+  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({
+    facilities: true,
+    whyPrivate: false,
+    faq: false
+  });
+  const [reviewRating, setReviewRating] = useState<number>(5);
+  const [reviewTitle, setReviewTitle] = useState<string>("");
+  const [reviewComment, setReviewComment] = useState<string>("");
+  const [selectedEmoji, setSelectedEmoji] = useState<string>("😍");
+  const [selectedHours, setSelectedHours] = useState<number>(4);
+  const [selectedWeeks, setSelectedWeeks] = useState<number>(4);
 
   // Check URL hash to switch tabs on page load
   useEffect(() => {
@@ -165,7 +233,14 @@ export default function TeacherProfilePage() {
   const { data: libraryItems = [], isLoading: libraryLoading } = useQuery<LibraryItem[]>({
     queryKey: ["teacher-library", teacherId],
     queryFn: () => teachersApi.getLibrary(teacherId),
-    enabled: !!teacherId && activeTab === "library",
+    enabled: !!teacherId && (activeTab === "library" || activeTab === "videos"),
+  });
+
+  // Fetch teacher's popcasts
+  const { data: popcastsData = [], isLoading: popcastsLoading } = useQuery({
+    queryKey: ["teacher-popcasts", teacherId],
+    queryFn: () => popcastsApi.list({ teacher_id: teacherId }),
+    enabled: !!teacherId && activeTab === "popcasts",
   });
 
   // Fetch homeworks for selected course
@@ -212,6 +287,26 @@ export default function TeacherProfilePage() {
     },
   });
 
+  // Review mutation
+  const reviewMutation = useMutation({
+    mutationFn: (payload: { rating: number; title?: string; comment?: string }) => {
+      const targetCourseId = selectedCourseId || (data?.courses?.[0]?.id);
+      if (!targetCourseId) {
+        throw new Error("Değerlendirme yapmak için eğitmenin en az bir yayında eğitimi olmalıdır.");
+      }
+      return courseReviewsApi.create(targetCourseId, payload);
+    },
+    onSuccess: () => {
+      toast.success("Yorumunuz başarıyla gönderildi.");
+      setReviewComment("");
+      setReviewTitle("");
+      queryClient.invalidateQueries({ queryKey: ["teacher", teacherId] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || "Yorum gönderilirken bir hata oluştu.");
+    }
+  });
+
   const handleBookLiveClass = () => {
     if (!selectedSlotId) {
       setBookingError("Lütfen listeden uygun bir saat dilimi seçiniz.");
@@ -221,6 +316,31 @@ export default function TeacherProfilePage() {
       availability_id: selectedSlotId,
       student_notes: studentNotes,
     });
+  };
+
+  const handleIntroBooking = () => {
+    setActiveTab("book");
+    setTimeout(() => {
+      const element = document.getElementById("live-class-section");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 100);
+  };
+
+  const handleBuyPackage = () => {
+    if (selectedSlotId) {
+      router.push(`/checkout?type=package&teacher_id=${teacherId}&weeks=${selectedWeeks}&hours=${selectedHours}&slot_id=${selectedSlotId}`);
+    } else {
+      setActiveTab("book");
+      toast.info("Lütfen takvimden ders saati seçerek paketinizi rezerve edin.");
+      setTimeout(() => {
+        const element = document.getElementById("live-class-section");
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
   };
 
   const handleHomeworkSubmit = (e: React.FormEvent) => {
@@ -293,118 +413,93 @@ export default function TeacherProfilePage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            {/* LEFT SIDEBAR: PROFILE CARD */}
-            <div className="lg:col-span-3 space-y-6">
-              <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 flex flex-col items-center text-center relative overflow-hidden">
-                <Avatar
-                  src={data.teacher.avatar_url}
-                  name={data.teacher.full_name}
-                  size="xl"
-                  className="w-24 h-24 ring-4 ring-slate-50 shadow-md mb-4 flex-shrink-0"
-                />
-                
-                <h2 className="text-xl font-bold text-slate-800 tracking-tight uppercase leading-snug">{data.teacher.full_name}</h2>
-                <p className="text-slate-400 text-xs font-bold mt-1">
-                  {data.teacher.expertise_tags?.[0] ? `${data.teacher.expertise_tags[0]} Öğretmeni` : "Eğitmen"}
-                </p>
+            {/* LEFT MAIN CONTENT AREA */}
+            <div className="lg:col-span-8 space-y-6">
+              
+              {/* Teacher Header Card */}
+              <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 sm:p-8 relative overflow-hidden">
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                  <Avatar
+                    src={data.teacher.avatar_url}
+                    name={data.teacher.full_name}
+                    size="xl"
+                    className="w-24 h-24 ring-4 ring-slate-50 shadow-md flex-shrink-0"
+                  />
+                  <div className="space-y-3 text-center sm:text-left flex-1">
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                      <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase leading-snug">{data.teacher.full_name}</h2>
+                      <span className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold shadow-sm select-none" title="Dogrulanmıs Uzman">✓</span>
+                      <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-md uppercase tracking-wider">Premium Egitmen</span>
+                    </div>
+                    <p className="text-teal-600 font-bold text-sm flex items-center justify-center sm:justify-start gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-teal-500 inline-block animate-pulse" />
+                      {data.teacher.expertise_tags?.[0] ? `${data.teacher.expertise_tags[0]} Öğretmeni / Eğitim Koçu` : "Eğitmen"}
+                    </p>
+
+                    {/* Badge list */}
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-2 text-[11px] font-bold text-slate-500 pt-1">
+                      <span className="px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-lg flex items-center gap-1">📍 Ankara / Çankaya</span>
+                      <span className="px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-lg flex items-center gap-1">🏆 12 Yıl Deneyim</span>
+                      <span className="px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-lg flex items-center gap-1">🎓 Ankara Universitesi</span>
+                    </div>
+
+                    {/* Status badges */}
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-2 pt-2">
+                      <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                        ⚡ Hızlı cevap veriyor
+                      </span>
+                      <span className="px-3 py-1 bg-orange-50 text-orange-700 border border-orange-100 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                        🔥 Son 48 saatte 268 saat ders yaptı
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Follower Stats */}
-                <div className="flex items-center gap-6 py-5 border-t border-b border-slate-50 w-full mt-5">
-                  <div className="flex-1">
+                <div className="flex items-center gap-6 py-4 border-t border-slate-50 w-full mt-6">
+                  <div className="flex-1 text-center sm:text-left">
                     <div className="text-base font-black text-slate-800">{isFollowing ? 1 : 0}</div>
                     <div className="text-[10px] text-slate-400 font-bold uppercase">Takipçiler</div>
                   </div>
                   <div className="w-px h-6 bg-slate-100"></div>
-                  <div className="flex-1">
+                  <div className="flex-1 text-center sm:text-left">
                     <div className="text-base font-black text-slate-800">0</div>
                     <div className="text-[10px] text-slate-400 font-bold uppercase">Takip edilenler</div>
                   </div>
-                </div>
-
-                {/* Action buttons */}
-                <div className="flex items-center gap-3 w-full mt-5">
-                  <button
-                    onClick={() => setIsFollowing(!isFollowing)}
-                    className={`flex-1 py-3 font-bold rounded-2xl text-xs transition-all shadow-sm ${
-                      isFollowing 
-                        ? "bg-slate-100 hover:bg-slate-200 text-slate-700" 
-                        : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/10"
-                    }`}
-                  >
-                    {isFollowing ? "Takibi Bırak" : "Takip et"}
-                  </button>
-                  <Link
-                    href={`/dashboard/messages?recipient_id=${data.teacher.id}`}
-                    className="w-12 h-12 rounded-2xl bg-white hover:bg-slate-50 text-slate-400 hover:text-slate-600 flex items-center justify-center border border-slate-200/60 shadow-sm transition-all flex-shrink-0"
-                    title="Mesaj Gönder"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </Link>
-                </div>
-
-                {/* Telephone Contact info */}
-                {data.teacher.phone && (
-                  <div className="w-full mt-5 pt-4 border-t border-slate-50 flex items-center justify-center gap-2 text-slate-600 font-bold text-xs">
-                    <svg className="w-4 h-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                    <span>{data.teacher.phone}</span>
+                  <div className="w-px h-6 bg-slate-100"></div>
+                  <div className="flex-[2] flex justify-center sm:justify-end gap-2">
+                    <button
+                      onClick={() => setIsFollowing(!isFollowing)}
+                      className={`px-4 py-2 font-bold rounded-xl text-xs transition-all shadow-sm ${
+                        isFollowing 
+                          ? "bg-slate-100 hover:bg-slate-200 text-slate-700" 
+                          : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/10"
+                      }`}
+                    >
+                      {isFollowing ? "Takibi Bırak" : "Takip et"}
+                    </button>
+                    <Link
+                      href={`/dashboard/messages?recipient_id=${data.teacher.id}`}
+                      className="w-10 h-10 rounded-xl bg-white hover:bg-slate-50 text-slate-400 hover:text-slate-600 flex items-center justify-center border border-slate-200/60 shadow-sm transition-all flex-shrink-0"
+                      title="Mesaj Gönder"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </Link>
                   </div>
-                )}
-
-                {/* Social links */}
-                {data.teacher.social_links && (data.teacher.social_links.website || data.teacher.social_links.linkedin || data.teacher.social_links.twitter || data.teacher.social_links.instagram) && (
-                  <div className="flex gap-4 justify-center mt-5 text-slate-400 border-t border-slate-50 w-full pt-4">
-                    {data.teacher.social_links.website && (
-                      <a href={data.teacher.social_links.website} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 transition-colors" title="Kişisel Web Sitesi">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                        </svg>
-                      </a>
-                    )}
-                    {data.teacher.social_links.linkedin && (
-                      <a href={data.teacher.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-blue-700 transition-colors" title="LinkedIn">
-                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                          <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-                        </svg>
-                      </a>
-                    )}
-                    {data.teacher.social_links.twitter && (
-                      <a href={data.teacher.social_links.twitter} target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors" title="Twitter">
-                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                          <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
-                        </svg>
-                      </a>
-                    )}
-                    {data.teacher.social_links.instagram && (
-                      <a href={data.teacher.social_links.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-pink-600 transition-colors" title="Instagram">
-                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
-                        </svg>
-                      </a>
-                    )}
-                  </div>
-                )}
-
-                {/* Join Date footer */}
-                <div className="pt-5 border-t border-slate-50 w-full mt-5 text-[11px] text-slate-400 font-bold tracking-wide uppercase">
-                  ÜYELİK TARİHİ: {formatJoinDate(data.teacher.created_at)}
                 </div>
               </div>
-            </div>
 
-            {/* RIGHT MAIN LAYOUT: TABBED CONSOLE */}
-            <div className="lg:col-span-9 space-y-6">
-              
-              {/* Tabs list (Matches screenshot exactly, now expanded to 7 tabs) */}
+              {/* Tabs selection header */}
               <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm px-6 py-2 overflow-x-auto">
                 <div className="flex border-b border-transparent min-w-[500px] whitespace-nowrap">
                   {[
                     { key: "about", label: "👤 Hakkında" },
                     { key: "courses", label: "📚 Kurslar" },
                     { key: "book", label: "📅 Canlı Ders" },
+                    { key: "videos", label: "🎥 Videolar" },
+                    { key: "popcasts", label: "🎙️ Popcastler" },
                     { key: "blog", label: "✍️ Blog Yazıları" },
                     { key: "library", label: "📁 Kütüphane" },
                   ].map((tab) => (
@@ -424,16 +519,16 @@ export default function TeacherProfilePage() {
                 </div>
               </div>
 
-              {/* TAB CONTENT: HAKKINDA (Active by default) */}
+              {/* TAB CONTENT: ABOUT */}
               {activeTab === "about" && (
                 <div className="space-y-6">
                   
-                  {/* Four Counters Cards (Matches screenshot 1) */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {/* Four Counters Cards */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
                       { value: totalStudents, label: "Öğrenci", color: "text-red-500", bg: "bg-red-50", icon: "🎓" },
                       { value: data.courses?.length || 0, label: "Kurslar", color: "text-blue-500", bg: "bg-blue-50", icon: "▶️" },
-                      { value: 0, label: "Makaleler", color: "text-emerald-500", bg: "bg-emerald-50", icon: "🎭" },
+                      { value: blogPosts.length, label: "Makaleler", color: "text-emerald-500", bg: "bg-emerald-50", icon: "✍️" },
                       { value: totalMeetings, label: "Toplantılar", color: "text-orange-500", bg: "bg-orange-50", icon: "📅" },
                     ].map((stat, idx) => (
                       <div key={idx} className="bg-white border border-slate-100 rounded-[2rem] p-5 shadow-sm flex items-center gap-4">
@@ -448,115 +543,271 @@ export default function TeacherProfilePage() {
                     ))}
                   </div>
 
-                  {/* Main Bio Content Grid */}
-                  <div className="bg-white rounded-[2rem] border border-slate-100 p-6 sm:p-8 shadow-sm">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                      {/* Left: Bio text */}
-                      <div className="md:col-span-7 space-y-4">
-                        <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase">Hakkımda</h3>
+                  {/* Main Bio Content */}
+                  <div className="bg-white rounded-[2rem] border border-slate-100 p-6 sm:p-8 shadow-sm space-y-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase">Öğretmen Hakkında</h3>
+                      
+                      {/* Structured highlights */}
+                      <ul className="space-y-3 text-sm font-semibold text-slate-600">
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600 font-black text-base">✓</span>
+                          <span><strong>12 yıllık özel ders tecrübesi</strong> ile binlerce öğrenciyi hedeflerine ulaştırdı.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600 font-black text-base">✓</span>
+                          <span><strong>YKS (TYT-AYT) ve LGS hazırlık</strong> alanlarında kendini kanıtlamış özel sınav müfredatı.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600 font-black text-base">✓</span>
+                          <span><strong>Pedagojik yaklaşımla</strong> öğrencilerin ders korkularını aşmasını ve motivasyon kazanmasını sağlar.</span>
+                        </li>
+                      </ul>
+
+                      <div className="border-t border-slate-50 pt-4">
                         <p className="text-slate-500 text-xs font-semibold leading-relaxed whitespace-pre-wrap">
-                          {data.teacher.bio || "Merhaba, bu eğitmen henüz biyografi detaylarını doldurmamıştır."}
+                          {data.teacher.bio || "Merhaba! Platformumuzun seçkin eğitmenlerinden biri olarak öğrencilerimin hedeflerine ulaşmasında rehberlik ediyorum."}
                         </p>
-
-                        <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase pt-4">Deneyimler</h3>
-                        <div className="space-y-3 text-xs font-semibold text-slate-500 relative border-l border-slate-100 pl-4 ml-2">
-                          <div className="relative">
-                            <span className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-slate-300 ring-4 ring-white"></span>
-                            Özel Etüt Merkezleri (Matematik Eğitmeni)
-                          </div>
-                          <div className="relative">
-                            <span className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-slate-300 ring-4 ring-white"></span>
-                            Online Eğitim Portalları ve Canlı Grup Dersleri
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Education Timeline */}
-                      <div className="md:col-span-5 space-y-4 md:border-l md:border-slate-50 md:pl-6">
-                        <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase">Eğitim</h3>
-                        <div className="space-y-4 text-xs font-bold text-slate-600 relative border-l border-slate-100 pl-4 ml-2">
-                          <div className="relative">
-                            <span className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-white"></span>
-                            Üniversite Lisans Derecesi
-                          </div>
-                          <div className="relative">
-                            <span className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-white"></span>
-                            Pedagojik Formasyon Eğitimi
-                          </div>
-                        </div>
-
-                        {/* Tags list */}
-                        <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase pt-6">Beceriler & İlgi Alanları</h3>
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          {(data.teacher.expertise_tags || ["Matematik", "Geometri", "LGS Hazırlık", "TYT Hazırlık", "AYT Hazırlık"]).map((tag, idx) => (
-                            <span key={idx} className="px-3.5 py-1.5 bg-slate-50 text-slate-500 rounded-lg text-[10px] font-bold">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Promo Images & Videos */}
-                  {(data.teacher.promo_video || (data.teacher.promo_images && data.teacher.promo_images.length > 0)) && (
-                    <div className="bg-white rounded-[2rem] border border-slate-100 p-6 sm:p-8 shadow-sm space-y-6 mt-6">
-                      <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase border-b border-slate-50 pb-3">
-                        Tanıtım Galeri & Tanıtım Videosu
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                        {/* Video component */}
-                        {data.teacher.promo_video && (
-                          <div className={`space-y-3 ${data.teacher.promo_images?.length ? "md:col-span-6" : "md:col-span-12"}`}>
-                            <h4 className="text-sm font-bold text-slate-700">Tanıtım Videosu</h4>
-                            <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-slate-900 border border-slate-100 shadow-sm flex items-center justify-center">
-                              {data.teacher.promo_video.includes("youtube.com") || data.teacher.promo_video.includes("youtu.be") ? (
-                                <iframe
-                                  src={`https://www.youtube.com/embed/${
-                                    data.teacher.promo_video.includes("youtu.be/")
-                                      ? data.teacher.promo_video.split("youtu.be/")[1]?.split("?")[0]
-                                      : data.teacher.promo_video.split("v=")[1]?.split("&")[0]
-                                  }`}
-                                  className="w-full h-full"
-                                  allowFullScreen
-                                />
-                              ) : (
-                                <video
-                                  src={`http://localhost:8000/media/${data.teacher.promo_video}`}
-                                  controls
-                                  className="w-full h-full object-cover"
-                                />
-                              )}
-                            </div>
-                          </div>
-                        )}
+                  {/* Collapsible Accordions (Sundugu Imkanlar, Neden Ozel Ders, SSS) */}
+                  <div className="space-y-3">
+                    {/* Accordion 1 */}
+                    <div className="bg-white border border-slate-100 rounded-[1.5rem] shadow-sm overflow-hidden">
+                      <button
+                        onClick={() => setOpenAccordions(prev => ({ ...prev, facilities: !prev.facilities }))}
+                        className="w-full px-6 py-4 flex items-center justify-between font-black text-slate-800 text-sm uppercase tracking-wide bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                      >
+                        <span>🎒 Öğretmenin Sunduğu İmkânlar</span>
+                        <span>{openAccordions.facilities ? "▲" : "▼"}</span>
+                      </button>
+                      {openAccordions.facilities && (
+                        <div className="p-6 border-t border-slate-100 text-xs font-semibold text-slate-600 space-y-2">
+                          <p>• <strong>Zengin Dijital Kaynak Desteği:</strong> Ders dışında çözülmesi için haftalık PDF testler ve soru bankası desteği sağlanır.</p>
+                          <p>• <strong>Öğrenci Ödev Takibi:</strong> Platformumuz üzerinden atanan ödevlerin çözümleri ders öncesinde eğitmen tarafından kontrol edilir.</p>
+                          <p>• <strong>Haftalık İlerleme Raporu:</strong> Öğrencinin gelişim grafiği düzenli olarak analiz edilerek veli ile paylaşılır.</p>
+                        </div>
+                      )}
+                    </div>
 
-                        {/* Images component */}
-                        {data.teacher.promo_images && data.teacher.promo_images.length > 0 && (
-                          <div className={`space-y-3 ${data.teacher.promo_video ? "md:col-span-6" : "md:col-span-12"}`}>
-                            <h4 className="text-sm font-bold text-slate-700">Tanıtım Resimleri ({data.teacher.promo_images.length})</h4>
-                            <div className="grid grid-cols-2 gap-3">
-                              {data.teacher.promo_images.map((imgUrl: string, idx: number) => (
-                                <div key={idx} className="relative aspect-video rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 shadow-sm hover:scale-[1.02] transition-transform duration-200 cursor-pointer">
-                                  <img
-                                    src={`http://localhost:8000/media/${imgUrl}`}
-                                    alt={`Tanıtım Resmi ${idx + 1}`}
-                                    className="w-full h-full object-cover"
-                                    onClick={() => window.open(`http://localhost:8000/media/${imgUrl}`, '_blank')}
-                                  />
-                                </div>
-                              ))}
-                            </div>
+                    {/* Accordion 2 */}
+                    <div className="bg-white border border-slate-100 rounded-[1.5rem] shadow-sm overflow-hidden">
+                      <button
+                        onClick={() => setOpenAccordions(prev => ({ ...prev, whyPrivate: !prev.whyPrivate }))}
+                        className="w-full px-6 py-4 flex items-center justify-between font-black text-slate-800 text-sm uppercase tracking-wide bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                      >
+                        <span>❓ Neden Özel Ders Almalısınız?</span>
+                        <span>{openAccordions.whyPrivate ? "▲" : "▼"}</span>
+                      </button>
+                      {openAccordions.whyPrivate && (
+                        <div className="p-6 border-t border-slate-100 text-xs font-semibold text-slate-600 leading-relaxed">
+                          Birebir odaklanma sayesinde sınıf içi dikkat dağınıklığı ortadan kalkar. Öğrencinin anlamadığı konular anında tespit edilerek o bölgelere yoğunlaşılır. Bu sayede öğrenme hızı ve başarı oranı katlanır.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Accordion 3 */}
+                    <div className="bg-white border border-slate-100 rounded-[1.5rem] shadow-sm overflow-hidden">
+                      <button
+                        onClick={() => setOpenAccordions(prev => ({ ...prev, faq: !prev.faq }))}
+                        className="w-full px-6 py-4 flex items-center justify-between font-black text-slate-800 text-sm uppercase tracking-wide bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                      >
+                        <span>💬 Sıkça Sorulan Sorular</span>
+                        <span>{openAccordions.faq ? "▲" : "▼"}</span>
+                      </button>
+                      {openAccordions.faq && (
+                        <div className="p-6 border-t border-slate-100 text-xs font-semibold text-slate-600 space-y-3">
+                          <div>
+                            <h5 className="font-bold text-slate-800 mb-1">Dersler nasıl işleniyor?</h5>
+                            <p className="text-slate-500">Dersler platformumuzun entegre canlı sınıf modülü üzerinden kesintisiz video ve interaktif yazı tahtası eşliğinde işlenmektedir.</p>
                           </div>
-                        )}
+                          <div>
+                            <h5 className="font-bold text-slate-800 mb-1">Ders saatini erteleyebilir miyim?</h5>
+                            <p className="text-slate-500">Evet, planlanan ders saatine en geç 24 saat kala eğitmeninize bildirerek veya sistem üzerinden dersinizi erteleyebilirsiniz.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Ders Verdigi Konumlar */}
+                  <div className="bg-white rounded-[2rem] border border-slate-100 p-6 sm:p-8 shadow-sm space-y-4">
+                    <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase">Ders Verdiği Konumlar</h3>
+                    <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-600">
+                      {["Ankara (Çevrimiçi)", "Çankaya", "Yenimahalle", "Etimesgut", "Mamak", "Keçiören"].map((loc, idx) => (
+                        <span key={idx} className="px-3.5 py-1.5 bg-slate-50 border border-slate-100 rounded-xl">
+                          📍 {loc}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Verdiği Ders ve Saat Ücretleri */}
+                  <div className="bg-white rounded-[2rem] border border-slate-100 p-6 sm:p-8 shadow-sm space-y-4">
+                    <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase border-b border-slate-50 pb-3">Verdiği Dersler ve Fiyatlar</h3>
+                    <div className="space-y-3 text-xs font-bold text-slate-700">
+                      {[
+                        { branch: "Matematik Özel Ders / Canlı Canlı", duration: "45 Dakika", price: data.teacher.live_class_price ? `${data.teacher.live_class_price} TL` : "Anlaşmalı" },
+                        { branch: "Sınav Koçluğu / Birebir Görüşme", duration: "45 Dakika", price: data.teacher.live_class_price ? `${Math.round(data.teacher.live_class_price * 0.9)} TL` : "Anlaşmalı" },
+                        { branch: "Hızlı Soru Çözüm Paketi", duration: "30 Soru", price: "Ücretsiz" },
+                      ].map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-center p-3.5 bg-slate-50/50 border border-slate-100/50 rounded-2xl">
+                          <div className="space-y-0.5">
+                            <div className="text-slate-800 font-extrabold">{item.branch}</div>
+                            <div className="text-slate-400 text-[10px] font-semibold">{item.duration}</div>
+                          </div>
+                          <div className="text-blue-600 font-black text-sm">{item.price}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Değerlendirme & Yorumlar */}
+                  <div className="bg-white rounded-[2rem] border border-slate-100 p-6 sm:p-8 shadow-sm space-y-6">
+                    <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase">Öğrenci Değerlendirmeleri</h3>
+                    
+                    <div className="flex flex-col md:flex-row items-center gap-8 pb-6 border-b border-slate-50">
+                      <div className="text-center space-y-1">
+                        <div className="text-5xl font-black text-slate-800">4.9</div>
+                        <div className="text-amber-400 text-lg">★★★★★</div>
+                        <div className="text-[10px] text-slate-400 font-bold uppercase">{data.reviews?.length || 0} DEĞERLENDİRME</div>
+                      </div>
+                      <div className="flex-1 w-full space-y-2">
+                        {[
+                          { stars: 5, pct: 92 },
+                          { stars: 4, pct: 6 },
+                          { stars: 3, pct: 2 },
+                          { stars: 2, pct: 0 },
+                          { stars: 1, pct: 0 },
+                        ].map((row, idx) => (
+                          <div key={idx} className="flex items-center gap-3 text-xs font-bold text-slate-500">
+                            <span className="w-12 text-right">{row.stars} Yıldız</span>
+                            <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-600" style={{ width: `${row.pct}%` }} />
+                            </div>
+                            <span className="w-8">%{row.pct}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  )}
+
+                    {/* Reviews List */}
+                    <div className="space-y-4 pt-4">
+                      {!data.reviews?.length ? (
+                        <div className="text-center py-6 text-slate-400 font-bold text-xs bg-slate-50 rounded-2xl">
+                          Henüz değerlendirme yapılmamıştır. İlk yorumu siz yapın!
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {data.reviews.map((rev) => (
+                            <div key={rev.id} className="bg-slate-50/50 border border-slate-100/50 p-5 rounded-2xl space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <Avatar src={rev.user?.avatar_url} name={rev.user?.full_name || "Öğrenci"} size="sm" />
+                                  <div>
+                                    <div className="text-slate-800 font-black text-xs uppercase">{rev.user?.full_name || "Öğrenci"}</div>
+                                    <div className="text-amber-400 text-[10px]">{"★".repeat(rev.rating)}{"☆".repeat(5 - rev.rating)}</div>
+                                  </div>
+                                </div>
+                                <span className="text-[10px] text-slate-400 font-bold">
+                                  {new Date(rev.created_at).toLocaleDateString("tr-TR")}
+                                </span>
+                              </div>
+                              <p className="text-slate-600 text-xs font-medium leading-relaxed">{rev.comment}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Write a comment form */}
+                    <div className="pt-6 border-t border-slate-50 space-y-4">
+                      <h4 className="text-sm font-black text-slate-800 uppercase tracking-wide">
+                        {data.teacher.full_name} Hakkındaki Görüşlerinizi Yazın
+                      </h4>
+
+                      {/* Emoji reaction selector */}
+                      <div className="flex justify-center gap-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
+                        {[
+                          { emoji: "😡", label: "Kötü", val: 1 },
+                          { emoji: "😐", label: "Normal", val: 3 },
+                          { emoji: "😊", label: "İyi", val: 4 },
+                          { emoji: "😍", label: "Harika", val: 5 },
+                        ].map((reaction) => {
+                          const isSelected = selectedEmoji === reaction.emoji;
+                          return (
+                            <button
+                              key={reaction.emoji}
+                              type="button"
+                              onClick={() => {
+                                setSelectedEmoji(reaction.emoji);
+                                setReviewRating(reaction.val);
+                              }}
+                              className={`text-3xl p-2 rounded-xl transition-all ${
+                                isSelected ? "bg-white shadow-md scale-110 border border-slate-100" : "opacity-50 hover:opacity-100"
+                              }`}
+                              title={reaction.label}
+                            >
+                              {reaction.emoji}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <form onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!isAuthenticated) {
+                          toast.error("Yorum göndermek için lütfen önce giriş yapınız.");
+                          return;
+                        }
+                        reviewMutation.mutate({
+                          rating: reviewRating,
+                          title: reviewTitle || "Eğitmen Değerlendirmesi",
+                          comment: reviewComment
+                        });
+                      }} className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <input
+                            type="text"
+                            placeholder="Başlık (örn. Mükemmel bir ders tecrübesi)"
+                            value={reviewTitle}
+                            onChange={(e) => setReviewTitle(e.target.value)}
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700 text-xs font-semibold"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Adınız Soyadınız (Giriş yapılmış olmalıdır)"
+                            disabled
+                            value={user?.full_name || "Giriş Yapılmamış"}
+                            className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-400 text-xs font-semibold"
+                          />
+                        </div>
+                        <textarea
+                          placeholder="Eğitmen hakkında görüşlerinizi yazın, ders işleyişini, anlatım dilini vb. değerlendirin..."
+                          rows={4}
+                          value={reviewComment}
+                          onChange={(e) => setReviewComment(e.target.value)}
+                          required
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700 text-xs font-semibold"
+                        />
+                        <button
+                          type="submit"
+                          disabled={reviewMutation.isPending}
+                          className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-lg transition-colors"
+                        >
+                          {reviewMutation.isPending ? "Gönderiliyor..." : "Yorumu Gönder"}
+                        </button>
+                      </form>
+                    </div>
+
+                  </div>
 
                 </div>
               )}
 
-              {/* TAB CONTENT: KURLSAR */}
+              {/* TAB CONTENT: KURSLAR */}
               {activeTab === "courses" && (
                 <div className="bg-white rounded-[2rem] border border-slate-100 p-6 sm:p-8 shadow-sm space-y-6">
                   <h3 className="text-xl font-bold text-slate-800 tracking-tight mb-5">Yayınlanan Eğitimler</h3>
@@ -605,10 +856,29 @@ export default function TeacherProfilePage() {
                 </div>
               )}
 
-              {/* TAB CONTENT: TOPLANTI AYIRT (BOOK MEETING) */}
+              {/* TAB CONTENT: CANLI DERS TAKVİMİ */}
               {activeTab === "book" && (
-                <div className="bg-white rounded-[2rem] border border-slate-100 p-6 sm:p-8 shadow-sm space-y-6">
+                <div id="live-class-section" className="bg-white rounded-[2rem] border border-slate-100 p-6 sm:p-8 shadow-sm space-y-6">
                   
+                  {isAuthenticated && user?.id === teacherId && (
+                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <div className="text-xs font-black text-blue-800 flex items-center gap-1.5">
+                          <span>👤</span> KENDİ PROFİLİNİZİ GÖRÜNTÜLÜYORSUNUZ
+                        </div>
+                        <p className="text-[11px] text-blue-600 font-semibold leading-relaxed">
+                          Öğrencilerin sizden ders randevusu alabilmesi için takviminize müsait olduğunuz gün ve saatleri eklemelisiniz.
+                        </p>
+                      </div>
+                      <Link
+                        href="/dashboard/teacher/live-classes"
+                        className="flex-shrink-0 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm shadow-blue-500/10 transition-all text-center"
+                      >
+                        Takvime Müsaitlik Ekle
+                      </Link>
+                    </div>
+                  )}
+
                   <p className="text-slate-400 text-xs font-bold leading-relaxed border-b border-slate-100/50 pb-4">
                     Lütfen takvimden bir gün ve uygun bir saat seçin, ardından rezervasyon işlemine yönlendirileceksiniz.
                   </p>
@@ -634,32 +904,39 @@ export default function TeacherProfilePage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                     
-                    {/* Left: Monthly Calendar Month View */}
+                    {/* Left: Calendar view */}
                     <div className="md:col-span-5 bg-slate-50/50 border border-slate-100/50 p-4 rounded-3xl space-y-4">
                       
                       <div className="flex items-center justify-between px-2">
-                        <button className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 text-xs font-black hover:bg-blue-100 transition-colors">
+                        <button 
+                          onClick={handlePrevMonth}
+                          className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 text-xs font-black hover:bg-blue-100 transition-colors"
+                        >
                           &lt;
                         </button>
-                        <span className="font-extrabold text-slate-800 text-sm">2026 May</span>
-                        <button className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 text-xs font-black hover:bg-blue-100 transition-colors">
+                        <span className="font-extrabold text-slate-800 text-sm">{currentYear} {MONTH_NAMES[currentMonth - 1]}</span>
+                        <button 
+                          onClick={handleNextMonth}
+                          className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 text-xs font-black hover:bg-blue-100 transition-colors"
+                        >
                           &gt;
                         </button>
                       </div>
 
                       <div className="grid grid-cols-7 gap-1 text-center">
-                        {["Sa", "Fr", "Th", "We", "Tu", "Mo", "Su"].map((day) => (
+                        {["Pt", "Sa", "Çr", "Pe", "Cu", "Ct", "Pa"].map((day) => (
                           <span key={day} className="text-[10px] font-black text-slate-400 py-1 uppercase">{day}</span>
                         ))}
 
-                        {[...Array(3)].map((_, i) => (
+                        {[...Array(offset)].map((_, i) => (
                           <span key={`empty-${i}`} className="py-2 text-[10px] text-slate-300 font-bold"></span>
                         ))}
 
-                        {[...Array(31)].map((_, i) => {
+                        {[...Array(daysInMonth)].map((_, i) => {
                           const dayNum = i + 1;
                           const dayStr = dayNum < 10 ? `0${dayNum}` : `${dayNum}`;
-                          const fullDateStr = `2026-05-${dayStr}`;
+                          const monthStr = currentMonth < 10 ? `0${currentMonth}` : `${currentMonth}`;
+                          const fullDateStr = `${currentYear}-${monthStr}-${dayStr}`;
 
                           const hasSlots = slots?.some((s) => s.date === fullDateStr);
                           const isCurrentlySelected = selectedDate === fullDateStr;
@@ -686,7 +963,7 @@ export default function TeacherProfilePage() {
                       </div>
                     </div>
 
-                    {/* Right: Selected Date Slots and Booking Form */}
+                    {/* Right: Selected slot form */}
                     <div className="md:col-span-7 flex flex-col justify-center min-h-[300px] border border-slate-100 rounded-3xl p-6 relative overflow-hidden bg-white">
                       
                       {!selectedDate ? (
@@ -715,8 +992,22 @@ export default function TeacherProfilePage() {
                               ))}
                             </div>
                           ) : !slotsForSelectedDate.length ? (
-                            <div className="text-center py-8 text-slate-400 font-bold text-xs bg-slate-50 rounded-2xl">
-                              Bu tarihte tanımlı boş canlı ders saati bulunmamaktadır. Lütfen takvimden yeşil renkli tarihleri seçiniz.
+                            <div className="text-center py-8 text-slate-400 font-bold text-xs bg-slate-50 rounded-2xl px-4 space-y-4">
+                              <p>Bu tarihte tanımlı boş canlı ders saati bulunmamaktadır. Lütfen takvimden yeşil renkli tarihleri seçiniz.</p>
+                              {isAuthenticated && user?.id === teacherId && (
+                                <div className="border-t border-slate-200/50 pt-4 space-y-2">
+                                  <p className="text-blue-600 font-extrabold text-[10px] uppercase tracking-wide">Eğitmen İpucu</p>
+                                  <p className="text-slate-500 font-medium text-[11px] leading-relaxed">
+                                    Bu güne ders saati ekleyerek öğrencilerin rezervasyon yapmasını sağlayabilirsiniz.
+                                  </p>
+                                  <Link
+                                    href="/dashboard/teacher/live-classes"
+                                    className="inline-flex px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-all"
+                                  >
+                                    Bu Güne Saat Ekle
+                                  </Link>
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <div className="space-y-2">
@@ -782,6 +1073,7 @@ export default function TeacherProfilePage() {
                         </div>
                       )}
                     </div>
+
                   </div>
 
                   {bookingSuccess && (
@@ -954,7 +1246,313 @@ export default function TeacherProfilePage() {
                 </div>
               )}
 
+              {/* TAB CONTENT: VİDEOLAR */}
+              {activeTab === "videos" && (
+                <div className="bg-white rounded-[2rem] border border-slate-100 p-6 sm:p-8 shadow-sm space-y-6">
+                  <h3 className="text-xl font-bold text-slate-800 tracking-tight mb-5">🎥 Öğretmenin Tanıtım ve Ders Videoları</h3>
 
+                  {/* Promo Video */}
+                  {data.teacher.promo_video && (
+                    <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-3">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold uppercase bg-teal-50 text-teal-700 border border-teal-100">
+                        🎬 Tanıtım Videosu
+                      </span>
+                      <h4 className="font-bold text-slate-800">{data.teacher.full_name} Tanıtım Videosu</h4>
+                      <div className="aspect-video w-full rounded-xl overflow-hidden bg-black shadow-inner border border-slate-200">
+                        {data.teacher.promo_video.includes("youtube.com") || data.teacher.promo_video.includes("youtu.be") ? (
+                          <iframe
+                            src={getYoutubeEmbedUrl(data.teacher.promo_video)}
+                            title="Tanıtım Videosu"
+                            className="w-full h-full border-0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          ></iframe>
+                        ) : (
+                          <video
+                            src={`http://localhost:8000/media/${data.teacher.promo_video}`}
+                            controls
+                            className="w-full h-full object-cover"
+                          ></video>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Library Video & Youtube Items */}
+                  <div>
+                    <h4 className="text-sm font-extrabold text-slate-800 tracking-tight mb-4">Ders ve Hazırlık Videoları</h4>
+                    
+                    {libraryLoading ? (
+                      <div className="flex justify-center py-10">
+                        <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    ) : libraryItems.filter(item => item.item_type === "video" || item.item_type === "youtube").length === 0 ? (
+                      <div className="text-center py-12 bg-slate-50 rounded-2xl">
+                        <p className="text-slate-400 font-bold text-sm">Eğitmen henüz ders videosu eklememiştir.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {libraryItems.filter(item => item.item_type === "video" || item.item_type === "youtube").map((item) => (
+                          <div
+                            key={item.id}
+                            className="bg-white border border-slate-100 rounded-2xl p-5 hover:shadow-md transition-all flex flex-col justify-between"
+                          >
+                            <div className="space-y-3">
+                              <span
+                                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold uppercase ${
+                                  item.item_type === "video"
+                                    ? "bg-purple-50 text-purple-700 border border-purple-100"
+                                    : "bg-red-50 text-red-700 border border-red-100"
+                                }`}
+                              >
+                                {item.item_type === "video" ? "🎥 Video" : "🔗 YouTube"}
+                              </span>
+
+                              <h4 className="font-bold text-slate-800 line-clamp-1">{item.title}</h4>
+                              {item.description && (
+                                <p className="text-slate-500 text-xs line-clamp-2 leading-relaxed">
+                                  {item.description}
+                                </p>
+                              )}
+
+                              {item.item_type === "youtube" && item.youtube_url && (
+                                <div className="aspect-video w-full rounded-xl overflow-hidden shadow-inner border border-slate-100 mt-2">
+                                  <iframe
+                                    src={getYoutubeEmbedUrl(item.youtube_url)}
+                                    title={item.title}
+                                    className="w-full h-full border-0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                  ></iframe>
+                                </div>
+                              )}
+
+                              {item.item_type === "video" && item.file_path && (
+                                <div className="aspect-video w-full rounded-xl overflow-hidden bg-black mt-2">
+                                  <video
+                                    src={`http://localhost:8000/media/${item.file_path}`}
+                                    controls
+                                    className="w-full h-full object-cover"
+                                  ></video>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="mt-4 pt-3 border-t border-slate-50 text-[10px] text-slate-400 font-bold">
+                              <span>Eklendi: {new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB CONTENT: POPCASTLER */}
+              {activeTab === "popcasts" && (
+                <div className="bg-white rounded-[2rem] border border-slate-100 p-6 sm:p-8 shadow-sm space-y-6">
+                  <h3 className="text-xl font-bold text-slate-800 tracking-tight mb-5">🎙️ Öğretmenin Popcast Yayınları</h3>
+
+                  {popcastsLoading ? (
+                    <div className="flex justify-center py-10">
+                      <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  ) : popcastsData.length === 0 ? (
+                    <div className="text-center py-12 bg-slate-50 rounded-2xl">
+                      <p className="text-slate-400 font-bold text-sm">Eğitmen henüz podcast yayını eklememiştir.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {popcastsData.map((popcast: any) => (
+                        <div
+                          key={popcast.id}
+                          className="bg-white border border-slate-100 rounded-2xl p-5 hover:shadow-md transition-all flex flex-col justify-between"
+                        >
+                          <div className="space-y-3">
+                            <div className="flex gap-4">
+                              {popcast.cover_image_url ? (
+                                <img
+                                  src={`http://localhost:8000${popcast.cover_image_url}`}
+                                  alt={popcast.title}
+                                  className="w-16 h-16 rounded-xl object-cover border border-slate-100 flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="w-16 h-16 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center text-3xl flex-shrink-0">
+                                  🎙️
+                                </div>
+                              )}
+                              <div>
+                                <h4 className="font-bold text-slate-800 line-clamp-1">{popcast.title}</h4>
+                                <p className="text-slate-500 text-xs line-clamp-2 leading-relaxed mt-1">
+                                  {popcast.description || "Açıklama bulunmuyor."}
+                                </p>
+                              </div>
+                            </div>
+
+                            {popcast.audio_url && (
+                              <div className="pt-2">
+                                <audio
+                                  src={`http://localhost:8000${popcast.audio_url}`}
+                                  controls
+                                  className="w-full mt-2"
+                                ></audio>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between text-[10px] text-slate-400 font-bold">
+                            <span>Süre: {Math.round(popcast.duration / 60)} dk</span>
+                            <span>Yayınlanma: {new Date(popcast.created_at).toLocaleDateString("tr-TR")}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT STICKY SIDEBAR */}
+            <div className="lg:col-span-4 space-y-6 sticky top-24">
+              
+              {/* Promo Video Card */}
+              <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-4 relative overflow-hidden">
+                <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-slate-900 border border-slate-100 shadow-inner flex items-center justify-center">
+                  {data.teacher.promo_video ? (
+                    data.teacher.promo_video.includes("youtube.com") || data.teacher.promo_video.includes("youtu.be") ? (
+                      <iframe
+                        src={`https://www.youtube.com/embed/${
+                          data.teacher.promo_video.includes("youtu.be/")
+                            ? data.teacher.promo_video.split("youtu.be/")[1]?.split("?")[0]
+                            : data.teacher.promo_video.split("v=")[1]?.split("&")[0]
+                        }`}
+                        className="w-full h-full border-0"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <video
+                        src={`http://localhost:8000/media/${data.teacher.promo_video}`}
+                        controls
+                        className="w-full h-full object-cover"
+                      />
+                    )
+                  ) : (
+                    /* Video placeholder with custom overlay */
+                    <div className="text-center space-y-2 p-6">
+                      <div className="w-12 h-12 rounded-full bg-orange-500 text-white flex items-center justify-center text-xl mx-auto shadow-lg shadow-orange-500/20 cursor-pointer animate-pulse">
+                        ▶
+                      </div>
+                      <div className="text-xs text-slate-300 font-bold">Tanıtım Videosu</div>
+                      <div className="text-[10px] text-slate-400">Eğitmen tarafından hazırlanıyor</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Pricing & Booking Card */}
+              <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 space-y-5">
+                <div className="flex justify-between items-baseline border-b border-slate-50 pb-4">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Ders Ücreti</span>
+                    <span className="text-3xl font-black text-slate-800 leading-none">
+                      {data.teacher.live_class_price ? `${data.teacher.live_class_price} TL` : "Anlaşmalı"}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400">/ 45 Dakika</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-bold text-slate-700 flex items-center gap-1 justify-end">⭐ 4.9</span>
+                    <span className="text-[10px] text-slate-400 font-bold">{data.reviews?.length || 0} Değerlendirme</span>
+                  </div>
+                </div>
+
+                {/* Package selector inside the sidebar */}
+                {data.teacher.live_class_price && (
+                  <div className="space-y-4">
+                    {/* Hour slider input */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Haftalık Saat</label>
+                        <span className="text-blue-600 font-black text-xs">{selectedHours} Saat</span>
+                      </div>
+                      <input 
+                        type="range" 
+                        min={1} 
+                        max={10} 
+                        value={selectedHours}
+                        onChange={(e) => setSelectedHours(parseInt(e.target.value))}
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600" 
+                      />
+                    </div>
+
+                    {/* Weeks options button cards */}
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Paketler & İndirimler</label>
+                      {WEEK_OPTIONS.map((opt) => {
+                        const disc = DISCOUNT_MAP[opt.weeks];
+                        const active = selectedWeeks === opt.weeks;
+                        const packageCost = calcPackage(data.teacher.live_class_price || 0, selectedHours, opt.weeks);
+
+                        return (
+                          <button
+                            key={opt.weeks}
+                            type="button"
+                            onClick={() => setSelectedWeeks(opt.weeks)}
+                            className={`w-full flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all text-left ${
+                              active 
+                                ? "border-blue-600 bg-gradient-to-r from-blue-50/50 to-white shadow-sm" 
+                                : "border-slate-100 bg-white hover:border-slate-200"
+                            }`}
+                          >
+                            <div className="space-y-0.5">
+                              <div className={`text-xs font-black ${active ? "text-blue-700" : "text-slate-700"}`}>
+                                {opt.label} <span className="font-semibold text-slate-400">({opt.sub})</span>
+                              </div>
+                              {disc > 0 && <span className="inline-block text-[9px] font-black text-rose-500 bg-rose-50 px-1.5 py-px rounded-md">%{disc} indirim</span>}
+                            </div>
+                            <div className="text-right">
+                              <div className={`text-xs font-black ${active ? "text-blue-700" : "text-slate-700"}`}>
+                                {packageCost.total.toLocaleString("tr-TR")} TL
+                              </div>
+                              <div className="text-[9px] text-slate-400 leading-none mt-0.5">
+                                ~{Math.round(packageCost.total / 6).toLocaleString("tr-TR")} TL/ay
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* CTA Action Buttons */}
+                <div className="space-y-2 pt-2">
+                  <button
+                    onClick={handleIntroBooking}
+                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-2xl shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 transform hover:-translate-y-0.5 transition-all text-center uppercase tracking-wider"
+                  >
+                    BİREBİR TANITIM ALIN
+                  </button>
+                  <button
+                    onClick={handleBuyPackage}
+                    className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-2xl hover:shadow-lg transition-all text-center uppercase tracking-wider"
+                  >
+                    DERS PAKETİ SATIN AL
+                  </button>
+                </div>
+
+                {/* Trust Badges */}
+                <div className="pt-3 border-t border-slate-50 space-y-2 text-[10px] font-bold text-slate-400">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-emerald-500">🛡️</span>
+                    <span>Satın alma ve ders güvencesi</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-emerald-500">💳</span>
+                    <span>Kredi kartı ile 12 taksit seçeneği</span>
+                  </div>
+                </div>
+              </div>
 
             </div>
 

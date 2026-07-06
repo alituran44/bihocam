@@ -69,6 +69,9 @@ class QuizQuestionBase(BaseModel):
     correct_answer: str
     points: int = 1
     explanation: str | None = None
+    image_path: str | None = None
+    solution_file_path: str | None = None
+
 
 
 class QuizQuestionCreate(QuizQuestionBase):
@@ -82,6 +85,9 @@ class QuizQuestionUpdate(BaseModel):
     correct_answer: str | None = None
     points: int | None = None
     explanation: str | None = None
+    image_path: str | None = None
+    solution_file_path: str | None = None
+
 
 
 class QuizQuestionResponse(QuizQuestionBase):

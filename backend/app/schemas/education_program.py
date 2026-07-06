@@ -5,9 +5,14 @@ from typing import Optional, List, Dict, Any, Union
 
 class CurriculumSectionSchema(BaseModel):
     title: str
-    lessonCount: int
-    duration: str
+    # Eski format (frontend uyumu)
+    lessonCount: Optional[int] = None
+    duration: Optional[str] = None
     items: List[Union[str, Dict[str, Any]]] = []
+    # Yeni MEB format
+    lessons: List[str] = []
+    hours: Optional[int] = None
+
 
 
 class FAQSchema(BaseModel):
