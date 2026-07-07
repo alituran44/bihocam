@@ -1,5 +1,6 @@
 "use client";
 
+import { ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -36,7 +37,7 @@ interface OrderDetail {
   order_items: OrderItem[];
 }
 
-const statusConfig: Record<string, { label: string; color: string; icon: JSX.Element }> = {
+const statusConfig: Record<string, { label: string; color: string; icon: ReactNode }> = {
   paid: {
     label: "Ödendi",
     color: "bg-emerald-50 text-emerald-700 border-emerald-300",

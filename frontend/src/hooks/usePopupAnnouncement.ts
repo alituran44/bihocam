@@ -79,26 +79,23 @@ export function usePopupAnnouncement(): UsePopupAnnouncementReturn {
     (popup: PopupAnnouncement | null): boolean => {
       if (!popup) return false;
 
-      // Check if dismissed
-      if (dismissedIds.includes(popup.id)) {
-        // Check dismiss duration
-        const dismissedUntilKey = `${POPUP_DISMISSED_UNTIL_PREFIX}${popup.id}`;
-        const dismissedUntil = localStorage.getItem(dismissedUntilKey);
-        if (dismissedUntil) {
-          const timestamp = parseInt(dismissedUntil, 10);
-          if (Date.now() < timestamp) {
-            return false; // Still in dismiss period
-          }
-          // Dismiss period expired, remove from dismissed list
-          localStorage.removeItem(dismissedUntilKey);
-          setDismissedIds((prev) => prev.filter((id) => id !== popup.id));
-        } else {
-          return false; // Permanently dismissed
+      // 1. Check temporary dismiss duration
+      const dismissedUntilKey = `${POPUP_DISMISSED_UNTIL_PREFIX}${popup.id}`;
+      const dismissedUntil = typeof window !== "undefined" ? localStorage.getItem(dismissedUntilKey) : null;
+      if (dismissedUntil) {
+        const timestamp = parseInt(dismissedUntil, 10);
+        if (Date.now() < timestamp) {
+          return false; // Still in dismiss period
         }
       }
 
-      // Check show_once_per_user
-      if (popup.show_once_per_user) {
+      // 2. Check if permanently dismissed
+      if (dismissedIds.includes(popup.id)) {
+        return false;
+      }
+
+      // 3. Check show_once_per_user
+      if (popup.show_once_per_user && typeof window !== "undefined") {
         const shownOnce = localStorage.getItem(SHOWN_POPUPS_ONCE_KEY);
         if (shownOnce) {
           try {

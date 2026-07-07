@@ -227,11 +227,15 @@ async def get_course_by_slug(
         raise HTTPException(status_code=404, detail="Kurs bulunamadı")
 
     # Dersleri: owner/admin veya enrolled değilse sadece preview dersleri dön
+    visible_lessons = course.lessons
     if not _is_course_owner_or_admin(course, current_user):
         enrolled = await _is_enrolled(db, course.id, current_user)
         if not enrolled:
-            course.lessons = [l for l in course.lessons if l.is_preview]
-    return course
+            visible_lessons = [l for l in course.lessons if l.is_preview]
+
+    response = CourseResponse.model_validate(course)
+    response.lessons = [LessonResponse.model_validate(l) for l in visible_lessons]
+    return response
 
 
 @router.get("/{course_id}", response_model=CourseResponse)
@@ -257,11 +261,15 @@ async def get_course(
     if course.status != "published" and not _is_course_owner_or_admin(course, current_user):
         raise HTTPException(status_code=404, detail="Kurs bulunamadı")
 
+    visible_lessons = course.lessons
     if not _is_course_owner_or_admin(course, current_user):
         enrolled = await _is_enrolled(db, course.id, current_user)
         if not enrolled:
-            course.lessons = [l for l in course.lessons if l.is_preview]
-    return course
+            visible_lessons = [l for l in course.lessons if l.is_preview]
+
+    response = CourseResponse.model_validate(course)
+    response.lessons = [LessonResponse.model_validate(l) for l in visible_lessons]
+    return response
 
 
 @router.post("", response_model=CourseResponse)

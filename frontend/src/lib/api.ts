@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
 
@@ -33,10 +33,11 @@ api.interceptors.response.use(
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
         // Auth store'u da temizle (P3-01 fix)
-        try {
-          const { useAuthStore } = require("./store");
-          useAuthStore.getState().logout();
-        } catch {}
+        import("./store")
+          .then(({ useAuthStore }) => {
+            useAuthStore.getState().logout();
+          })
+          .catch(() => {});
         
         // Prevent redirect loop if already on login page or sending login request
         const isLoginPage = window.location.pathname === "/login";
@@ -223,6 +224,13 @@ export interface UploadResponse {
   lesson_type?: string;
   mime_type?: string;
 }
+
+export interface GeneralUploadResponse {
+  filename: string;
+  path: string;
+  url: string;
+}
+
 
 // Courses API
 export interface Course {
@@ -441,7 +449,7 @@ export const mediaApi = {
     const formData = new FormData();
     formData.append("file", file);
     
-    const config: any = {
+    const config: AxiosRequestConfig = {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -449,7 +457,7 @@ export const mediaApi = {
     
     // Progress tracking (EP10-FE-01: AbortController support)
     if (onProgress) {
-      config.onUploadProgress = (progressEvent: any) => {
+      config.onUploadProgress = (progressEvent) => {
         if (progressEvent.total) {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           onProgress(percentCompleted);
@@ -481,14 +489,14 @@ export const mediaApi = {
     const formData = new FormData();
     formData.append("file", file);
     
-    const config: any = {
+    const config: AxiosRequestConfig = {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     };
     
     if (onProgress) {
-      config.onUploadProgress = (progressEvent: any) => {
+      config.onUploadProgress = (progressEvent) => {
         if (progressEvent.total) {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           onProgress(percentCompleted);
@@ -500,18 +508,18 @@ export const mediaApi = {
     return data;
   },
 
-  uploadGeneralDocument: async (file: File, onProgress?: (progress: number) => void): Promise<any> => {
+  uploadGeneralDocument: async (file: File, onProgress?: (progress: number) => void): Promise<GeneralUploadResponse> => {
     const formData = new FormData();
     formData.append("file", file);
     
-    const config: any = {
+    const config: AxiosRequestConfig = {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     };
     
     if (onProgress) {
-      config.onUploadProgress = (progressEvent: any) => {
+      config.onUploadProgress = (progressEvent) => {
         if (progressEvent.total) {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           onProgress(percentCompleted);
@@ -523,18 +531,18 @@ export const mediaApi = {
     return data;
   },
 
-  uploadGeneralImage: async (file: File, onProgress?: (progress: number) => void): Promise<any> => {
+  uploadGeneralImage: async (file: File, onProgress?: (progress: number) => void): Promise<GeneralUploadResponse> => {
     const formData = new FormData();
     formData.append("file", file);
     
-    const config: any = {
+    const config: AxiosRequestConfig = {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     };
     
     if (onProgress) {
-      config.onUploadProgress = (progressEvent: any) => {
+      config.onUploadProgress = (progressEvent) => {
         if (progressEvent.total) {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           onProgress(percentCompleted);
@@ -546,18 +554,18 @@ export const mediaApi = {
     return data;
   },
 
-  uploadGeneralFile: async (file: File, onProgress?: (progress: number) => void): Promise<any> => {
+  uploadGeneralFile: async (file: File, onProgress?: (progress: number) => void): Promise<GeneralUploadResponse> => {
     const formData = new FormData();
     formData.append("file", file);
     
-    const config: any = {
+    const config: AxiosRequestConfig = {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     };
     
     if (onProgress) {
-      config.onUploadProgress = (progressEvent: any) => {
+      config.onUploadProgress = (progressEvent) => {
         if (progressEvent.total) {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           onProgress(percentCompleted);
@@ -1715,6 +1723,8 @@ export interface MockExam {
   end_date?: string | null;
   course_id?: string | null;
   student_id?: string | null;
+  image_path?: string | null;
+  solution_file_path?: string | null;
   created_at: string;
   updated_at: string;
   questions?: MockExamQuestion[];
@@ -1732,6 +1742,8 @@ export interface MockExamCreate {
   end_date?: string | null;
   course_id?: string | null;
   student_id?: string | null;
+  image_path?: string | null;
+  solution_file_path?: string | null;
   questions: MockExamQuestion[];
 }
 
@@ -4490,7 +4502,7 @@ export interface CurriculumSection {
   title: string;
   lessonCount: number;
   duration: string;
-  items: (string | { title: string; lesson_type: string })[];
+  items: (string | { title: string; lesson_type: string; content_url?: string })[];
 }
 
 export interface FAQ {
@@ -4504,6 +4516,7 @@ export interface Review {
   role: string;
   text: string;
   date: string;
+  avatar_url?: string;
 }
 
 export interface EducationProgram {
@@ -4531,6 +4544,7 @@ export interface EducationProgram {
   faqs: FAQ[];
   reviews: Review[];
   active: boolean;
+  passing_score?: number;
   created_at: string;
   updated_at: string;
 }

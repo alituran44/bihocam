@@ -20,6 +20,7 @@ import {
   Mail,
   FileText,
   TrendingUp,
+  ArrowRight,
 } from "lucide-react";
 import { blogPublicApi, type BlogPost } from "@/lib/api";
 import Link from "next/link";

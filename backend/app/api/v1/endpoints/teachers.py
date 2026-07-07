@@ -82,6 +82,25 @@ async def list_teachers(
     return items
 
 
+@router.get("/my-bookings", response_model=list[LiveClassReservationResponse])
+async def get_student_bookings(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Student/Authenticated: Bir öğrenci kendi aldığı tüm canlı ders rezervasyonlarını listeler."""
+    from app.models.live_class import LiveClassReservation
+    result = await db.execute(
+        select(LiveClassReservation)
+        .options(
+            selectinload(LiveClassReservation.teacher),
+            selectinload(LiveClassReservation.student)
+        )
+        .where(LiveClassReservation.student_id == current_user.id)
+        .order_by(LiveClassReservation.date.desc(), LiveClassReservation.start_time.desc())
+    )
+    return result.scalars().all()
+
+
 @router.get("/{teacher_id}", response_model=TeacherProfileResponse)
 async def get_teacher_profile(
     teacher_id: str,
@@ -550,23 +569,6 @@ async def update_reservation_status(
     )
     return res_detail.scalar_one()
 
-
-@router.get("/my-bookings", response_model=list[LiveClassReservationResponse])
-async def get_student_bookings(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Student/Authenticated: Bir öğrenci kendi aldığı tüm canlı ders rezervasyonlarını listeler."""
-    result = await db.execute(
-        select(LiveClassReservation)
-        .options(
-            selectinload(LiveClassReservation.teacher),
-            selectinload(LiveClassReservation.student)
-        )
-        .where(LiveClassReservation.student_id == current_user.id)
-        .order_by(LiveClassReservation.date.desc(), LiveClassReservation.start_time.desc())
-    )
-    return result.scalars().all()
 
 
 # ========== ADMIN ENDPOINTS ==========

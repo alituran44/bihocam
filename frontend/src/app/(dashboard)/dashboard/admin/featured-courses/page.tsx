@@ -14,7 +14,7 @@ import {
   User,
   DollarSign,
 } from "lucide-react";
-import { coursesApi } from "@/lib/api";
+import { coursesApi, type Course } from "@/lib/api";
 import { toast } from "sonner";
 import Link from "next/link";
 import Image from "next/image";

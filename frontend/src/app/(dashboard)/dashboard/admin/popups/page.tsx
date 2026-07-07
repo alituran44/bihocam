@@ -11,7 +11,7 @@ import {
 } from "@/lib/api";
 import { toast } from "sonner";
 import { Eye, Edit, Trash2, Power, PowerOff, Plus, Calendar, Users, Star, X } from "lucide-react";
-import PopupAnnouncement from "@/components/PopupAnnouncement";
+import PopupAnnouncementComponent from "@/components/PopupAnnouncement";
 
 const TYPE_COLORS: Record<string, string> = {
   info: "bg-cyan-100 text-cyan-800 border-cyan-200",
@@ -698,7 +698,7 @@ export default function AdminPopupsPage() {
       {/* Preview Modal */}
       {previewPopup && (
         <div className="fixed inset-0 z-[10000]">
-          <PopupAnnouncement
+          <PopupAnnouncementComponent
             popup={previewPopup}
             onClose={() => setPreviewPopup(null)}
             onDismiss={() => setPreviewPopup(null)}

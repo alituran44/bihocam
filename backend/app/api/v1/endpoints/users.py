@@ -155,6 +155,52 @@ async def list_users(
     )
 
 
+@router.get("/storage-quotas", response_model=dict)
+async def list_storage_quotas(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    """Tüm kullanıcıların depolama kotası listesi (Admin)"""
+    from sqlalchemy.orm import selectinload
+    from app.models.storage_quota import StorageQuota
+    
+    result = await db.execute(
+        select(StorageQuota)
+        .options(selectinload(StorageQuota.user))
+        .offset(skip)
+        .limit(limit)
+        .order_by(StorageQuota.used_bytes.desc())
+    )
+    quotas = result.scalars().all()
+    
+    total_result = await db.execute(select(func.count(StorageQuota.id)))
+    total = total_result.scalar_one()
+    
+    quota_list = []
+    for quota in quotas:
+        quota_list.append({
+            "user_id": quota.user_id,
+            "user_email": quota.user.email if quota.user else None,
+            "user_full_name": quota.user.full_name if quota.user else None,
+            "quota_bytes": quota.quota_bytes,
+            "used_bytes": quota.used_bytes,
+            "available_bytes": quota.available_bytes,
+            "usage_percentage": round(quota.usage_percentage, 2),
+            "is_exceeded": quota.is_exceeded,
+            "is_custom": quota.is_custom,
+            "reset_at": quota.reset_at.isoformat() if quota.reset_at else None,
+        })
+    
+    return {
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "quotas": quota_list,
+    }
+
+
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: str,
@@ -570,48 +616,3 @@ async def update_user_storage_quota(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
-@router.get("/storage-quotas", response_model=dict)
-async def list_storage_quotas(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_admin),
-):
-    """Tüm kullanıcıların depolama kotası listesi (Admin)"""
-    from sqlalchemy.orm import selectinload
-    from app.models.storage_quota import StorageQuota
-    
-    result = await db.execute(
-        select(StorageQuota)
-        .options(selectinload(StorageQuota.user))
-        .offset(skip)
-        .limit(limit)
-        .order_by(StorageQuota.used_bytes.desc())
-    )
-    quotas = result.scalars().all()
-    
-    total_result = await db.execute(select(func.count(StorageQuota.id)))
-    total = total_result.scalar_one()
-    
-    quota_list = []
-    for quota in quotas:
-        quota_list.append({
-            "user_id": quota.user_id,
-            "user_email": quota.user.email if quota.user else None,
-            "user_full_name": quota.user.full_name if quota.user else None,
-            "quota_bytes": quota.quota_bytes,
-            "used_bytes": quota.used_bytes,
-            "available_bytes": quota.available_bytes,
-            "usage_percentage": round(quota.usage_percentage, 2),
-            "is_exceeded": quota.is_exceeded,
-            "is_custom": quota.is_custom,
-            "reset_at": quota.reset_at.isoformat() if quota.reset_at else None,
-        })
-    
-    return {
-        "total": total,
-        "skip": skip,
-        "limit": limit,
-        "quotas": quota_list,
-    }

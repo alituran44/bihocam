@@ -54,14 +54,14 @@ def _clear_auth_cookies(response: Response) -> None:
 
 
 def _extract_token(request: Request, bearer_token: str | None) -> str | None:
-    """P1-02: Önce cookie'den, sonra Authorization header'dan token çıkarır."""
-    # 1. HttpOnly cookie (öncelikli — daha güvenli)
+    """P1-02: Önce Authorization header'dan (Bearer), yoksa HttpOnly cookie'den token çıkarır."""
+    # 1. Bearer header (öncelikli - açık kimlik bilgisi)
+    if bearer_token:
+        return bearer_token
+    # 2. HttpOnly cookie (fallback)
     cookie_token = request.cookies.get("access_token")
     if cookie_token:
         return cookie_token
-    # 2. Bearer header (backward compatible — mevcut API client'lar için)
-    if bearer_token:
-        return bearer_token
     return None
 
 

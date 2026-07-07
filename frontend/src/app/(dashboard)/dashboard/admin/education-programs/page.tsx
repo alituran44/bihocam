@@ -183,7 +183,7 @@ function AdminEduContent() {
     });
     setFormWhatYouLearn(prog.what_you_learn || []);
     // Normalize curriculum items when editing (backwards compatibility)
-    const normalizedCurriculum = (prog.curriculum || []).map(section => ({
+    const normalizedCurriculum: CurriculumSection[] = (prog.curriculum || []).map(section => ({
       ...section,
       items: (section.items || []).map(item => {
         if (typeof item === "string") {
@@ -194,7 +194,7 @@ function AdminEduContent() {
           lesson_type: item?.lesson_type || "video",
           content_url: item?.content_url || ""
         };
-      })
+      }) as CurriculumSection['items']
     }));
 
     setFormCurriculum(normalizedCurriculum);
@@ -683,7 +683,7 @@ function AdminEduContent() {
                       type="text"
                       placeholder="Yeni, Popüler..."
                       value={formGeneral.badge}
-                      onChange={e => setFormGeneral({ ...general => ({ ...general, badge: e.target.value }) })}
+                      onChange={e => setFormGeneral(general => ({ ...general, badge: e.target.value }))}
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 font-medium"
                     />
                   </div>
