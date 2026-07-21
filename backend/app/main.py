@@ -143,8 +143,10 @@ async def lifespan(app: FastAPI):
             if "is_assigned" not in homework_columns:
                 cursor.execute("ALTER TABLE homeworks ADD COLUMN is_assigned BOOLEAN DEFAULT 0")
                 
-        await conn.run_sync(run_sqlite_migrations)
-    
+        # PRAGMA yalnizca SQLite'ta calisir; PostgreSQL'de atla (semayi create_all guncel tutuyor)
+        if engine.dialect.name == "sqlite":
+            await conn.run_sync(run_sqlite_migrations)
+
     # Seed default ad placements and pricing
     try:
         from app.services.ad_seed import seed_default_placements_and_pricing
