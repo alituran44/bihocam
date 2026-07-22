@@ -118,14 +118,16 @@ export function usePopupAnnouncement(): UsePopupAnnouncementReturn {
     (popupId: string, dontShowAgain: boolean) => {
       if (typeof window === "undefined") return;
 
-      if (dontShowAgain) {
-        // Permanently dismiss
-        setDismissedIds((prev) => {
-          const updated = [...prev, popupId];
+      // Always update dismissedIds in React state so popup closes immediately in current session
+      setDismissedIds((prev) => {
+        const updated = Array.from(new Set([...prev, popupId]));
+        if (dontShowAgain) {
           localStorage.setItem(DISMISSED_POPUPS_KEY, JSON.stringify(updated));
-          return updated;
-        });
-      } else {
+        }
+        return updated;
+      });
+
+      if (!dontShowAgain) {
         // Temporary dismiss (check dismiss_duration_days)
         const popup = activePopup;
         if (popup && popup.dismiss_duration_days) {
@@ -134,13 +136,6 @@ export function usePopupAnnouncement(): UsePopupAnnouncementReturn {
             `${POPUP_DISMISSED_UNTIL_PREFIX}${popupId}`,
             dismissedUntil.toString()
           );
-        } else {
-          // No duration specified, dismiss permanently
-          setDismissedIds((prev) => {
-            const updated = [...prev, popupId];
-            localStorage.setItem(DISMISSED_POPUPS_KEY, JSON.stringify(updated));
-            return updated;
-          });
         }
       }
 

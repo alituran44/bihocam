@@ -141,9 +141,8 @@ export default function PopupAnnouncement({
             animate={{ opacity: overlayOpacity }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black z-[9998]"
-            onClick={popup.is_dismissible ? handleDismiss : undefined}
-            style={{ cursor: popup.is_dismissible ? "pointer" : "default" }}
+            className="fixed inset-0 bg-black z-[9998] cursor-pointer"
+            onClick={handleDismiss}
           />
 
           {/* Popup Container */}
