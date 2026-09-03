@@ -1,9 +1,12 @@
 from typing import Optional
 from datetime import datetime
 from decimal import Decimal
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from app.api.v1.endpoints.auth import get_current_user
 from app.core.config import settings
@@ -507,15 +510,25 @@ async def mark_withdrawal_paid(
 
     from app.core.paytr import create_platform_transfer, _amount_to_int
     from app.core.config import settings
+    from app.models.order import Order, OrderStatus
 
-    # PAYTR_MERCHANT_ID boşsa (henüz yapılandırılmamış), transfer atla
-    if settings.PAYTR_MERCHANT_ID:
-        # Her withdrawal için benzersiz transfer ID
-        trans_id = f"wd_{withdrawal.id[:20]}"
-        # Öğretmene gönderilecek tutar (kuruş cinsinden)
+    # PAYTR_MERCHANT_ID yapılandırılmışsa PayTR Transfer API'sini çağır
+    if settings.PAYTR_MERCHANT_ID and bank_account.iban:
+        clean_id = withdrawal.id.replace("-", "").replace("_", "")
+        trans_id = f"wd{clean_id[:20]}"
         submerchant_amount = _amount_to_int(withdrawal.amount)
-        # Total amount = submerchant_amount (direkt transfer, komisyon zaten kesilmiş)
         total_amount = submerchant_amount
+
+        # Öğretmenin kazancına ait gerçek ödenmiş bir sipariş varsa merchant_oid olarak kullan
+        order_res = await db.execute(
+            select(Order.order_number)
+            .join(TeacherEarning, TeacherEarning.order_id == Order.id)
+            .where(TeacherEarning.teacher_id == withdrawal.teacher_id, Order.status == OrderStatus.PAID)
+            .order_by(TeacherEarning.created_at.desc())
+            .limit(1)
+        )
+        matched_order_number = order_res.scalar_one_or_none()
+        merchant_oid = matched_order_number or f"wd{clean_id[:20]}"
 
         # Öğretmen adı: User tablosundan
         teacher_result = await db.execute(
@@ -525,19 +538,24 @@ async def mark_withdrawal_paid(
         transfer_name = teacher.full_name if teacher else "Öğretmen"
 
         transfer_result = await create_platform_transfer(
-            merchant_oid=f"wd-{withdrawal.id[:30]}",
+            merchant_oid=merchant_oid,
             trans_id=trans_id,
             submerchant_amount=submerchant_amount,
             total_amount=total_amount,
             transfer_name=transfer_name,
-            transfer_iban=bank_account.iban,
+            transfer_iban=bank_account.iban.replace(" ", "").strip(),
         )
 
         if transfer_result.get("status") != "success":
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"PayTR transfer hatası: {transfer_result.get('err_msg', 'Bilinmeyen hata')}"
-            )
+            err_msg = transfer_result.get("err_msg", "Bilinmeyen hata")
+            logger.warning(f"PayTR Platform Transfer not completed: {transfer_result}")
+            if settings.PAYTR_TEST_MODE == 1:
+                withdrawal.notes = f"[TEST MODU] PayTR Transfer: {err_msg}"
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail=f"PayTR transfer hatası: {err_msg}"
+                )
 
     withdrawal.status = WithdrawalStatus.PAID
     withdrawal.paid_at = datetime.utcnow()

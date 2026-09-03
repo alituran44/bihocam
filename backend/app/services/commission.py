@@ -37,8 +37,14 @@ async def get_platform_commission_rate(db: AsyncSession) -> Decimal:
     if platform_data:
         rate = platform_data.get("platform_commission_rate")
         if rate is not None:
-            return Decimal(str(rate))
-    return Decimal(str(settings.PLATFORM_COMMISSION_RATE))
+            r = Decimal(str(rate))
+            if r > 1:
+                r = r / Decimal("100")
+            return r
+    r = Decimal(str(settings.PLATFORM_COMMISSION_RATE))
+    if r > 1:
+        r = r / Decimal("100")
+    return r
 
 
 async def get_platform_currency(db: AsyncSession) -> str:
@@ -65,7 +71,12 @@ def calculate_commission(course_price: Decimal, commission_rate: Decimal | None 
     if commission_rate is None:
         commission_rate = Decimal(str(settings.PLATFORM_COMMISSION_RATE))
     
-    platform_commission = course_price * commission_rate
-    teacher_earnings = course_price - platform_commission
+    # Yüzde olarak verilmişse (örn: 35 veya %35), 0.35 oranına normalize et
+    if commission_rate > 1:
+        commission_rate = commission_rate / Decimal("100")
+    
+    platform_commission = (course_price * commission_rate).quantize(Decimal("0.01"))
+    teacher_earnings = (course_price - platform_commission).quantize(Decimal("0.01"))
     
     return platform_commission, teacher_earnings
+
