@@ -9,6 +9,7 @@ class SocialPostBase(BaseModel):
     content: Optional[str] = None
     media_url: Optional[str] = None
     media_type: MediaType = MediaType.TEXT
+    target_level: Optional[str] = "all"
 
 class SocialPostCreate(SocialPostBase):
     pass
@@ -17,6 +18,7 @@ class SocialPostUpdate(BaseModel):
     content: Optional[str] = None
     media_url: Optional[str] = None
     media_type: Optional[MediaType] = None
+    target_level: Optional[str] = None
 
 class SocialPostResponse(SocialPostBase):
     id: str
@@ -26,8 +28,26 @@ class SocialPostResponse(SocialPostBase):
     user: Optional[UserResponse] = None
     likes_count: int = 0
     saves_count: int = 0
+    comments_count: int = 0
+    target_level: Optional[str] = "all"
     is_liked_by_me: bool = False
     is_saved_by_me: bool = False
+
+    class Config:
+        from_attributes = True
+
+class PostCommentBase(BaseModel):
+    content: str
+
+class PostCommentCreate(PostCommentBase):
+    pass
+
+class PostCommentResponse(PostCommentBase):
+    id: str
+    user_id: str
+    post_id: str
+    created_at: datetime
+    user: Optional[UserResponse] = None
 
     class Config:
         from_attributes = True

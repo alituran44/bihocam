@@ -128,6 +128,14 @@ export default function DashboardLayout({
             ),
           },
           {
+            href: "/dashboard/ai-studio",
+            label: "AI Eğitim Stüdyosu",
+            active: startsWithPath("/dashboard/ai-studio"),
+            icon: (
+              <span className="text-base">✨</span>
+            ),
+          },
+          {
             href: "/dashboard/teacher/profile",
             label: "Profil & Finansal",
             active: startsWithPath("/dashboard/teacher/profile"),
@@ -302,16 +310,6 @@ export default function DashboardLayout({
               </svg>
             ),
           },
-          {
-            href: "/dashboard/teacher/ai-assistant",
-            label: "AI Asistan",
-            active: startsWithPath("/dashboard/teacher/ai-assistant"),
-            icon: (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            ),
-          },
         ]
       : [];
 
@@ -332,6 +330,14 @@ export default function DashboardLayout({
                   d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
                 />
               </svg>
+            ),
+          },
+          {
+            href: "/dashboard/ai-studio",
+            label: "AI Çalışma Odası",
+            active: startsWithPath("/dashboard/ai-studio"),
+            icon: (
+              <span className="text-base">✨</span>
             ),
           },
           {
@@ -1517,7 +1523,7 @@ export default function DashboardLayout({
                 {startsWithPath("/dashboard/admin/coupons") && "Kupon Yönetimi"}
                 {startsWithPath("/dashboard/teacher/sales") && "Satışlarım"}
                 {startsWithPath("/dashboard/teacher/library") && "Kütüphane Yönetimi"}
-                {startsWithPath("/dashboard/teacher/ai-assistant") && "AI Öğretmen Asistanı"}
+                {startsWithPath("/dashboard/ai-studio") && "AI Eğitim Stüdyosu"}
                 {startsWithPath("/dashboard/teacher/homeworks") && "Ödev Yönetimi"}
                 {startsWithPath("/dashboard/teacher/quizzes") && "Test Yönetimi"}
                 {startsWithPath("/dashboard/admin/homeworks") && "Ödev Yönetimi (Yönetici)"}

@@ -10,6 +10,7 @@ import { LessonForm } from "@/components/lessons/LessonForm";
 import { SortableLessonList } from "@/components/lessons/SortableLessonList";
 import { LiveLessonManager } from "@/components/lessons/LiveLessonManager";
 import { ContentStatsCard } from "@/components/courses/ContentStatsCard";
+import { AICourseBuilderModal, type GeneratedLesson } from "@/components/courses/AICourseBuilderModal";
 
 // Use LessonResponse from API types
 type Lesson = LessonResponse;
@@ -63,7 +64,24 @@ export default function MyCourseDetailPage() {
       }
       return newCourse;
     },
-    onSuccess: (newCourse: any) => {
+    onSuccess: async (newCourse: any) => {
+      if (pendingGeneratedLessons.length > 0) {
+        for (let i = 0; i < pendingGeneratedLessons.length; i++) {
+          const l = pendingGeneratedLessons[i];
+          try {
+            await coursesApi.addLesson(newCourse.id, {
+              title: l.title,
+              description: l.description,
+              lesson_type: l.lesson_type,
+              duration_seconds: l.duration_seconds,
+              is_preview: l.is_preview || false,
+              order: i + 1,
+            });
+          } catch (e) {
+            console.error("Lesson insert error", e);
+          }
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ["my-courses"] });
       router.push(`/dashboard/my-courses/${newCourse.id}`);
     },
@@ -84,6 +102,8 @@ export default function MyCourseDetailPage() {
   const [liveLessonAt, setLiveLessonAt] = useState("");
   const [liveLessonUrl, setLiveLessonUrl] = useState("");
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [showAIBuilderModal, setShowAIBuilderModal] = useState(false);
+  const [pendingGeneratedLessons, setPendingGeneratedLessons] = useState<GeneratedLesson[]>([]);
 
 
   const { data: course, isLoading } = useQuery<Course>({
@@ -695,6 +715,14 @@ export default function MyCourseDetailPage() {
                 </button>
               )}
               <button
+                type="button"
+                onClick={() => setShowAIBuilderModal(true)}
+                className="px-4 py-2 bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-400 hover:to-indigo-500 text-white text-sm rounded-lg transition-all flex items-center gap-2 font-bold shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              >
+                <span className="text-base animate-pulse">✨</span>
+                <span>AI ile Müfredat Üret</span>
+              </button>
+              <button
                 onClick={() => setShowEditForm(!showEditForm)}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-all flex items-center gap-2 font-medium shadow-md hover:shadow-lg"
               >
@@ -711,13 +739,24 @@ export default function MyCourseDetailPage() {
       {/* Kurs Düzenleme Formu - Modern Design */}
       {showEditForm && (
         <div className="mb-8 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-8 shadow-xl">
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+            <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-teal-600 flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
+                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">Kurs Bilgilerini Düzenle</h2>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Kurs Bilgilerini Düzenle</h2>
+
+            <button
+              type="button"
+              onClick={() => setShowAIBuilderModal(true)}
+              className="px-4 py-2 bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-400 hover:to-indigo-500 text-white text-xs sm:text-sm rounded-xl font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+            >
+              <span>✨</span>
+              <span>AI ile Müfredat & Dersleri Doldur</span>
+            </button>
           </div>
           <div className="space-y-6">
             <div>
@@ -1071,6 +1110,20 @@ export default function MyCourseDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* AI Course & Curriculum Builder Modal */}
+      <AICourseBuilderModal
+        isOpen={showAIBuilderModal}
+        onClose={() => setShowAIBuilderModal(false)}
+        courseId={id}
+        onApplyToCourse={(data) => {
+          setEditTitle(data.title);
+          setEditDescription(data.description);
+          setEditPrice(data.price);
+          setPendingGeneratedLessons(data.lessons);
+          setShowEditForm(true);
+        }}
+      />
     </div>
   );
 }

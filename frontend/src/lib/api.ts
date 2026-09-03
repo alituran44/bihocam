@@ -4582,21 +4582,31 @@ export interface SocialPostResponse {
   content?: string;
   media_url?: string;
   media_type: "video" | "image" | "text";
+  target_level?: string;
   created_at: string;
   likes_count: number;
   saves_count: number;
+  comments_count?: number;
   is_liked_by_me: boolean;
   is_saved_by_me: boolean;
   user?: any; // To hold user response
 }
 
 export const socialApi = {
-  getReels: async (skip: number = 0, limit: number = 10): Promise<SocialPostResponse[]> => {
-    const { data } = await api.get("/social/posts/reels", { params: { skip, limit } });
+  getReels: async (skip: number = 0, limit: number = 50, level?: string): Promise<SocialPostResponse[]> => {
+    const { data } = await api.get("/social/posts/reels", { params: { skip, limit, level } });
     return data;
   },
-  createPost: async (payload: { content?: string; media_url?: string; media_type: string }): Promise<SocialPostResponse> => {
+  createPost: async (payload: { content?: string; media_url?: string; media_type: string; target_level?: string }): Promise<SocialPostResponse> => {
     const { data } = await api.post("/social/posts", payload);
+    return data;
+  },
+  updatePost: async (postId: string, payload: { content?: string; media_url?: string; media_type?: string; target_level?: string }): Promise<SocialPostResponse> => {
+    const { data } = await api.put(`/social/posts/${postId}`, payload);
+    return data;
+  },
+  deletePost: async (postId: string): Promise<{ message: string }> => {
+    const { data } = await api.delete(`/social/posts/${postId}`);
     return data;
   },
   likePost: async (postId: string) => {
@@ -4613,6 +4623,18 @@ export const socialApi = {
   },
   unsavePost: async (postId: string) => {
     const { data } = await api.delete(`/social/posts/${postId}/save`);
+    return data;
+  },
+  getComments: async (postId: string): Promise<any[]> => {
+    const { data } = await api.get(`/social/posts/${postId}/comments`);
+    return data;
+  },
+  createComment: async (postId: string, content: string): Promise<any> => {
+    const { data } = await api.post(`/social/posts/${postId}/comments`, { content });
+    return data;
+  },
+  deleteComment: async (commentId: string): Promise<{ message: string }> => {
+    const { data } = await api.delete(`/social/posts/comments/${commentId}`);
     return data;
   },
   getSavedPosts: async (): Promise<any[]> => {
@@ -4761,5 +4783,30 @@ export const mockExamsApi = {
     return data;
   },
 };
+
+// AI Assistant & OpenRouter / OmniRoute API client
+export const aiApi = {
+  chat: async (message: string, history: { role: string; content: string }[] = [], model?: string) => {
+    const { data } = await api.post("/ai/chat", { message, history, model });
+    return data as { reply: string; provider?: string; model?: string };
+  },
+  generate: async (prompt: string, type: "description" | "quiz" | "social" | string, model?: string) => {
+    const { data } = await api.post("/ai/generate", { prompt, type, model });
+    return data as { content: string; provider?: string; model?: string };
+  },
+  generateImage: async (prompt: string) => {
+    const { data } = await api.post("/ai/generate_image", { prompt });
+    return data as { image_url: string };
+  },
+  getInfo: async () => {
+    const { data } = await api.get("/ai/info");
+    return data as {
+      active_provider: string;
+      openrouter: { configured: boolean; base_url: string; model: string };
+      gemini: { configured: boolean };
+    };
+  },
+};
+
 
 

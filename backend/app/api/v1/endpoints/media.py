@@ -274,47 +274,31 @@ async def stream_video(
 
     
     if not lesson:
-        # Final check: does the file exist in storage?
-        try:
-            file_exists = await storage.exists(storage_key)
-            import logging
-            logger = logging.getLogger(__name__)
-            if file_exists:
-                logger.warning(f"File exists in storage but no lesson found. Storage key: {storage_key}")
-            else:
-                logger.warning(f"File does not exist in storage. Storage key: {storage_key}")
-        except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error checking file existence: {e}")
-        
-        raise HTTPException(status_code=404, detail=f"Video bulunamadı (filename: {decoded_filename}, storage_key: {storage_key})")
-    
-    # CRITICAL SECURITY FIX: Anonim erişim kapatıldı
-    # Preview dersleri herkese açık
-    if lesson.is_preview:
-        # Preview dersleri için herhangi bir kontrol yapma, direkt stream et
-        pass
+        # Lesson dışındaki genel videolar (Reels, Popcast, Tanıtım videoları vb.) için storage kontrolü
+        file_exists = await storage.exists(storage_key)
+        if not file_exists:
+            raise HTTPException(status_code=404, detail=f"Video bulunamadı (filename: {decoded_filename})")
     else:
-        # Preview değilse MUTLAKA authentication ve enrollment kontrolü
-        if not current_user:
-            raise HTTPException(status_code=401, detail="Giriş yapmalısınız")
-        
-        # Enrollment kontrolü
-        enrollment_result = await db.execute(
-            select(Enrollment).where(
-                Enrollment.user_id == current_user.id,
-                Enrollment.course_id == lesson.course_id
+        # CRITICAL SECURITY FIX: Ders videoları için güvenlik ve kayıt kontrolü
+        if not lesson.is_preview:
+            if not current_user:
+                raise HTTPException(status_code=401, detail="Giriş yapmalısınız")
+            
+            # Enrollment kontrolü
+            enrollment_result = await db.execute(
+                select(Enrollment).where(
+                    Enrollment.user_id == current_user.id,
+                    Enrollment.course_id == lesson.course_id
+                )
             )
-        )
-        enrollment = enrollment_result.scalar_one_or_none()
-        
-        # Owner veya admin kontrolü
-        is_owner = lesson.course.teacher_id == current_user.id
-        is_admin = current_user.role == UserRole.ADMIN
-        
-        if not enrollment and not is_owner and not is_admin:
-            raise HTTPException(status_code=403, detail="Bu videoya erişim yetkiniz yok")
+            enrollment = enrollment_result.scalar_one_or_none()
+            
+            # Owner veya admin kontrolü
+            is_owner = lesson.course.teacher_id == current_user.id
+            is_admin = current_user.role == UserRole.ADMIN
+            
+            if not enrollment and not is_owner and not is_admin:
+                raise HTTPException(status_code=403, detail="Bu videoya erişim yetkiniz yok")
     
     # Range request desteği (video streaming için)
     # Local storage için dosyayı stream et

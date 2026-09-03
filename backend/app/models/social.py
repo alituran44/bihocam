@@ -21,6 +21,7 @@ class SocialPost(Base):
     content: Mapped[str | None] = mapped_column(Text, nullable=True)
     media_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     media_type: Mapped[MediaType] = mapped_column(Enum(MediaType, values_callable=lambda e: [x.value for x in e]), default=MediaType.TEXT, nullable=False)
+    target_level: Mapped[str | None] = mapped_column(String(50), default="all", nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
@@ -29,6 +30,21 @@ class SocialPost(Base):
     user = relationship("User", back_populates="social_posts")
     likes = relationship("PostLike", back_populates="post", cascade="all, delete-orphan")
     saves = relationship("SavedPost", back_populates="post", cascade="all, delete-orphan")
+    comments = relationship("PostComment", back_populates="post", cascade="all, delete-orphan")
+
+class PostComment(Base):
+    __tablename__ = "post_comments"
+    
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    post_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("social_posts.id", ondelete="CASCADE"), nullable=False, index=True)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User")
+    post = relationship("SocialPost", back_populates="comments")
 
 class PostLike(Base):
     __tablename__ = "post_likes"

@@ -101,6 +101,13 @@ class Settings(BaseSettings):
     PAYTR_TIMEOUT_LIMIT: int = 30  # dakika
     PAYTR_CURRENCY: str = "TL"
 
+    # OpenRouter / OmniRoute / AI Settings
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_MODEL: str = "google/gemini-2.5-flash"
+    AI_PROVIDER: str = "auto"  # "openrouter", "gemini", "auto"
+    GEMINI_API_KEY: str = ""
+
     # DB Connection Pool
     DB_POOL_SIZE: int = 20
     DB_MAX_OVERFLOW: int = 40
