@@ -606,6 +606,31 @@ async def payment_callback(
     return Response(content="OK", media_type="text/plain")
 
 
+@router.get("/transfer-callback")
+async def platform_transfer_callback_get():
+    """
+    PayTR Platform Transfer bildirim URL kontrolü (GET).
+    PayTR paneli veya tarayıcı kontrol ettiğinde doğrudan 200 OK döner.
+    """
+    return Response(content="OK", media_type="text/plain", status_code=200)
+
+
+@router.post("/transfer-callback")
+async def platform_transfer_callback(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    PayTR Platform Transfer (Pazaryeri alt satıcı hakediş aktarımı) async bildirim endpoint'i.
+    - Sadece 'OK' döner.
+    """
+    form = await request.form()
+    trans_id = form.get("trans_id") or form.get("merchant_oid") or ""
+    status = form.get("status", "")
+    logger.info(f"PayTR Platform Transfer Callback: trans_id={trans_id}, status={status}")
+    return Response(content="OK", media_type="text/plain", status_code=200)
+
+
 @router.get("/status/{order_id}", response_model=PaymentStatusResponse)
 async def get_payment_status(
     order_id: str,

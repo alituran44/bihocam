@@ -393,3 +393,19 @@ async def root_paytr_callback_post(request: Request, db: AsyncSessionLocal = Dep
     """PayTR kök bildirim endpoint'i (api/v1 prefix olmadan gelenler için)."""
     from app.api.v1.endpoints.payments import payment_callback
     return await payment_callback(request=request, db=db)
+
+
+@app.get("/transfer-callback")
+@app.get("/payments/transfer-callback")
+async def root_paytr_transfer_callback_get():
+    """PayTR Platform Transfer kontrolü için GET endpoint (her zaman OK döner)."""
+    return Response(content="OK", media_type="text/plain", status_code=200)
+
+
+@app.post("/transfer-callback")
+@app.post("/payments/transfer-callback")
+async def root_paytr_transfer_callback_post(request: Request, db: AsyncSessionLocal = Depends(get_db)):
+    """PayTR Platform Transfer bildirim endpoint'i."""
+    from app.api.v1.endpoints.payments import platform_transfer_callback
+    return await platform_transfer_callback(request=request, db=db)
+
