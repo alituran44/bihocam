@@ -423,6 +423,16 @@ async def checkout(
     )
 
 
+@router.get("/callback")
+async def payment_callback_probe():
+    """
+    PayTR panel doğrulama / probe isteği (GET).
+    PayTR paneli bildirim URL'sini test ederken veya kontrol ederken GET atabilir.
+    PayTR sistemleri 'OK' yanıtı bekler.
+    """
+    return Response(content="OK", media_type="text/plain", status_code=200)
+
+
 @router.post("/callback")
 async def payment_callback(
     request: Request,
@@ -443,6 +453,11 @@ async def payment_callback(
     failed_reason_msg = form.get("failed_reason_msg", "")
     test_mode = form.get("test_mode", "")
     payment_type = form.get("payment_type", "")
+
+    # PayTR panelinin test/probe isteği (boş parametreler veya test pini)
+    if not merchant_oid or not incoming_hash:
+        logger.info("PayTR callback probe/test request received. Responding OK.")
+        return Response(content="OK", media_type="text/plain", status_code=200)
 
     logger.info(f"PayTR callback: order={merchant_oid}, status={status}, amount={total_amount}")
 

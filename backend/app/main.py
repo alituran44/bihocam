@@ -3,7 +3,7 @@ import traceback
 import asyncio
 import logging
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status, Response, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
@@ -14,7 +14,7 @@ from app.core.rate_limit import limiter
 
 from app.api.v1.router import api_router
 from app.core.config import settings
-from app.db.session import engine, AsyncSessionLocal
+from app.db.session import engine, AsyncSessionLocal, get_db
 from app.db.base import Base
 from app.models.user import User  # noqa: F401
 from app.models.course import Course, Lesson  # noqa: F401
@@ -378,3 +378,18 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "version": settings.VERSION}
+
+
+@app.get("/callback")
+@app.get("/payments/callback")
+async def root_paytr_callback_get():
+    """PayTR panel kontrolü veya test ping'leri için GET endpoint (her zaman OK döner)."""
+    return Response(content="OK", media_type="text/plain", status_code=200)
+
+
+@app.post("/callback")
+@app.post("/payments/callback")
+async def root_paytr_callback_post(request: Request, db: AsyncSessionLocal = Depends(get_db)):
+    """PayTR kök bildirim endpoint'i (api/v1 prefix olmadan gelenler için)."""
+    from app.api.v1.endpoints.payments import payment_callback
+    return await payment_callback(request=request, db=db)
