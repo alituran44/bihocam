@@ -29,6 +29,7 @@ from app.core.paytr import (
     _build_user_basket,
     get_iframe_token,
     verify_callback_hash,
+    verify_transfer_callback_hash,
 )
 from app.db.session import get_db
 from app.models.cart import CartItem
@@ -622,12 +623,30 @@ async def platform_transfer_callback(
 ):
     """
     PayTR Platform Transfer (Pazaryeri alt satıcı hakediş aktarımı) async bildirim endpoint'i.
-    - Sadece 'OK' döner.
+    PayTR'dan gelen trans_ids JSON dizisi ve hash doğrulanır.
+    - Her zaman 'OK' döner.
     """
     form = await request.form()
-    trans_id = form.get("trans_id") or form.get("merchant_oid") or ""
-    status = form.get("status", "")
-    logger.info(f"PayTR Platform Transfer Callback: trans_id={trans_id}, status={status}")
+    trans_ids_raw = form.get("trans_ids", "")
+    incoming_hash = form.get("hash", "")
+
+    # Test / probe istekleri (form boş geldiğinde)
+    if not trans_ids_raw or not incoming_hash:
+        logger.info("PayTR Platform Transfer probe/test ping received. Responding OK.")
+        return Response(content="OK", media_type="text/plain", status_code=200)
+
+    # Hash doğrula
+    if not verify_transfer_callback_hash(trans_ids_raw, incoming_hash):
+        logger.error("PayTR Platform Transfer callback HASH MISMATCH")
+        return Response(content="PAYTR notification failed: bad hash", media_type="text/plain")
+
+    try:
+        clean_ids = trans_ids_raw.replace('\\', '')
+        trans_ids = json.loads(clean_ids)
+        logger.info(f"PayTR Platform Transfer completed successfully for trans_ids: {trans_ids}")
+    except Exception as e:
+        logger.warning(f"Error parsing trans_ids: {e}")
+
     return Response(content="OK", media_type="text/plain", status_code=200)
 
 

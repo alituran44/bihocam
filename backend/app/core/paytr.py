@@ -202,6 +202,18 @@ def verify_callback_hash(merchant_oid: str, status: str, total_amount: str, inco
     return hmac.compare_digest(expected_hash, incoming_hash)
 
 
+def verify_transfer_callback_hash(trans_ids: str, incoming_hash: str) -> bool:
+    """
+    PayTR Platform Transfer Callback hash doğrulaması.
+    trans_ids: PayTR'dan gelen JSON string (örn: '["wd123", "wd456"]')
+    Formül: base64(HMAC-SHA256(trans_ids_clean + merchant_salt, merchant_key))
+    """
+    clean_trans_ids = trans_ids.replace('\\', '')
+    hash_str = f"{clean_trans_ids}{settings.PAYTR_MERCHANT_SALT}"
+    expected_hash = _paytr_token(hash_str)
+    return hmac.compare_digest(expected_hash, incoming_hash)
+
+
 async def refund_payment(merchant_oid: str, return_amount: Decimal, reference_no: str = "") -> dict[str, Any]:
     """
     PayTR iade API'si.
