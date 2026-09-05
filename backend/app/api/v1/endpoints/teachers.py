@@ -76,6 +76,7 @@ async def list_teachers(
                 expertise_tags=t.expertise_tags or [],
                 live_class_price=t.live_class_price,
                 live_class_discount_price=t.live_class_discount_price,
+                face_to_face_price=t.face_to_face_price,
                 created_at=t.created_at,
             )
         )
@@ -191,6 +192,7 @@ async def get_teacher_profile(
             avatar_url=teacher.avatar_url,
             live_class_price=teacher.live_class_price,
             live_class_discount_price=teacher.live_class_discount_price,
+            face_to_face_price=teacher.face_to_face_price,
             live_class_link=teacher.live_class_link,
             promo_images=teacher.promo_images,
             promo_video=teacher.promo_video,
@@ -237,6 +239,10 @@ async def get_my_profile(
         expertise_tags=current_user.expertise_tags or [],
         social_links=social_links,
         avatar_url=current_user.avatar_url,
+        live_class_price=current_user.live_class_price,
+        live_class_discount_price=current_user.live_class_discount_price,
+        face_to_face_price=current_user.face_to_face_price,
+        live_class_link=current_user.live_class_link,
         promo_images=current_user.promo_images,
         promo_video=current_user.promo_video,
         is_active=current_user.is_active,
@@ -303,6 +309,10 @@ async def update_my_profile(
         expertise_tags=current_user.expertise_tags or [],
         social_links=social_links,
         avatar_url=current_user.avatar_url,
+        live_class_price=current_user.live_class_price,
+        live_class_discount_price=current_user.live_class_discount_price,
+        face_to_face_price=current_user.face_to_face_price,
+        live_class_link=current_user.live_class_link,
         promo_images=current_user.promo_images,
         promo_video=current_user.promo_video,
         is_active=current_user.is_active,
@@ -454,8 +464,13 @@ async def book_live_class(
     if not teacher:
         raise HTTPException(status_code=404, detail="Öğretmen bulunamadı")
 
-    price = teacher.live_class_price or 0.0
-    discount_price = teacher.live_class_discount_price
+    lesson_type = payload.lesson_type or "online"
+    if lesson_type == "face_to_face":
+        price = teacher.face_to_face_price if teacher.face_to_face_price is not None else (teacher.live_class_price or 0.0)
+        discount_price = None
+    else:
+        price = teacher.live_class_price or 0.0
+        discount_price = teacher.live_class_discount_price
     
     slot.is_booked = True
     
@@ -468,6 +483,7 @@ async def book_live_class(
         end_time=slot.end_time,
         price=price,
         discount_price=discount_price,
+        lesson_type=lesson_type,
         status="pending",
         student_notes=payload.student_notes
     )

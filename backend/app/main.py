@@ -112,6 +112,8 @@ async def lifespan(app: FastAPI):
                 cursor.execute("ALTER TABLE users ADD COLUMN live_class_price FLOAT")
             if "live_class_discount_price" not in columns:
                 cursor.execute("ALTER TABLE users ADD COLUMN live_class_discount_price FLOAT")
+            if "face_to_face_price" not in columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN face_to_face_price FLOAT")
             if "live_class_link" not in columns:
                 cursor.execute("ALTER TABLE users ADD COLUMN live_class_link VARCHAR(500)")
             if "promo_images" not in columns:
@@ -142,6 +144,12 @@ async def lifespan(app: FastAPI):
                 cursor.execute("ALTER TABLE homeworks ADD COLUMN file_path VARCHAR(500)")
             if "is_assigned" not in homework_columns:
                 cursor.execute("ALTER TABLE homeworks ADD COLUMN is_assigned BOOLEAN DEFAULT 0")
+
+            # LiveClassReservation migrations
+            cursor.execute("PRAGMA table_info(live_class_reservations)")
+            res_columns = [row[1] for row in cursor.fetchall()]
+            if "lesson_type" not in res_columns:
+                cursor.execute("ALTER TABLE live_class_reservations ADD COLUMN lesson_type VARCHAR(20) DEFAULT 'online'")
                 
         # PRAGMA yalnizca SQLite'ta calisir; PostgreSQL'de atla (semayi create_all guncel tutuyor)
         if engine.dialect.name == "sqlite":

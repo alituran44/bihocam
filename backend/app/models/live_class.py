@@ -34,6 +34,7 @@ class LiveClassReservation(Base):
     end_time: Mapped[str] = mapped_column(String(5), nullable=False)  # HH:MM
     price: Mapped[float] = mapped_column(Float, nullable=False)
     discount_price: Mapped[float | None] = mapped_column(Float, nullable=True)
+    lesson_type: Mapped[str] = mapped_column(String(20), default="online", nullable=False) # online, face_to_face
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)  # pending, approved, completed, cancelled
     meeting_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
     student_notes: Mapped[str | None] = mapped_column(Text, nullable=True)

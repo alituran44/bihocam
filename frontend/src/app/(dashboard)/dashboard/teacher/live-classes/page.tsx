@@ -47,6 +47,7 @@ export default function TeacherLiveClassesPage() {
   // Profile Settings Form State
   const [price, setPrice] = useState<string>(user?.live_class_price?.toString() || "");
   const [discountPrice, setDiscountPrice] = useState<string>(user?.live_class_discount_price?.toString() || "");
+  const [faceToFacePrice, setFaceToFacePrice] = useState<string>(user?.face_to_face_price?.toString() || "");
   const [meetingLink, setMeetingLink] = useState<string>(user?.live_class_link || "");
 
   const [settingsSuccess, setSettingsSuccess] = useState(false);
@@ -86,7 +87,7 @@ export default function TeacherLiveClassesPage() {
 
   // Update Settings mutation
   const updateSettingsMutation = useMutation({
-    mutationFn: (data: { live_class_price?: number | null; live_class_discount_price?: number | null; live_class_link?: string }) =>
+    mutationFn: (data: { live_class_price?: number | null; live_class_discount_price?: number | null; face_to_face_price?: number | null; live_class_link?: string }) =>
       teachersApi.updateMyProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher", user?.id] });
@@ -130,10 +131,12 @@ export default function TeacherLiveClassesPage() {
     e.preventDefault();
     const parsedPrice = price === "" ? null : parseFloat(price);
     const parsedDiscountPrice = discountPrice === "" ? null : parseFloat(discountPrice);
+    const parsedFaceToFacePrice = faceToFacePrice === "" ? null : parseFloat(faceToFacePrice);
 
     updateSettingsMutation.mutate({
       live_class_price: parsedPrice,
       live_class_discount_price: parsedDiscountPrice,
+      face_to_face_price: parsedFaceToFacePrice,
       live_class_link: meetingLink,
     });
   };
@@ -186,25 +189,37 @@ export default function TeacherLiveClassesPage() {
 
             <form onSubmit={handleSaveSettings} className="space-y-5">
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Canlı Ders Saatlik Ücreti (₺)</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Online Canlı Ders Saatlik Ücreti (₺)</label>
                 <input
                   type="number"
                   min="0"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
-                  placeholder="Örn: 1000"
+                  placeholder="Örn: 500"
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200/80 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 font-semibold text-slate-800"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">İndirimli Saatlik Ücret (₺ - İsteğe Bağlı)</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Yüz Yüze Ders Saatlik Ücreti (₺ - İsteğe Bağlı)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={faceToFacePrice}
+                  onChange={(e) => setFaceToFacePrice(e.target.value)}
+                  placeholder="Örn: 750 (Boş bırakılırsa anlaşmalı/belirtilmedi görünür)"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200/80 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 font-semibold text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">İndirimli Online Saatlik Ücret (₺ - İsteğe Bağlı)</label>
                 <input
                   type="number"
                   min="0"
                   value={discountPrice}
                   onChange={(e) => setDiscountPrice(e.target.value)}
-                  placeholder="Örn: 850"
+                  placeholder="Örn: 450"
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200/80 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 font-semibold text-slate-800"
                 />
               </div>

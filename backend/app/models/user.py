@@ -47,6 +47,7 @@ class User(Base):
     # Live class fields
     live_class_price: Mapped[float | None] = mapped_column(Float, nullable=True)
     live_class_discount_price: Mapped[float | None] = mapped_column(Float, nullable=True)
+    face_to_face_price: Mapped[float | None] = mapped_column(Float, nullable=True)
     live_class_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # Timestamps

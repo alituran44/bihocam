@@ -1116,7 +1116,7 @@ export const teachersApi = {
     const { data } = await api.get(`/teachers/${teacherId}/availability`);
     return data;
   },
-  bookLiveClass: async (teacherId: string, payload: { availability_id: string; student_notes?: string }) => {
+  bookLiveClass: async (teacherId: string, payload: { availability_id: string; lesson_type?: "online" | "face_to_face"; student_notes?: string }) => {
     const { data } = await api.post(`/teachers/${teacherId}/book-live-class`, payload);
     return data;
   },
@@ -2126,6 +2126,7 @@ export interface TeacherProfileUpdate {
   promo_video?: string;
   live_class_price?: number | null;
   live_class_discount_price?: number | null;
+  face_to_face_price?: number | null;
   live_class_link?: string | null;
   tax_info?: {
     iban?: string;

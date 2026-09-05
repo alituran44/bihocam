@@ -34,6 +34,9 @@ class UserResponse(UserBase):
     updated_at: datetime
     phone: str | None = None
     last_login_at: datetime | None = None
+    live_class_price: float | None = None
+    live_class_discount_price: float | None = None
+    face_to_face_price: float | None = None
 
     class Config:
         from_attributes = True

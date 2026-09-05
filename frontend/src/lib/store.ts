@@ -13,6 +13,7 @@ interface User {
   bio?: string | null;
   live_class_price?: number | null;
   live_class_discount_price?: number | null;
+  face_to_face_price?: number | null;
   live_class_link?: string | null;
 }
 

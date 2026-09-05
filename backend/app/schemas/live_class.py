@@ -33,6 +33,7 @@ class UserMinimalInfo(BaseModel):
 
 class LiveClassReservationCreate(BaseModel):
     availability_id: str
+    lesson_type: Optional[str] = "online"  # "online" or "face_to_face"
     student_notes: Optional[str] = None
 
 class LiveClassReservationResponse(BaseModel):
@@ -45,6 +46,7 @@ class LiveClassReservationResponse(BaseModel):
     end_time: str
     price: float
     discount_price: Optional[float] = None
+    lesson_type: Optional[str] = "online"
     status: str
     meeting_link: Optional[str] = None
     student_notes: Optional[str] = None
