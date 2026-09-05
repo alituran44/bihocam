@@ -21,6 +21,7 @@ type TeacherListItem = {
   expertise_tags: string[];
   live_class_price?: number | null;
   live_class_discount_price?: number | null;
+  face_to_face_price?: number | null;
   created_at: string;
 };
 
@@ -326,12 +327,16 @@ function TeachersPageInner() {
                           </svg>
                           <span>40 Dakika</span>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                          </svg>
-                          <span>{hourlyRate ? `${hourlyRate.toLocaleString("tr-TR")} TL` : "Anlasmalı"}</span>
+                        <div className="flex items-center gap-1.5 text-blue-600 font-bold">
+                          <span>🌐</span>
+                          <span>{hourlyRate ? `${hourlyRate.toLocaleString("tr-TR")} TL (Online)` : "Anlaşmalı"}</span>
                         </div>
+                        {teacher.face_to_face_price !== undefined && teacher.face_to_face_price !== null && (
+                          <div className="flex items-center gap-1.5 text-indigo-600 font-bold">
+                            <span>📍</span>
+                            <span>{teacher.face_to_face_price ? `${teacher.face_to_face_price.toLocaleString("tr-TR")} TL (Yüz Yüze)` : "Ücretsiz"}</span>
+                          </div>
+                        )}
                       </div>
 
                       <p className="mt-5 text-gray-500 text-[14px] leading-relaxed font-medium line-clamp-3">{bio}</p>
