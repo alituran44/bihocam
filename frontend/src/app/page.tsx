@@ -16,6 +16,8 @@ import { useAuthStore } from "@/lib/store";
 import { usePopupAnnouncement } from "@/hooks/usePopupAnnouncement";
 import { Play, Pause, Headphones, Heart, Download } from "lucide-react";
 import PayTRTaksitWidget from "@/components/payment/PayTRTaksitWidget";
+import Hero3DCanvas from "@/components/3d/Hero3DCanvas";
+import TiltCard3D from "@/components/3d/TiltCard3D";
 
 // Visual helpers for education program banners
 const getGradientBySlug = (slug: string) => {
@@ -503,9 +505,13 @@ export default function Home() {
       {/* HERO - ANIMATED PREMIUM REDESIGN                     */}
       {/* ══════════════════════════════════════════════════════ */}
       <section className="relative pt-28 pb-20 md:pt-36 md:pb-32 overflow-hidden">
-        {/* Animated Mesh Gradient Background */}
-        <div className="absolute inset-0 -z-10">
+        {/* Animated Mesh Gradient Background with 3D Spatial Canvas */}
+        <div className="absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-teal-50/60 to-indigo-50/40" />
+          
+          {/* Interactive 3D Spatial Canvas */}
+          <Hero3DCanvas className="absolute inset-0 z-0 opacity-80" />
+
           {/* Morphing Blob 1 */}
           <motion.div
             className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-teal-300/20 rounded-full blur-3xl"
@@ -758,70 +764,72 @@ export default function Home() {
                   </div>
                 </motion.div>
 
-                {/* Main Visual: Premium Campaigns & Announcements Slider Banner */}
-                <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white bg-slate-950 aspect-video w-full flex flex-col justify-between p-6 sm:p-10 group/banner">
-                  {/* Backdrop glowing background */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${campaigns[activeCampaignSlide].bgGradient} transition-all duration-700 ease-in-out`} />
-                  
-                  {/* Decorative mesh/grid pattern overlay */}
-                  <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:16px_16px] opacity-60 z-10" />
+                {/* Main Visual: 3D Tilt Premium Campaigns & Announcements Slider Banner */}
+                <TiltCard3D maxTilt={7} glareOpacity={0.25} depth={20} className="w-full">
+                  <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white bg-slate-950 aspect-video w-full flex flex-col justify-between p-6 sm:p-10 group/banner">
+                    {/* Backdrop glowing background */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${campaigns[activeCampaignSlide].bgGradient} transition-all duration-700 ease-in-out`} />
+                    
+                    {/* Decorative mesh/grid pattern overlay */}
+                    <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:16px_16px] opacity-60 z-10" />
 
-                  {/* Slide Content */}
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={activeCampaignSlide}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.4 }}
-                      className="relative z-10 flex flex-col justify-between h-full space-y-6"
-                    >
-                      {/* Top Row: Badge & Large Icon */}
-                      <div className="flex items-center justify-between">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black text-white tracking-widest uppercase ${campaigns[activeCampaignSlide].badgeColor} shadow-md`}>
-                          {campaigns[activeCampaignSlide].badge}
-                        </span>
-                        <span className="text-4xl filter drop-shadow-md select-none">{campaigns[activeCampaignSlide].icon}</span>
-                      </div>
+                    {/* Slide Content */}
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={activeCampaignSlide}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.4 }}
+                        className="relative z-10 flex flex-col justify-between h-full space-y-6"
+                      >
+                        {/* Top Row: Badge & Large Icon */}
+                        <div className="flex items-center justify-between">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black text-white tracking-widest uppercase ${campaigns[activeCampaignSlide].badgeColor} shadow-md`}>
+                            {campaigns[activeCampaignSlide].badge}
+                          </span>
+                          <span className="text-4xl filter drop-shadow-md select-none">{campaigns[activeCampaignSlide].icon}</span>
+                        </div>
 
-                      {/* Main Copy */}
-                      <div className="space-y-3 text-left">
-                        <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white leading-tight tracking-tight">
-                          {campaigns[activeCampaignSlide].title}
-                        </h3>
-                        <p className="text-slate-300 text-xs sm:text-sm font-medium leading-relaxed max-w-xl">
-                          {campaigns[activeCampaignSlide].description}
-                        </p>
-                      </div>
+                        {/* Main Copy */}
+                        <div className="space-y-3 text-left">
+                          <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white leading-tight tracking-tight">
+                            {campaigns[activeCampaignSlide].title}
+                          </h3>
+                          <p className="text-slate-300 text-xs sm:text-sm font-medium leading-relaxed max-w-xl">
+                            {campaigns[activeCampaignSlide].description}
+                          </p>
+                        </div>
 
-                      {/* Call to Action Button */}
-                      <div className="text-left">
-                        <Link
-                          href={campaigns[activeCampaignSlide].actionLink}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-slate-900 font-bold rounded-xl text-xs hover:bg-teal-50 transition-all shadow-lg hover:scale-105 active:scale-95"
-                        >
-                          <span>{campaigns[activeCampaignSlide].actionText}</span>
-                          <span className="text-base">→</span>
-                        </Link>
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
+                        {/* Call to Action Button */}
+                        <div className="text-left">
+                          <Link
+                            href={campaigns[activeCampaignSlide].actionLink}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-slate-900 font-bold rounded-xl text-xs hover:bg-teal-50 transition-all shadow-lg hover:scale-105 active:scale-95"
+                          >
+                            <span>{campaigns[activeCampaignSlide].actionText}</span>
+                            <span className="text-base">→</span>
+                          </Link>
+                        </div>
+                      </motion.div>
+                    </AnimatePresence>
 
-                  {/* Slide controls: Dots */}
-                  <div className="absolute bottom-4 right-6 flex items-center gap-2 z-20">
-                    {campaigns.map((_, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setActiveCampaignSlide(idx)}
-                        className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                          idx === activeCampaignSlide
-                            ? "bg-teal-400 w-6"
-                            : "bg-white/30 hover:bg-white/50"
-                        }`}
-                      />
-                    ))}
+                    {/* Slide controls: Dots */}
+                    <div className="absolute bottom-4 right-6 flex items-center gap-2 z-20">
+                      {campaigns.map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setActiveCampaignSlide(idx)}
+                          className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                            idx === activeCampaignSlide
+                              ? "bg-teal-400 w-6"
+                              : "bg-white/30 hover:bg-white/50"
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
+                </TiltCard3D>
 
                 {/* Online indicator */}
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur rounded-full px-3 py-1.5 flex items-center gap-2 shadow-md z-20">
@@ -908,67 +916,69 @@ export default function Home() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: i * 0.1 }}
               >
-                <Link
-                  href={`/tanisma-dersi?category=${cat.id}`}
-                  className="group block rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
-                >
-                  {/* Card top gradient area */}
-                  <div className={`relative h-44 bg-gradient-to-br ${cat.gradient} flex items-center justify-center overflow-hidden`}>
-                    {/* Animated circles */}
-                    <motion.div
-                      className="absolute -top-8 -right-8 w-32 h-32 bg-white/20 rounded-full"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: i * 0.3 }}
-                    />
-                    <motion.div
-                      className="absolute -bottom-4 -left-4 w-20 h-20 bg-white/15 rounded-full"
-                      animate={{ scale: [1, 1.3, 1] }}
-                      transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: i * 0.2 }}
-                    />
-                    {/* Sparkle particles */}
-                    {[...Array(4)].map((_, pi) => (
+                <TiltCard3D maxTilt={10} glareOpacity={0.2} depth={15} className="h-full">
+                  <Link
+                    href={`/tanisma-dersi?category=${cat.id}`}
+                    className="group block rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 h-full"
+                  >
+                    {/* Card top gradient area */}
+                    <div className={`relative h-44 bg-gradient-to-br ${cat.gradient} flex items-center justify-center overflow-hidden`}>
+                      {/* Animated circles */}
                       <motion.div
-                        key={pi}
-                        className="absolute w-1.5 h-1.5 bg-white/60 rounded-full"
-                        style={{
-                          top: `${20 + pi * 18}%`,
-                          left: `${10 + pi * 22}%`,
-                        }}
-                        animate={{ opacity: [0, 1, 0], scale: [0, 1.5, 0] }}
-                        transition={{ duration: 2, repeat: Infinity, delay: pi * 0.5 + i * 0.3 }}
+                        className="absolute -top-8 -right-8 w-32 h-32 bg-white/20 rounded-full"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: i * 0.3 }}
                       />
-                    ))}
-                    {/* Central emoji */}
-                    <motion.div
-                      className="relative z-10 flex flex-col items-center"
-                      whileHover={{ scale: 1.2, rotate: 5 }}
-                    >
-                      <motion.span
-                        className="text-7xl drop-shadow-lg select-none"
-                        animate={{ y: [0, -8, 0] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
+                      <motion.div
+                        className="absolute -bottom-4 -left-4 w-20 h-20 bg-white/15 rounded-full"
+                        animate={{ scale: [1, 1.3, 1] }}
+                        transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: i * 0.2 }}
+                      />
+                      {/* Sparkle particles */}
+                      {[...Array(4)].map((_, pi) => (
+                        <motion.div
+                          key={pi}
+                          className="absolute w-1.5 h-1.5 bg-white/60 rounded-full"
+                          style={{
+                            top: `${20 + pi * 18}%`,
+                            left: `${10 + pi * 22}%`,
+                          }}
+                          animate={{ opacity: [0, 1, 0], scale: [0, 1.5, 0] }}
+                          transition={{ duration: 2, repeat: Infinity, delay: pi * 0.5 + i * 0.3 }}
+                        />
+                      ))}
+                      {/* Central emoji */}
+                      <motion.div
+                        className="relative z-10 flex flex-col items-center"
+                        whileHover={{ scale: 1.2, rotate: 5 }}
                       >
-                        {cat.emoji}
-                      </motion.span>
-                    </motion.div>
-                  </div>
-
-                  {/* Card body */}
-                  <div className="bg-white px-6 py-5 flex items-center justify-between border-t-0">
-                    <div>
-                      <h3 className="text-xl font-black text-slate-900 group-hover:text-teal-600 transition-colors">{cat.title}</h3>
-                      <p className="text-slate-500 text-sm font-medium mt-0.5">{cat.desc}</p>
+                        <motion.span
+                          className="text-7xl drop-shadow-lg select-none"
+                          animate={{ y: [0, -8, 0] }}
+                          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
+                        >
+                          {cat.emoji}
+                        </motion.span>
+                      </motion.div>
                     </div>
-                    <motion.div
-                      className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 group-hover:bg-teal-500 flex items-center justify-center transition-all duration-300"
-                      whileHover={{ scale: 1.1 }}
-                    >
-                      <svg className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </motion.div>
-                  </div>
-                </Link>
+
+                    {/* Card body */}
+                    <div className="bg-white px-6 py-5 flex items-center justify-between border-t-0">
+                      <div>
+                        <h3 className="text-xl font-black text-slate-900 group-hover:text-teal-600 transition-colors">{cat.title}</h3>
+                        <p className="text-slate-500 text-sm font-medium mt-0.5">{cat.desc}</p>
+                      </div>
+                      <motion.div
+                        className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 group-hover:bg-teal-500 flex items-center justify-center transition-all duration-300"
+                        whileHover={{ scale: 1.1 }}
+                      >
+                        <svg className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </motion.div>
+                    </div>
+                  </Link>
+                </TiltCard3D>
               </motion.div>
             ))}
           </div>
