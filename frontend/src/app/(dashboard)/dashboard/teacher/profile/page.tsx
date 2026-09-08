@@ -2600,6 +2600,34 @@ function TaxInfoTab({ profile, onUpdate, isUpdating }: any) {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* VERGİ DAİRESİ */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">VERGİ DAİRESİ</label>
+              <input 
+                type="text" 
+                placeholder="Örn: Beşiktaş Vergi Dairesi" 
+                value={formData.tax_office || ""}
+                onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none"
+              />
+            </div>
+
+            {/* TİCARİ UNVAN / ŞİRKET ADI */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">
+                {formData.company_type === "Kurumsal (Anonim, Limited vb.)" ? "RESMİ ŞİRKET UNVANI" : "ŞAHIS FİRMA UNVANI (VARSA)"}
+              </label>
+              <input 
+                type="text" 
+                placeholder="Örn: Turan Eğitim ve Danışmanlık Ltd. Şti." 
+                value={formData.company_title || ""}
+                onChange={(e) => setFormData({ ...formData, company_title: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none"
+              />
+            </div>
+          </div>
+
           {/* YASAL YERLEŞİM ADRESİ */}
           <div>
             <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">YASAL YERLEŞİM ADRESİ</label>

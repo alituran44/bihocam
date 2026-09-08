@@ -58,6 +58,7 @@ from app.models.education_program import EducationProgram
 from app.models.social import SocialPost, PostLike, SavedPost, UserFollow, MediaType
 from app.models.popcast import Popcast, UserPopcastFavorite, PopcastStatus
 from app.models.mock_exam import MockExam, MockExamQuestion, MockExamAttempt, MockExamStudentAnswer
+from app.models.gib_log import GibAuditLog, GibServiceType, GibActionType
 
 __all__ = [
     "User",

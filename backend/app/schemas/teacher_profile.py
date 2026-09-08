@@ -36,6 +36,7 @@ class TeacherProfileUpdate(BaseModel):
     live_class_link: Optional[str] = Field(None, max_length=500)
     promo_images: Optional[list[str]] = None
     promo_video: Optional[str] = Field(None, max_length=500)
+    tax_info: Optional[dict] = None
 
     @field_validator("bio")
     @classmethod
@@ -93,6 +94,7 @@ class TeacherProfileResponse(BaseModel):
     live_class_link: Optional[str] = None
     promo_images: Optional[list[str]] = None
     promo_video: Optional[str] = None
+    tax_info: Optional[dict] = None
     is_active: bool
     is_verified: bool
     created_at: datetime

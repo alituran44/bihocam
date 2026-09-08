@@ -4809,5 +4809,99 @@ export const aiApi = {
   },
 };
 
+// GİB BTRANS VUK 538 / 595 İlan, Canlı Ders ve Kurs Denetim Modülü
+export interface GibAuditLogItem {
+  id: string;
+  service_type: "LIVE_CLASS" | "COURSE" | "EDUCATION_PROGRAM" | string;
+  action: "CREATE" | "UPDATE" | "PUBLISH" | "PURCHASE" | "CANCEL" | string;
+  item_id: string;
+  item_reference_no: string;
+  item_title: string;
+  item_category?: string | null;
+  item_url?: string | null;
+  gross_amount: number;
+  commission_rate: number;
+  commission_amount: number;
+  teacher_net_earnings: number;
+  currency: string;
+  teacher_id: string;
+  teacher_name: string;
+  teacher_tc_vkn?: string | null;
+  teacher_company_type?: string | null;
+  teacher_company_title?: string | null;
+  teacher_tax_office?: string | null;
+  teacher_city?: string | null;
+  teacher_district?: string | null;
+  teacher_address?: string | null;
+  teacher_iban?: string | null;
+  teacher_phone?: string | null;
+  teacher_email?: string | null;
+  buyer_id?: string | null;
+  buyer_name?: string | null;
+  buyer_email?: string | null;
+  payment_gateway_ref?: string | null;
+  client_ip: string;
+  client_port?: number | null;
+  user_agent?: string | null;
+  is_compliant: boolean;
+  missing_fields: string[];
+  created_at: string;
+}
+
+export interface GibAuditSummary {
+  total_items: number;
+  total_gross_amount: number;
+  total_commission_amount: number;
+  total_teacher_net_amount: number;
+  compliant_count: number;
+  non_compliant_count: number;
+  compliance_rate_percent: number;
+}
+
+export interface GibAuditResponse {
+  total: number;
+  skip: number;
+  limit: number;
+  summary: GibAuditSummary;
+  logs: GibAuditLogItem[];
+}
+
+export const adminGibApi = {
+  getLogs: async (params?: {
+    year?: number;
+    month?: number;
+    service_type?: string;
+    action?: string;
+    is_compliant?: boolean;
+    search?: string;
+    skip?: number;
+    limit?: number;
+  }): Promise<GibAuditResponse> => {
+    const { data } = await api.get("/admin/gib/logs", { params });
+    return data;
+  },
+  triggerSync: async (): Promise<{ success: boolean; synced_count: number; message: string }> => {
+    const { data } = await api.post("/admin/gib/sync");
+    return data;
+  },
+  downloadCsvUrl: (params?: { year?: number; month?: number; service_type?: string; is_compliant?: boolean }) => {
+    const query = new URLSearchParams();
+    if (params?.year) query.set("year", params.year.toString());
+    if (params?.month) query.set("month", params.month.toString());
+    if (params?.service_type) query.set("service_type", params.service_type);
+    if (params?.is_compliant !== undefined) query.set("is_compliant", params.is_compliant.toString());
+    return `${API_URL}/admin/gib/export-csv?${query.toString()}`;
+  },
+  downloadXmlUrl: (params?: { year?: number; month?: number; service_type?: string; is_compliant?: boolean }) => {
+    const query = new URLSearchParams();
+    if (params?.year) query.set("year", params.year.toString());
+    if (params?.month) query.set("month", params.month.toString());
+    if (params?.service_type) query.set("service_type", params.service_type);
+    if (params?.is_compliant !== undefined) query.set("is_compliant", params.is_compliant.toString());
+    return `${API_URL}/admin/gib/export-xml?${query.toString()}`;
+  },
+};
+
+
 
 

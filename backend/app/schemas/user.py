@@ -37,6 +37,7 @@ class UserResponse(UserBase):
     live_class_price: float | None = None
     live_class_discount_price: float | None = None
     face_to_face_price: float | None = None
+    tax_info: dict | None = None
 
     class Config:
         from_attributes = True

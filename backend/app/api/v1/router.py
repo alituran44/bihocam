@@ -51,6 +51,7 @@ from app.api.v1.endpoints import (
     call_requests,
     popcasts,
     mock_exams,
+    admin_gib,
 )
 
 api_router = APIRouter()
@@ -75,6 +76,7 @@ api_router.include_router(coupons.admin_router, prefix="/admin/coupons", tags=["
 api_router.include_router(orders.router, prefix="/orders", tags=["orders"])
 api_router.include_router(payments.router, prefix="/payments", tags=["payments"])
 api_router.include_router(orders.admin_router, prefix="/admin/orders", tags=["Admin - Orders"])
+api_router.include_router(admin_gib.router, prefix="/admin/gib", tags=["Admin - GIB Reports"])
 api_router.include_router(enrollments.router, prefix="/enrollments", tags=["enrollments"])
 api_router.include_router(lesson_progress.router, prefix="", tags=["lesson-progress"])
 api_router.include_router(course_reviews.router, prefix="", tags=["course-reviews"])

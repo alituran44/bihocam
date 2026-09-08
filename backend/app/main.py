@@ -120,6 +120,8 @@ async def lifespan(app: FastAPI):
                 cursor.execute("ALTER TABLE users ADD COLUMN promo_images JSON")
             if "promo_video" not in columns:
                 cursor.execute("ALTER TABLE users ADD COLUMN promo_video VARCHAR(500)")
+            if "tax_info" not in columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN tax_info JSON")
                 
             # Quizzes migrations
             cursor.execute("PRAGMA table_info(quizzes)")
@@ -193,6 +195,16 @@ async def lifespan(app: FastAPI):
             logger.info("Initial ad campaign scheduler run completed")
     except Exception as e:
         logger.warning(f"Initial ad campaign scheduler run failed: {e}")
+
+    # GİB BTRANS VUK 538 / 595 Denetim Günlüğü Senkronizasyonu
+    try:
+        async with AsyncSessionLocal() as db:
+            from app.services.gib_logger import sync_existing_records_to_gib_logs
+            synced_count = await sync_existing_records_to_gib_logs(db)
+            if synced_count > 0:
+                logger.info(f"GIB BTRANS initial sync: {synced_count} records logged")
+    except Exception as e:
+        logger.warning(f"GIB BTRANS initial sync failed: {e}")
     
     yield
     

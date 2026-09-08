@@ -50,6 +50,9 @@ class User(Base):
     face_to_face_price: Mapped[float | None] = mapped_column(Float, nullable=True)
     live_class_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
+    # Tax & Legal Information (GİB BTRANS VUK 538 / 595 Uyumlu)
+    tax_info: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # {tc_kimlik, company_type, company_title, tax_office, address, city, district, ...}
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
