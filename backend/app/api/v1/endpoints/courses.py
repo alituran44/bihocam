@@ -2010,13 +2010,14 @@ async def approve_course(
         
         # Bildirim gönder (APP-BE-07) - Non-blocking
         try:
+            admin_note_text = f" Admin notu: {admin_note}" if admin_note else ""
             notification_service = NotificationService(db)
             await notification_service.send_notification(
                 user_ids=[course.teacher_id],
                 sender_id=current_user.id,
                 notification_type=NotificationType.COURSE_APPROVED,
                 title=f"Kursunuz Onaylandı: {course.title}",
-                message=f"'{course.title}' adlı kursunuz admin tarafından onaylandı ve yayınlandı.{" Admin notu: " + admin_note if admin_note else ""}",
+                message=f"'{course.title}' adlı kursunuz admin tarafından onaylandı ve yayınlandı.{admin_note_text}",
                 priority=NotificationPriority.MEDIUM,
                 action_url=f"/dashboard/my-courses/{course.id}",
                 action_label="Kursu Görüntüle",
