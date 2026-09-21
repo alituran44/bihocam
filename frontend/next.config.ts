@@ -25,6 +25,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -33,6 +34,8 @@ const nextConfig: NextConfig = {
     "https://bihocam.com",
     "https://www.bihocam.com",
     "http://16.170.218.212",
+    "http://13.53.172.136",
+    "http://ec2-13-53-172-136.eu-north-1.compute.amazonaws.com",
   ],
   async headers() {
     return [

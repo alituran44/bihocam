@@ -2,7 +2,7 @@
     email admin@bihocam.com
 }
 
-bihocam.com, www.bihocam.com {
+:80, bihocam.com, www.bihocam.com {
     encode zstd gzip
 
     # Güvenlik Başlıkları
