@@ -809,7 +809,7 @@ export default function Home() {
                 <div className="lg:col-span-7 bg-white rounded-3xl p-8 border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-8">
                   {/* Step 1: Sınav / Program Seçimi */}
                   <div className="space-y-3">
-                    <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">1. Sınav / Program Seçin</label>
+                    <label className="text-sm font-black text-slate-900 uppercase tracking-wider">1. Sınav / Program Seçin</label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                       {Object.entries(EXAM_SUBJECTS).map(([key, val]) => (
                         <button
@@ -821,12 +821,12 @@ export default function Home() {
                           }}
                           className={`flex items-center justify-between px-3.5 py-3 rounded-2xl border font-bold text-xs transition-all text-left ${
                             calcExam === key
-                              ? "border-emerald-500 bg-emerald-50 text-emerald-800 shadow-sm"
-                              : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+                              ? "border-emerald-600 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-500/20 shadow-sm"
+                              : "border-slate-300 bg-white text-slate-900 hover:border-slate-400 hover:bg-slate-50 shadow-xs"
                           }`}
                         >
                           <span className="leading-tight">{val.label}</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-500 font-mono">
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 border border-slate-300 text-slate-700 font-bold font-mono">
                             {val.tag}
                           </span>
                         </button>
@@ -838,12 +838,12 @@ export default function Home() {
                   {calcExam && EXAM_SUBJECTS[calcExam] && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">2. Ders / Branş Tercihiniz</label>
+                        <label className="text-sm font-black text-slate-900 uppercase tracking-wider">2. Ders / Branş Tercihiniz</label>
                         {calcSubjects.length > 0 && (
                           <button
                             type="button"
                             onClick={() => setCalcSubjects([])}
-                            className="text-xs text-rose-500 font-bold hover:underline flex items-center gap-1"
+                            className="text-xs text-rose-600 font-bold hover:underline flex items-center gap-1"
                           >
                             <span>Temizle</span>
                             <X className="w-3 h-3" />
@@ -856,10 +856,10 @@ export default function Home() {
                             key={s}
                             type="button"
                             onClick={() => toggleCalcSubject(s)}
-                            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
                               calcSubjects.includes(s)
-                                ? "bg-emerald-600 text-white font-bold border-emerald-500 shadow-sm"
-                                : "bg-slate-50 text-slate-700 border-slate-200 hover:border-emerald-500/40 hover:bg-emerald-50/50"
+                                ? "bg-emerald-600 text-white font-black border-emerald-600 shadow-sm"
+                                : "bg-white text-slate-800 border-slate-300 hover:border-emerald-500 hover:bg-emerald-50"
                             }`}
                           >
                             {s}
@@ -872,10 +872,10 @@ export default function Home() {
                   {/* Slider 1: Hours per Week */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <label htmlFor="calc-hours-slider" className="text-sm font-bold text-slate-700 uppercase tracking-wider">
+                      <label htmlFor="calc-hours-slider" className="text-sm font-black text-slate-900 uppercase tracking-wider">
                         Haftalık Birebir Ders Saati
                       </label>
-                      <span className="text-2xl font-black text-emerald-700 font-mono">{calcHours} Saat</span>
+                      <span className="text-2xl font-black text-emerald-800 font-mono">{calcHours} Saat</span>
                     </div>
                     <input
                       id="calc-hours-slider"
@@ -884,9 +884,9 @@ export default function Home() {
                       max="10"
                       value={calcHours}
                       onChange={(e) => setCalcHours(parseInt(e.target.value))}
-                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                      className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                     />
-                    <div className="flex justify-between text-xs text-slate-500 font-medium">
+                    <div className="flex justify-between text-xs text-slate-700 font-bold">
                       <span>1 Saat (Temel)</span>
                       <span>5 Saat (Önerilen)</span>
                       <span>10 Saat (Yoğun)</span>
@@ -896,10 +896,10 @@ export default function Home() {
                   {/* Slider 2: Duration in Weeks */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <label htmlFor="calc-weeks-select" className="text-sm font-bold text-slate-700 uppercase tracking-wider">
+                      <label htmlFor="calc-weeks-select" className="text-sm font-black text-slate-900 uppercase tracking-wider">
                         Toplam Program Süresi
                       </label>
-                      <span className="text-2xl font-black text-emerald-700 font-mono">{calcWeeks} Hafta</span>
+                      <span className="text-2xl font-black text-emerald-800 font-mono">{calcWeeks} Hafta</span>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {[
@@ -915,12 +915,12 @@ export default function Home() {
                           onClick={() => setCalcWeeks(item.value)}
                           className={`p-3.5 rounded-2xl border font-bold text-xs transition-all relative flex flex-col items-center justify-center gap-1.5 ${
                             calcWeeks === item.value
-                              ? "border-emerald-500 bg-emerald-50 text-emerald-800 shadow-sm"
-                              : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:text-slate-900"
+                              ? "border-emerald-600 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-500/20 shadow-sm"
+                              : "border-slate-300 bg-white text-slate-800 hover:border-slate-400 hover:text-slate-950 shadow-xs"
                           }`}
                         >
                           {item.discount > 0 && (
-                            <span className="absolute -top-2.5 bg-emerald-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-xs">
+                            <span className="absolute -top-2.5 bg-emerald-700 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-xs">
                               %{item.discount} İndirim
                             </span>
                           )}
@@ -930,56 +930,59 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl p-4 border border-emerald-200 bg-emerald-50 flex items-start gap-3">
-                    <Sparkles className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-emerald-800 leading-relaxed font-normal">
+                  <div className="rounded-2xl p-4 border border-emerald-300 bg-emerald-50/90 flex items-start gap-3">
+                    <Sparkles className="w-4 h-4 text-emerald-700 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-emerald-900 leading-relaxed font-medium">
                       Uzun vadeli programlarda <strong>peşin fiyatına taksit</strong> ve <strong>%{discount36}&apos;ye varan ek saat indirimleri</strong> otomatik yansıtılır. Memnun kalınmadığında kalan saatler koşulsuz iade edilir.
                     </p>
                   </div>
                 </div>
 
                 {/* Calculations Card Area */}
-                <div className="lg:col-span-5 bg-white rounded-3xl p-8 border border-slate-200/90 shadow-xl flex flex-col justify-between relative overflow-hidden">
+                <div className="lg:col-span-5 bg-white rounded-3xl p-8 border border-slate-300 shadow-xl flex flex-col justify-between relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none" />
                   
                   <div className="space-y-6 relative z-10">
-                    <h3 className="text-xl font-bold text-slate-900 flex items-center justify-between">
+                    <h3 className="text-xl font-black text-slate-900 flex items-center justify-between">
                       <span>Planlama Özeti</span>
-                      <span className="text-xs font-mono text-emerald-700 font-semibold px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80">
+                      <span className="text-xs font-mono text-emerald-800 font-bold px-3 py-1 rounded-full bg-emerald-100 border border-emerald-300">
                         {totalHours} Saat Canlı
                       </span>
                     </h3>
                     
-                    <div className="space-y-3.5 border-b border-slate-100 pb-6 text-sm">
-                      <div className="flex justify-between text-slate-600">
-                        <span className="text-slate-500">Toplam Canlı Ders</span>
-                        <span className="font-semibold text-slate-800">{totalHours} Saat</span>
+                    <div className="space-y-3.5 border-b border-slate-200 pb-6 text-sm">
+                      <div className="flex justify-between text-slate-700">
+                        <span className="text-slate-600 font-medium">Toplam Canlı Ders</span>
+                        <span className="font-bold text-slate-900">{totalHours} Saat</span>
                       </div>
-                      <div className="flex justify-between text-slate-600">
-                        <span className="text-slate-500">Saatlik Taban Ücret</span>
-                        <span className="font-mono font-semibold text-slate-800">{hourlyRate.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                      <div className="flex justify-between text-slate-700">
+                        <span className="text-slate-600 font-medium">Saatlik Taban Ücret</span>
+                        <span className="font-mono font-bold text-slate-900">{hourlyRate.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
                       </div>
                       {selectedDiscount > 0 && (
-                        <div className="flex justify-between text-emerald-700 font-semibold">
+                        <div className="flex justify-between text-emerald-800 font-bold">
                           <span>Süreye Özel İndirim</span>
-                          <span className="font-mono font-bold">-%{selectedDiscount}</span>
+                          <span className="font-mono font-black">-%{selectedDiscount}</span>
                         </div>
                       )}
                     </div>
 
                     <div className="space-y-1.5">
-                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tahmini Toplam Tutar</span>
+                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Tahmini Toplam Tutar</span>
                       <div className="text-4xl font-black tracking-tight text-slate-900 font-mono">
-                        {Math.round(netPrice).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} <span className="text-emerald-600 text-2xl">TL</span>
+                        {Math.round(netPrice).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} <span className="text-emerald-700 text-2xl">TL</span>
                       </div>
-                      <p className="text-[11px] text-slate-500 font-normal">
+                      <p className="text-[11px] text-slate-600 font-medium">
                         *Eğitmen tecrübesine ve öğrenci talebine göre tekliflerde fiyat esnekliği sağlanır.
                       </p>
                     </div>
 
                     {/* PayTR Taksit Tablosu */}
-                    <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
-                      <div className="text-xs font-bold text-slate-600 uppercase mb-3 tracking-wider">Taksit Seçenekleri</div>
+                    <div className="bg-slate-50 rounded-2xl p-4 border border-slate-300">
+                      <div className="text-xs font-black text-slate-900 uppercase mb-3 tracking-wider flex items-center justify-between">
+                        <span>Taksit Seçenekleri</span>
+                        <span className="text-[10px] text-emerald-800 font-bold bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200">Vade Farksız</span>
+                      </div>
                       <PayTRTaksitWidget amount={calcNetPrice} />
                     </div>
                   </div>

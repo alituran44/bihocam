@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef } from "react";
 
@@ -43,48 +43,61 @@ export default function PayTRTaksitWidget({ amount, className = "" }: PayTRTaksi
           font-size: 11px;
           width: 100%;
           text-align: center;
-          font-family: Arial, sans-serif;
-          max-height: 180px;
+          font-family: inherit;
+          max-height: 200px;
           overflow-y: auto;
           overflow-x: hidden;
           scrollbar-width: thin;
-          scrollbar-color: rgba(45,212,191,0.4) transparent;
+          scrollbar-color: #10B981 #f1f5f9;
         }
         #paytr_taksit_tablosu::-webkit-scrollbar { width: 4px; }
-        #paytr_taksit_tablosu::-webkit-scrollbar-thumb { background: rgba(45,212,191,0.4); border-radius: 4px; }
+        #paytr_taksit_tablosu::-webkit-scrollbar-thumb { background: #10B981; border-radius: 4px; }
         #paytr_taksit_tablosu::before { display: table; content: " "; }
         #paytr_taksit_tablosu::after  { content: ""; clear: both; display: table; }
         .taksit-tablosu-wrapper {
           margin: 3px;
-          padding: 6px 4px;
+          padding: 8px 6px;
           display: inline-block;
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 8px;
-          background: rgba(255,255,255,0.04);
-          width: calc(50% - 10px);
-          min-width: 80px;
+          border: 1px solid #cbd5e1 !important;
+          border-radius: 12px !important;
+          background: #ffffff !important;
+          width: calc(50% - 8px);
+          min-width: 85px;
           vertical-align: top;
           box-sizing: border-box;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+          transition: all 0.2s ease;
         }
-        .taksit-tablosu-wrapper:hover { background: rgba(255,255,255,0.09); }
+        .taksit-tablosu-wrapper:hover {
+          border-color: #10B981 !important;
+          box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.15);
+        }
         .taksit-logo img {
-          max-height: 18px;
+          max-height: 22px;
           padding-bottom: 4px;
-          filter: brightness(0) invert(1);
-          opacity: 0.8;
+          filter: none !important;
+          opacity: 1 !important;
         }
         .taksit-tutari-text {
           float: left; width: 48%;
-          color: rgba(255,255,255,0.4);
-          margin-bottom: 2px; font-size: 9px;
+          color: #475569 !important;
+          font-weight: 700 !important;
+          margin-bottom: 2px;
+          font-size: 10px !important;
         }
         .taksit-tutar-wrapper { display: inline-block; width: 100%; }
         .taksit-tutari {
           float: left; width: 48%;
-          padding: 2px 0; color: #e2e8f0;
-          border: none; font-size: 9px;
+          padding: 2px 0;
+          color: #0f172a !important;
+          border: none;
+          font-size: 10px !important;
+          font-weight: 600 !important;
         }
-        .taksit-tutari-bold { font-weight: bold; color: #2dd4bf; }
+        .taksit-tutari-bold {
+          font-weight: 800 !important;
+          color: #047857 !important;
+        }
       `}</style>
 
       <div id="paytr_taksit_tablosu" ref={containerRef} className="w-full" />
