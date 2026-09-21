@@ -2,14 +2,14 @@
     email admin@bihocam.com
 }
 
-:80, bihocam.com, www.bihocam.com {
+# Main Web Platform (HTTPS automatic with Let's Encrypt)
+bihocam.com, www.bihocam.com {
     encode zstd gzip
 
-    # Güvenlik Başlıkları
     header {
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
         X-Content-Type-Options "nosniff"
-        X-Frame-Options "DENY"
+        X-Frame-Options "SAMEORIGIN"
         Referrer-Policy "strict-origin-when-cross-origin"
     }
 
@@ -24,6 +24,28 @@
     }
 
     # Next.js Frontend SSR & Static
+    handle {
+        reverse_proxy frontend:3000
+    }
+}
+
+# Dedicated API Subdomain
+api.bihocam.com {
+    encode zstd gzip
+
+    reverse_proxy backend:8000 {
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Port {remote_port}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+# Direct IP Access fallback
+:80 {
+    handle /api/* {
+        reverse_proxy backend:8000
+    }
     handle {
         reverse_proxy frontend:3000
     }
