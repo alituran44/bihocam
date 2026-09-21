@@ -1,0 +1,30 @@
+<svg width="220" height="56" viewBox="0 0 220 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bihocamStemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#2563EB" />
+    </linearGradient>
+    <linearGradient id="bihocamArchGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#10B981" />
+    </linearGradient>
+    <linearGradient id="bihocamHocamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#10B981" />
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(4, 5)">
+    <rect x="0" y="2" width="10" height="38" rx="5" fill="url(#bihocamStemGrad)" />
+    <path d="M8 17C8 17 13 13 20.5 13C28 13 32.5 17.5 32.5 25V37C32.5 38.6569 31.1569 40 29.5 40H26C24.3431 40 23 38.6569 23 37V27C23 23.134 19.866 20 16 20C12.134 20 9 23.134 9 27V37C9 38.6569 7.65685 40 6 40H4.5C2.84315 40 1.5 38.6569 1.5 37V24.5C1.5 22.8431 2.84315 21.5 4.5 21.5H8V17Z" fill="url(#bihocamArchGrad)" />
+  </g>
+
+  <g transform="translate(48, 32)">
+    <text x="0" y="0" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="900" font-size="27" fill="#0F172A" letter-spacing="-0.03em">Bi</text>
+    <text x="31" y="0" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="800" font-size="27" fill="url(#bihocamHocamGrad)" letter-spacing="-0.02em">Hocam</text>
+  </g>
+
+  <text x="50" y="45" font-family="'Inter', system-ui, -apple-system, sans-serif" font-weight="600" font-size="7.5" fill="#64748B" letter-spacing="0.22em">
+    ONLİNE EĞİTİM PLATFORMU
+  </text>
+</svg>

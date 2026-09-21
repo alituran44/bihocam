@@ -60,7 +60,7 @@ export default function LoginPage() {
     <div className="w-full max-w-md">
       <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
         <div className="text-center mb-8">
-          <img src="/logo.png" alt="BiHocam Logo" className="h-14 w-auto object-contain mx-auto mb-4" />
+          <img src="/logo-light.png" alt="BiHocam Logo" className="h-14 w-auto object-contain mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Hoş Geldiniz!</h1>
           <p className="text-gray-500">Hesabınıza giriş yapın</p>
         </div>

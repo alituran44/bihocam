@@ -77,6 +77,11 @@ class NotificationType(str, enum.Enum):
     # Mesajlaşma sistemi (EPIC-12 entegrasyon)
     NEW_MESSAGE = "new_message"
 
+    # Özel Ders Talepleri & Teklifler
+    NEW_TENDER_FOR_BRANCH = "new_tender_for_branch"
+    TENDER_BID_RECEIVED = "tender_bid_received"
+    TENDER_BID_ACCEPTED = "tender_bid_accepted"
+
 
 class NotificationPriority(str, enum.Enum):
     LOW = "low"

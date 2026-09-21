@@ -59,6 +59,7 @@ from app.models.social import SocialPost, PostLike, SavedPost, UserFollow, Media
 from app.models.popcast import Popcast, UserPopcastFavorite, PopcastStatus
 from app.models.mock_exam import MockExam, MockExamQuestion, MockExamAttempt, MockExamStudentAnswer
 from app.models.gib_log import GibAuditLog, GibServiceType, GibActionType
+from app.models.tender import Tender, TenderBid, TenderStatus, TenderBidStatus, TenderMode
 
 __all__ = [
     "User",
@@ -160,5 +161,13 @@ __all__ = [
     "MockExamQuestion",
     "MockExamAttempt",
     "MockExamStudentAnswer",
+    "GibAuditLog",
+    "GibServiceType",
+    "GibActionType",
+    "Tender",
+    "TenderBid",
+    "TenderStatus",
+    "TenderBidStatus",
+    "TenderMode",
 ]
 

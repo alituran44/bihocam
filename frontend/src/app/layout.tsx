@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/lib/providers";
 import SiteSettingsScripts from "@/components/SiteSettingsScripts";
@@ -15,10 +15,16 @@ const inter = Inter({
   display: "swap",
 });
 
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-display",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "BiHocam | Online Eğitim Platformu",
-  description: "YKS, LGS ve okul derslerinde uzman eğitmenlerle çalış. Canlı dersler, video arşivi ve kişiselleştirilmiş öğrenme.",
-  keywords: ["online eğitim", "YKS hazırlık", "LGS hazırlık", "özel ders"],
+  title: "BiHocam | Türkiye'nin Yeni Nesil Özel Ders & Eğitim Platformu",
+  description: "YKS, LGS ve okul derslerinde doğrulanmış uzman eğitmenlerle çalış. Canlı dersler, özel ders talepleri ve kişiselleştirilmiş öğrenme.",
+  keywords: ["online eğitim", "YKS hazırlık", "LGS hazırlık", "özel ders", "özel ders talebi"],
   authors: [{ name: "BiHocam" }],
 };
 
@@ -29,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" className="scroll-smooth">
-      <body className={`${inter.variable} antialiased`} style={{ fontFamily: "var(--font-body)" }}>
+      <body className={`${inter.variable} ${plusJakarta.variable} antialiased bg-slate-950 text-slate-100 selection:bg-emerald-500 selection:text-white`}>
         <Providers>
           <SiteSettingsScripts />
           {children}

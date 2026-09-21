@@ -64,10 +64,16 @@ async def log_gib_event(
     
     # Egitmenin varsayilan IBAN'ini bul
     teacher_iban = None
-    if teacher.bank_accounts:
-        for b in teacher.bank_accounts:
-            if b.is_default or not teacher_iban:
-                teacher_iban = b.iban
+    try:
+        # Lazy load patlamasini onlemek icin inspect / state kontrolu
+        from sqlalchemy import inspect
+        insp = inspect(teacher)
+        if "bank_accounts" in insp.dict:
+            for b in teacher.bank_accounts:
+                if getattr(b, "is_default", False) or not teacher_iban:
+                    teacher_iban = getattr(b, "iban", None)
+    except Exception:
+        pass
     if not teacher_iban:
         teacher_iban = teacher_tax.get("iban")
 

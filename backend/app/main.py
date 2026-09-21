@@ -45,6 +45,7 @@ from app.models.education_program import EducationProgram  # noqa: F401
 from app.models.homework import Homework, HomeworkSubmission  # noqa: F401
 from app.models.exam import Exam, ExamQuestion, ExamAttempt, ExamAttemptAnswer  # noqa: F401
 from app.models.social import SocialPost, PostLike, SavedPost, UserFollow  # noqa: F401
+from app.models.tender import Tender, TenderBid  # noqa: F401
 
 
 

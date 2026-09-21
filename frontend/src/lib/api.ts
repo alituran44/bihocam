@@ -4902,6 +4902,215 @@ export const adminGibApi = {
   },
 };
 
+// ==========================================
+// ÖZEL DERS TALEP & TEKLİF SİSTEMİ (TENDERS API)
+// ==========================================
+
+export interface TenderBidItem {
+  id: string;
+  tender_id: string;
+  teacher_id: string;
+  teacher_name: string;
+  teacher_avatar?: string;
+  teacher_title?: string;
+  teacher_rating?: number;
+  teacher_reviews_count?: number;
+  teacher_email?: string;
+  teacher_phone?: string;
+  teacher_tc_vkn?: string;
+  offered_price: number;
+  currency: string;
+  proposal_letter: string;
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN";
+  client_ip?: string;
+  client_port?: number;
+  created_at: string;
+  whatsapp_link?: string;
+}
+
+export interface TenderItem {
+  id: string;
+  student_id: string;
+  student_name: string;
+  student_email?: string;
+  student_phone?: string;
+  student_whatsapp?: string;
+  student_avatar?: string;
+  title: string;
+  subject: string;
+  category_name?: string;
+  description: string;
+  mode: "ONLINE" | "FACE_TO_FACE" | "HYBRID";
+  city?: string;
+  district?: string;
+  target_date_info?: string;
+  min_budget?: number;
+  max_budget?: number;
+  currency: string;
+  status: "OPEN" | "BIDDING" | "ACCEPTED" | "PAID" | "COMPLETED" | "CANCELLED" | "EXPIRED";
+  accepted_bid_id?: string;
+  bids_count: number;
+  version: number;
+  client_ip?: string;
+  client_port?: number;
+  expires_at?: string;
+  created_at: string;
+  updated_at: string;
+  bids?: TenderBidItem[];
+  accepted_bid?: TenderBidItem;
+}
+
+export interface TenderStats {
+  total_tenders: number;
+  open_tenders: number;
+  bidding_tenders: number;
+  accepted_tenders: number;
+  paid_tenders: number;
+  total_bids: number;
+}
+
+export const tendersApi = {
+  create: async (data: {
+    title: string;
+    subject: string;
+    category_name?: string;
+    description: string;
+    mode?: string;
+    city?: string;
+    district?: string;
+    target_date_info?: string;
+    min_budget?: number;
+    max_budget?: number;
+  }): Promise<TenderItem> => {
+    const res = await api.post("/tenders", data);
+    return res.data;
+  },
+
+  listPublic: async (params?: {
+    subject?: string;
+    mode?: string;
+    city?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<TenderItem[]> => {
+    const res = await api.get("/tenders/public", { params });
+    return res.data;
+  },
+
+  getMyTenders: async (): Promise<TenderItem[]> => {
+    const res = await api.get("/tenders/my");
+    return res.data;
+  },
+
+  getMyBids: async (): Promise<TenderBidItem[]> => {
+    const res = await api.get("/tenders/my-bids");
+    return res.data;
+  },
+
+  getDetail: async (id: string): Promise<TenderItem> => {
+    const res = await api.get(`/tenders/${id}`);
+    return res.data;
+  },
+
+  submitBid: async (
+    id: string,
+    data: { offered_price: number; proposal_letter: string; currency?: string }
+  ): Promise<TenderBidItem> => {
+    const res = await api.post(`/tenders/${id}/bids`, data);
+    return res.data;
+  },
+
+  acceptBid: async (
+    id: string,
+    bidId: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+    tender_id: string;
+    accepted_bid_id: string;
+    teacher_name: string;
+    teacher_phone?: string;
+    teacher_whatsapp_link?: string;
+  }> => {
+    const res = await api.post(`/tenders/${id}/accept/${bidId}`);
+    return res.data;
+  },
+
+  cancel: async (id: string): Promise<{ success: boolean; message: string }> => {
+    const res = await api.post(`/tenders/${id}/cancel`);
+    return res.data;
+  },
+
+  update: async (
+    id: string,
+    data: Partial<{
+      title: string;
+      subject: string;
+      category_name?: string;
+      description: string;
+      mode?: string;
+      city?: string;
+      district?: string;
+      target_date_info?: string;
+      min_budget?: number;
+      max_budget?: number;
+    }>
+  ): Promise<TenderItem> => {
+    const res = await api.put(`/tenders/${id}`, data);
+    return res.data;
+  },
+
+  delete: async (id: string): Promise<{ success: boolean; message: string }> => {
+    const res = await api.delete(`/tenders/${id}`);
+    return res.data;
+  },
+};
+
+export const adminTendersApi = {
+  list: async (params?: {
+    status_filter?: string;
+    search?: string;
+    mode?: string;
+    city?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    items: TenderItem[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+  }> => {
+    const res = await api.get("/admin/tenders", { params });
+    return res.data;
+  },
+
+  getStats: async (): Promise<TenderStats> => {
+    const res = await api.get("/admin/tenders/stats");
+    return res.data;
+  },
+
+  getDetail: async (id: string): Promise<TenderItem> => {
+    const res = await api.get(`/admin/tenders/${id}`);
+    return res.data;
+  },
+
+  updateStatus: async (
+    id: string,
+    newStatus: string
+  ): Promise<{ success: boolean; message: string }> => {
+    const res = await api.post(`/admin/tenders/${id}/status?new_status=${newStatus}`);
+    return res.data;
+  },
+};
+
+export type Tender = TenderItem;
+export const tenderApi = {
+  ...tendersApi,
+  getPublicTenders: tendersApi.listPublic,
+};
+
+
 
 
 

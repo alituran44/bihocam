@@ -52,6 +52,8 @@ from app.api.v1.endpoints import (
     popcasts,
     mock_exams,
     admin_gib,
+    tenders,
+    admin_tenders,
 )
 
 api_router = APIRouter()
@@ -113,4 +115,6 @@ api_router.include_router(social.router, prefix="/social", tags=["Social"])
 api_router.include_router(ai_assistant.router, prefix="/ai", tags=["AI Assistant"])
 api_router.include_router(call_requests.router, prefix="/call-requests", tags=["Call Requests"])
 api_router.include_router(popcasts.router, prefix="/popcasts", tags=["Popcasts"])
-api_router.include_router(mock_exams.router, prefix="/mock-exams", tags=["MockExams"])
+api_router.include_router(mock_exams.router, prefix="/mock-exams", tags=["MockExams"])
+api_router.include_router(tenders.router, prefix="/tenders", tags=["Özel Ders Talepleri"])
+api_router.include_router(admin_tenders.router, prefix="/admin/tenders", tags=["Admin - Özel Ders Talep Masası"])

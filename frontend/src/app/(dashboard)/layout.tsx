@@ -271,6 +271,16 @@ export default function DashboardLayout({
             ),
           },
           {
+            href: "/dashboard/teacher/tenders",
+            label: "Özel Ders Talepleri",
+            active: startsWithPath("/dashboard/teacher/tenders"),
+            icon: (
+              <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            ),
+          },
+          {
             href: "/dashboard/teacher/homeworks",
             label: "Ödev Yönetimi",
             active: startsWithPath("/dashboard/teacher/homeworks"),
@@ -414,6 +424,16 @@ export default function DashboardLayout({
                   strokeWidth={2}
                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                 />
+              </svg>
+            ),
+          },
+          {
+            href: "/dashboard/student/tenders",
+            label: "Özel Ders Taleplerim",
+            active: startsWithPath("/dashboard/student/tenders"),
+            icon: (
+              <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
             ),
           },
@@ -743,6 +763,16 @@ export default function DashboardLayout({
                 icon: (
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                ),
+              },
+              {
+                href: "/dashboard/admin/tenders",
+                label: "Özel Ders Talep Masası",
+                active: startsWithPath("/dashboard/admin/tenders"),
+                icon: (
+                  <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                 ),
               },
@@ -1294,7 +1324,7 @@ export default function DashboardLayout({
         {/* Logo */}
         <div className="p-6 border-b border-gray-200/50 bg-gradient-to-br from-teal-500/5 to-blue-500/5">
           <Link href="/" className="flex flex-col items-start gap-1 group">
-            <img src="/logo.png" alt="BiHocam Logo" className="h-10 w-auto object-contain" />
+            <img src="/logo-light.png" alt="BiHocam Logo" className="h-10 w-auto object-contain" />
             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1.5 ml-1">
               {user?.role === "admin" ? "Admin Panel" : user?.role === "teacher" ? "Eğitmen Paneli" : "Öğrenci Paneli"}
             </p>

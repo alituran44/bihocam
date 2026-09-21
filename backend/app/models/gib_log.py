@@ -1,4 +1,4 @@
-﻿import enum
+import enum
 from datetime import datetime
 from uuid import uuid4
 
@@ -14,6 +14,8 @@ class GibServiceType(str, enum.Enum):
     COURSE = "COURSE"
     EDUCATION_PROGRAM = "EDUCATION_PROGRAM"
     LIVE_RESERVATION = "LIVE_RESERVATION"
+    TENDER = "TENDER"
+    TENDER_BID = "TENDER_BID"
 
 
 class GibActionType(str, enum.Enum):
@@ -22,6 +24,8 @@ class GibActionType(str, enum.Enum):
     PUBLISH = "PUBLISH"
     PURCHASE = "PURCHASE"
     CANCEL = "CANCEL"
+    BID = "BID"
+    ACCEPT = "ACCEPT"
 
 
 class GibAuditLog(Base):

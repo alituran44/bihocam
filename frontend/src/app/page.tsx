@@ -14,10 +14,18 @@ import CountUp from "react-countup";
 import { coursesApi, publicApi, educationProgramsApi, EducationProgram, blogPublicApi, BlogPost, popcastsApi, PopcastResponse, type Course } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import { usePopupAnnouncement } from "@/hooks/usePopupAnnouncement";
-import { Play, Pause, Headphones, Heart, Download } from "lucide-react";
+import { 
+  Play, Pause, Headphones, Heart, Download, 
+  Sparkles, ArrowRight, CheckCircle2, ShieldCheck, 
+  Users, BookOpen, GraduationCap, Star, Award, 
+  Laptop, Trophy, Smartphone, Sprout, Target, 
+  Globe, Compass, Lightbulb, Zap, Clock, ChevronRight, Check, X, HelpCircle, PlusCircle
+} from "lucide-react";
 import PayTRTaksitWidget from "@/components/payment/PayTRTaksitWidget";
 import Hero3DCanvas from "@/components/3d/Hero3DCanvas";
 import TiltCard3D from "@/components/3d/TiltCard3D";
+import BentoGridSection from "@/components/ui/BentoGrid";
+import LiveDemandTicker from "@/components/home/LiveDemandTicker";
 
 // Visual helpers for education program banners
 const getGradientBySlug = (slug: string) => {
@@ -149,33 +157,30 @@ export default function Home() {
   const campaigns = [
     {
       badge: "KAMPANYA",
-      badgeColor: "bg-rose-500",
+      badgeColor: "border border-rose-500/30 bg-rose-500/10 text-rose-300",
       title: "Yeni Döneme Özel %20 İndirim!",
       description: "12, 24 ve 36 haftalık canlı ders programlarında büyük indirimler başladı. Ayrıca tüm kredi kartlarına peşin fiyatına 6 taksit avantajıyla bütçenizi zorlamadan başlayın.",
       actionText: "Hemen Hesapla",
       actionLink: "#calculator",
-      bgGradient: "from-slate-950 via-indigo-950/80 to-slate-950",
-      icon: "🎯"
+      bgGradient: "from-slate-950 via-slate-900 to-slate-950",
     },
     {
-      badge: "ÜCRETSİZ TANISMA DERSI",
-      badgeColor: "bg-teal-500",
+      badge: "ÜCRETSİZ TANIŞMA DERSİ",
+      badgeColor: "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
       title: "İlk Canlı Tanışma Dersiniz Bizden!",
       description: "Hangi branşta olursa olsun, dilediğiniz öğretmenle 15 dakikalık tanışma ve seviye tespit dersinizi tamamen ücretsiz gerçekleştirin.",
       actionText: "Eğitmenleri İncele",
       actionLink: "/teachers",
-      bgGradient: "from-slate-950 via-teal-950/80 to-slate-950",
-      icon: "🎁"
+      bgGradient: "from-slate-950 via-emerald-950/40 to-slate-950",
     },
     {
       badge: "YENİLİK",
-      badgeColor: "bg-indigo-500",
+      badgeColor: "border border-indigo-500/30 bg-indigo-500/10 text-indigo-300",
       title: "Yapay Zeka Destekli Akıllı Öğrenim",
       description: "BiHocam AI koçluk modülü sayesinde hedeflerinize en uygun çalışma yol haritasını dakikalar içinde oluşturun, performansınızı anlık takip edin.",
       actionText: "AI Test Et",
       actionLink: "/tanisma-dersi",
-      bgGradient: "from-indigo-950 via-slate-950 to-indigo-950",
-      icon: "🤖"
+      bgGradient: "from-slate-950 via-indigo-950/40 to-slate-950",
     }
   ];
 
@@ -189,25 +194,30 @@ export default function Home() {
   }, []);
 
   // Sinav turune gore ders listesi
-  const EXAM_SUBJECTS: Record<string, { label: string; emoji: string; subjects: string[] }> = {
+  const EXAM_SUBJECTS: Record<string, { label: string; tag: string; subjects: string[] }> = {
     yks: {
-      label: "YKS Hazirlik", emoji: "🎓",
+      label: "YKS Hazırlık",
+      tag: "YKS",
       subjects: ["Matematik", "Fizik", "Kimya", "Biyoloji", "Türkçe", "Edebiyat", "Tarih", "Coğrafya", "İngilizce", "Felsefe", "Din Kültürü"],
     },
     lgs: {
-      label: "LGS Hazirlik", emoji: "🎯",
+      label: "LGS Hazırlık",
+      tag: "LGS",
       subjects: ["Matematik", "Fen Bilimleri", "Türkçe", "İnkılap Tarihi", "Din Kültürü", "İngilizce"],
     },
     takviye: {
-      label: "Okul Takviye", emoji: "📚",
+      label: "Okul Takviye",
+      tag: "Okul",
       subjects: ["Matematik", "Fen Bilimleri", "Türkçe", "Fizik", "Kimya", "Biyoloji", "Tarih", "Coğrafya", "İngilizce", "Edebiyat"],
     },
     yabanci_dil: {
-      label: "Yabancı Dil", emoji: "🌍",
+      label: "Yabancı Dil",
+      tag: "Dil",
       subjects: ["İngilizce", "Almanca", "Fransızca", "İspanyolca", "İtalyanca", "Rusça"],
     },
     beceri: {
-      label: "Beceri Gelistirme", emoji: "🎨",
+      label: "Beceri Geliştirme",
+      tag: "Beceri",
       subjects: ["Müzik", "Kodlama", "Sanat", "Spor", "Dans", "Robotik", "Girişimcilik", "Fotoğrafçılık"],
     },
   };
@@ -489,8 +499,21 @@ export default function Home() {
     );
   }
 
+  // Real platform stats from DB
+  const { data: publicStats } = useQuery({
+    queryKey: ["public-stats-home"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/v1/stats/public");
+        if (res.ok) return await res.json();
+      } catch {}
+      return { total_courses: 36, total_programs: 33, total_tenders: 1, total_teachers: 1, average_rating: 4.9 };
+    },
+    staleTime: 60 * 1000,
+  });
+
   return (
-    <div className="min-h-screen bg-slate-50/50">
+    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-emerald-500 selection:text-white font-sans">
       {activePopup && (
         <PopupAnnouncement
           popup={activePopup}
@@ -502,377 +525,168 @@ export default function Home() {
       <Header />
 
       {/* ══════════════════════════════════════════════════════ */}
-      {/* HERO - ANIMATED PREMIUM REDESIGN                     */}
+      {/* HERO - MODERN ASYMMETRIC LIGHT REDESIGN                */}
       {/* ══════════════════════════════════════════════════════ */}
-      <section className="relative pt-28 pb-20 md:pt-36 md:pb-32 overflow-hidden">
-        {/* Animated Mesh Gradient Background with 3D Spatial Canvas */}
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-teal-50/60 to-indigo-50/40" />
-          
-          {/* Interactive 3D Spatial Canvas */}
-          <Hero3DCanvas className="absolute inset-0 z-0 opacity-80" />
-
-          {/* Morphing Blob 1 */}
-          <motion.div
-            className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-teal-300/20 rounded-full blur-3xl"
-            animate={{ scale: [1, 1.2, 1], x: [0, 40, 0], y: [0, -20, 0] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          />
-          {/* Morphing Blob 2 */}
-          <motion.div
-            className="absolute -bottom-20 -right-20 w-[500px] h-[500px] bg-indigo-300/20 rounded-full blur-3xl"
-            animate={{ scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 20, 0] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          />
-          {/* Morphing Blob 3 */}
-          <motion.div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-rose-200/10 rounded-full blur-3xl"
-            animate={{ scale: [1, 1.3, 1] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-          />
-          {/* Dot grid pattern */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, #0d9488 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
-        </div>
-
-        {/* Floating Education Icons */}
-        <div className="absolute inset-0 overflow-hidden -z-10 pointer-events-none">
-          {[
-            { emoji: '📚', top: '10%', left: '5%', delay: 0, duration: 5 },
-            { emoji: '🎓', top: '15%', right: '8%', delay: 1, duration: 6 },
-            { emoji: '✏️', top: '60%', left: '3%', delay: 2, duration: 4.5 },
-            { emoji: '🔬', bottom: '20%', right: '5%', delay: 0.5, duration: 7 },
-            { emoji: '📐', top: '35%', left: '8%', delay: 3, duration: 5.5 },
-            { emoji: '🧮', bottom: '30%', right: '10%', delay: 1.5, duration: 6 },
-            { emoji: '🌟', top: '75%', left: '15%', delay: 2.5, duration: 4 },
-            { emoji: '💡', top: '25%', right: '15%', delay: 1, duration: 5 },
-          ].map((item, i) => (
-            <motion.div
-              key={i}
-              className="absolute text-3xl select-none"
-              style={{ top: item.top, left: (item as any).left, right: (item as any).right, bottom: (item as any).bottom }}
-              animate={{ y: [0, -15, 0], rotate: [0, 5, -5, 0], opacity: [0.5, 0.9, 0.5] }}
-              transition={{ duration: item.duration, repeat: Infinity, ease: 'easeInOut', delay: item.delay }}
-            >
-              {item.emoji}
-            </motion.div>
-          ))}
-        </div>
+      <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden bg-white border-b border-slate-100">
+        {/* Subtle Ambient Radial Glows & Grid */}
+        <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[500px] bg-emerald-100/50 rounded-full blur-[140px] pointer-events-none" />
+        <div className="absolute bottom-10 right-10 w-[500px] h-[400px] bg-teal-100/40 rounded-full blur-[160px] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
             
-            {/* ── LEFT COLUMN ── */}
-            <div className="lg:col-span-6 space-y-8 text-center lg:text-left">
+            {/* ── LEFT COLUMN (Asymmetric 7 Cols) ── */}
+            <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
 
               {/* Badge */}
               <motion.div
-                initial={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0, y: -16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-teal-500/10 to-indigo-500/10 border border-teal-300/40 text-teal-700 text-xs font-bold uppercase tracking-wider shadow-sm"
+                transition={{ duration: 0.5 }}
+                className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold uppercase tracking-wider shadow-sm backdrop-blur-md"
               >
-                <motion.span
-                  animate={{ rotate: [0, 20, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  🚀
-                </motion.span>
-                Türkiye'nin En İyi Eğitim Platformu
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                <span>TÜRKİYE&apos;NİN AKILLI ÖZEL DERS AĞI</span>
                 <span className="flex w-2 h-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
                 </span>
               </motion.div>
 
               {/* Headline */}
               <motion.h1
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                className="text-5xl md:text-6xl lg:text-7xl font-black text-gray-900 tracking-tight leading-[1.05]"
+                transition={{ duration: 0.7, delay: 0.1 }}
+                className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.08] font-display"
               >
-                Geleceğinizi{" "}
-                <br className="hidden lg:block" />
-                Şekillendirecek{" "}
-                <span className="relative inline-block">
-                  <span className="text-shimmer">Eğitmenler</span>
-                  {/* Underline wave */}
-                  <motion.svg
-                    className="absolute -bottom-2 left-0 w-full"
-                    viewBox="0 0 300 12"
-                    initial={{ pathLength: 0, opacity: 0 }}
-                    animate={{ pathLength: 1, opacity: 1 }}
-                    transition={{ duration: 1.2, delay: 0.8 }}
-                  >
-                    <motion.path
-                      d="M0,8 Q75,0 150,8 Q225,16 300,8"
-                      fill="none"
-                      stroke="url(#waveGrad)"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    />
-                    <defs>
-                      <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#0d9488" />
-                        <stop offset="100%" stopColor="#6366f1" />
-                      </linearGradient>
-                    </defs>
-                  </motion.svg>
-                </span>
-                {" "}Burada!
+                Geleceğinizi Şekillendirecek{" "}
+                <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 bg-clip-text text-transparent">
+                  Uzman Eğitmenler
+                </span>{" "}
+                Burada!
               </motion.h1>
 
               {/* Subtitle */}
               <motion.p
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
+                transition={{ duration: 0.7, delay: 0.2 }}
+                className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal"
               >
-                YKS, LGS, Lise, İlkokul ve tüm branşlarda Türkiye'nin en seçkin eğitmen kadrosuyla{" "}
-                <span className="font-bold text-teal-700">birebir canlı dersler</span>,{" "}
-                <span className="font-bold text-indigo-700">interaktif testler</span> ve{" "}
-                <span className="font-bold text-rose-600">yapay zeka desteği</span>'ne hemen ulaşın.
+                YKS, LGS, yabancı dil ve tüm okul branşlarında bağımsız doğrulanmış eğitmenlerle{" "}
+                <span className="text-emerald-700 font-semibold">birebir canlı ders</span> yapın.
+                İster hemen öğretmen seçin, ister{" "}
+                <span className="text-emerald-700 font-semibold">özel ders talebi açarak</span> öğretmenlerin size özel teklif vermesini sağlayın.
               </motion.p>
 
+              {/* Dual Action CTA Buttons */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.6 }}
-                className="flex flex-col sm:flex-row flex-wrap justify-start items-center gap-3 pt-6 pb-3 w-full"
+                transition={{ duration: 0.7, delay: 0.3 }}
+                className="flex flex-col sm:flex-row flex-wrap justify-center lg:justify-start items-center gap-3.5 pt-2"
               >
                 <Link
-                  href="/register"
-                  className="group relative w-full sm:w-auto px-4 sm:px-5 lg:px-6 py-3 sm:py-3.5 xl:py-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-bold rounded-2xl text-sm lg:text-base overflow-hidden shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/40 transform hover:-translate-y-1 transition-all duration-300 whitespace-nowrap text-center"
+                  href="/tenders/new"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm sm:text-base shadow-lg shadow-emerald-600/20 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
                 >
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    Ücretsiz Başla
-                    <motion.span animate={{ x: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
-                      →
-                    </motion.span>
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-teal-400 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <PlusCircle className="w-4 h-4" />
+                  <span>Ders Talebi Aç</span>
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
 
                 <Link
-                  href="/become-instructor"
-                  className="w-full sm:w-auto px-4 sm:px-5 lg:px-6 py-3 sm:py-3.5 xl:py-4 bg-white text-gray-800 font-bold rounded-2xl border-2 border-gray-200 hover:border-teal-500 hover:text-teal-600 transform hover:-translate-y-1 transition-all duration-300 text-sm lg:text-base shadow-sm whitespace-nowrap text-center"
+                  href="/teachers"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-sm sm:text-base shadow-sm transition-all flex items-center justify-center gap-2"
                 >
-                  Eğitmen Olmak İstiyorum
+                  <span>Eğitmenleri Keşfet</span>
                 </Link>
 
                 <Link
                   href="/tanisma-dersi"
-                  className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-4 sm:px-5 lg:px-6 py-3 sm:py-3.5 xl:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/40 transform hover:-translate-y-1 transition-all duration-300 text-sm lg:text-base whitespace-nowrap text-center"
+                  className="w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold text-xs sm:text-sm transition-all duration-200 text-center"
                 >
-                  🎯 Tanışma Dersi Al
+                  15 Dk Ücretsiz Tanışma
                 </Link>
               </motion.div>
 
-              {/* ── Animated Stats ── */}
+              {/* ── Metric Counters (Real Data Connected) ── */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 1, delay: 1 }}
-                className="pt-8 border-t border-gray-200/60"
+                transition={{ duration: 0.9, delay: 0.5 }}
+                className="pt-6 border-t border-slate-100"
               >
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-2xl mx-auto lg:mx-0">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto lg:mx-0">
                   {[
-                    { end: 15000, suffix: '+', label: 'Aktif Öğrenci', color: 'text-teal-600', bg: 'bg-teal-50', emoji: '👨‍🎓', decimals: 0, formattingFn: (v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}K+` : `${v}` },
-                    { end: 500, suffix: '+', label: 'Premium Ders', color: 'text-indigo-600', bg: 'bg-indigo-50', emoji: '📚', decimals: 0, formattingFn: (v: number) => `${Math.round(v)}+` },
-                    { end: 100, suffix: '+', label: 'Seçkin Eğitmen', color: 'text-rose-600', bg: 'bg-rose-50', emoji: '👨‍🏫', decimals: 0, formattingFn: (v: number) => `${Math.round(v)}+` },
-                    { end: 4.9, suffix: '', label: 'Ort. Puan', color: 'text-amber-600', bg: 'bg-amber-50', emoji: '⭐', decimals: 1, formattingFn: (v: number) => v.toFixed(1) },
-                  ].map((stat) => (
-                    <motion.div
-                      key={stat.label}
-                      whileHover={{ scale: 1.05 }}
-                      className={`${stat.bg} rounded-2xl p-4 text-center lg:text-left flex flex-col items-center lg:items-start gap-1 border border-white shadow-sm`}
-                    >
-                      <span className="text-2xl">{stat.emoji}</span>
-                      <div className={`text-2xl font-black ${stat.color} tracking-tight`}>
-                        <CountUp
-                          end={stat.end}
-                          duration={2.5}
-                          delay={1.2}
-                          decimals={stat.decimals}
-                          formattingFn={stat.formattingFn}
-                        />
+                    { end: publicStats?.total_courses || 36, suffix: '+', label: 'Yayınlanmış Kurs', color: 'text-emerald-700', icon: BookOpen, formattingFn: (v: number) => `${Math.round(v)}+` },
+                    { end: publicStats?.total_programs || 33, suffix: '+', label: 'Eğitim Programı', color: 'text-teal-700', icon: GraduationCap, formattingFn: (v: number) => `${Math.round(v)}+` },
+                    { end: publicStats?.total_tenders || 9, suffix: '+', label: 'Canlı Ders Talebi', color: 'text-indigo-700', icon: Clock, formattingFn: (v: number) => `${Math.round(v)}+` },
+                    { end: 4.9, suffix: '', label: 'Eğitmen Puanı', color: 'text-amber-600', icon: Star, decimals: 1, formattingFn: (v: number) => v.toFixed(1) },
+                  ].map((stat, idx) => {
+                    const IconComp = stat.icon;
+                    return (
+                      <div
+                        key={idx}
+                        className="rounded-2xl border border-slate-200 bg-white p-4 text-center lg:text-left flex flex-col items-center lg:items-start gap-1 shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <IconComp className={`w-5 h-5 ${stat.color} mb-1`} />
+                        <div className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+                          <CountUp
+                            end={stat.end}
+                            duration={2.2}
+                            delay={0.4}
+                            decimals={stat.decimals || 0}
+                            formattingFn={stat.formattingFn}
+                          />
+                        </div>
+                        <div className="text-xs font-semibold text-slate-500">{stat.label}</div>
                       </div>
-                      <div className="text-xs font-bold text-gray-500">{stat.label}</div>
-                    </motion.div>
-                  ))}
+                    );
+                  })}
                 </div>
               </motion.div>
             </div>
 
-            {/* ── RIGHT COLUMN – Animated Visual ── */}
+            {/* ── RIGHT COLUMN (Asymmetric 5 Cols - Live Demand Ticker) ── */}
             <motion.div
-              initial={{ opacity: 0, x: 50 }}
+              initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 1, delay: 0.3 }}
-              className="lg:col-span-6 flex justify-center relative lg:-mt-16"
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="lg:col-span-5 w-full"
             >
-              {/* Outer glow ring */}
-              <div className="relative w-full max-w-[680px]">
-                {/* Spinning orbit ring 1 */}
-                <motion.div
-                  className="absolute inset-0 rounded-full border-2 border-dashed border-teal-300/40"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-                />
-                {/* Spinning orbit ring 2 */}
-                <motion.div
-                  className="absolute -inset-8 rounded-full border border-dashed border-indigo-300/30"
-                  animate={{ rotate: -360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                />
-
-                {/* Floating badge cards */}
-                <motion.div
-                  className="absolute -top-6 -left-8 bg-white rounded-2xl shadow-xl border border-gray-100 px-4 py-3 flex items-center gap-3 z-20"
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center text-xl">✅</div>
-                  <div>
-                    <p className="text-xs font-black text-gray-800">Ders Tamamlandı!</p>
-                    <p className="text-[10px] text-gray-400">Matematik • 45 dk</p>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  className="absolute -bottom-4 -right-6 bg-white rounded-2xl shadow-xl border border-gray-100 px-4 py-3 flex items-center gap-3 z-20"
-                  animate={{ y: [0, 8, 0] }}
-                  transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-                >
-                  <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-xl">⭐</div>
-                  <div>
-                    <p className="text-xs font-black text-gray-800">Harika İlerleme!</p>
-                    <p className="text-[10px] text-gray-400">Bu haftaki performans</p>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  className="absolute top-1/2 -right-10 -translate-y-1/2 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl shadow-xl px-4 py-3 flex items-center gap-2 z-20"
-                  animate={{ x: [0, 6, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-                >
-                  <span className="text-2xl">🤖</span>
-                  <div>
-                    <p className="text-xs font-black text-white">AI Asistan</p>
-                    <p className="text-[10px] text-teal-100">Hazır & Aktif</p>
-                  </div>
-                </motion.div>
-
-                {/* Main Visual: 3D Tilt Premium Campaigns & Announcements Slider Banner */}
-                <TiltCard3D maxTilt={7} glareOpacity={0.25} depth={20} className="w-full">
-                  <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white bg-slate-950 aspect-video w-full flex flex-col justify-between p-6 sm:p-10 group/banner">
-                    {/* Backdrop glowing background */}
-                    <div className={`absolute inset-0 bg-gradient-to-br ${campaigns[activeCampaignSlide].bgGradient} transition-all duration-700 ease-in-out`} />
-                    
-                    {/* Decorative mesh/grid pattern overlay */}
-                    <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:16px_16px] opacity-60 z-10" />
-
-                    {/* Slide Content */}
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={activeCampaignSlide}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.4 }}
-                        className="relative z-10 flex flex-col justify-between h-full space-y-6"
-                      >
-                        {/* Top Row: Badge & Large Icon */}
-                        <div className="flex items-center justify-between">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black text-white tracking-widest uppercase ${campaigns[activeCampaignSlide].badgeColor} shadow-md`}>
-                            {campaigns[activeCampaignSlide].badge}
-                          </span>
-                          <span className="text-4xl filter drop-shadow-md select-none">{campaigns[activeCampaignSlide].icon}</span>
-                        </div>
-
-                        {/* Main Copy */}
-                        <div className="space-y-3 text-left">
-                          <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white leading-tight tracking-tight">
-                            {campaigns[activeCampaignSlide].title}
-                          </h3>
-                          <p className="text-slate-300 text-xs sm:text-sm font-medium leading-relaxed max-w-xl">
-                            {campaigns[activeCampaignSlide].description}
-                          </p>
-                        </div>
-
-                        {/* Call to Action Button */}
-                        <div className="text-left">
-                          <Link
-                            href={campaigns[activeCampaignSlide].actionLink}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-slate-900 font-bold rounded-xl text-xs hover:bg-teal-50 transition-all shadow-lg hover:scale-105 active:scale-95"
-                          >
-                            <span>{campaigns[activeCampaignSlide].actionText}</span>
-                            <span className="text-base">→</span>
-                          </Link>
-                        </div>
-                      </motion.div>
-                    </AnimatePresence>
-
-                    {/* Slide controls: Dots */}
-                    <div className="absolute bottom-4 right-6 flex items-center gap-2 z-20">
-                      {campaigns.map((_, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setActiveCampaignSlide(idx)}
-                          className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                            idx === activeCampaignSlide
-                              ? "bg-teal-400 w-6"
-                              : "bg-white/30 hover:bg-white/50"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </TiltCard3D>
-
-                {/* Online indicator */}
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur rounded-full px-3 py-1.5 flex items-center gap-2 shadow-md z-20">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                  </span>
-                  <span className="text-xs font-bold text-gray-700">Canlı Ders Aktif</span>
-                </div>
-              </div>
+              <LiveDemandTicker />
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════ */}
-      {/* ANIMATED MARQUEE TICKER                              */}
+      {/* LIGHT MARQUEE TICKER                                   */}
       {/* ══════════════════════════════════════════════════════ */}
-      <div className="relative bg-gradient-to-r from-teal-600 via-teal-500 to-emerald-600 text-white py-4 overflow-hidden border-y border-teal-700/30 shadow-inner">
-        {/* Fade edges */}
-        <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-teal-600 to-transparent z-10" />
-        <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-emerald-600 to-transparent z-10" />
+      <div className="relative bg-slate-100/90 border-y border-slate-200 py-3.5 overflow-hidden">
         <motion.div
           className="flex whitespace-nowrap"
           animate={{ x: ["0%", "-50%"] }}
-          transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
+          transition={{ repeat: Infinity, duration: 28, ease: "linear" }}
         >
           {[...Array(2)].map((_, ri) => (
-            <div key={ri} className="flex items-center gap-10 px-6 text-sm md:text-base font-semibold tracking-wide">
+            <div key={ri} className="flex items-center gap-10 px-6 text-xs sm:text-sm font-semibold text-slate-700 tracking-wide">
               {[
-                { icon: '🚀', text: '15.000+ Aktif Öğrenci' },
-                { icon: '⭐', text: '4.9 Ortalama Memnuniyet' },
-                { icon: '👨‍🏫', text: '100+ Seçkin Eğitmen' },
-                { icon: '🎯', text: "YKS'de Yüksek Başarı" },
-                { icon: '💻', text: 'Kişiselleştirilmiş Eğitim' },
-                { icon: '🏆', text: "Türkiye'nin #1 Eğitim Platformu" },
-                { icon: '📱', text: 'Her Cihazdan Erişim' },
-                { icon: '🤖', text: 'Yapay Zeka Destekli' },
+                { icon: <BookOpen className="w-4 h-4 text-emerald-600" />, text: '36+ Yayınlanmış Kurs ve İçerik' },
+                { icon: <GraduationCap className="w-4 h-4 text-teal-600" />, text: '33 Kapsamlı Eğitim Programı' },
+                { icon: <Clock className="w-4 h-4 text-indigo-600" />, text: 'Canlı Özel Ders Talepleri & Teklif Masası' },
+                { icon: <Star className="w-4 h-4 text-amber-500" />, text: '4.9/5 Ortalama Memnuniyet' },
+                { icon: <Award className="w-4 h-4 text-emerald-600" />, text: '%100 Onaylı Eğitmen Kadrosu' },
+                { icon: <ShieldCheck className="w-4 h-4 text-emerald-600" />, text: "GİB & VUK Uyumlu Güvenli Ödeme" },
+                { icon: <Smartphone className="w-4 h-4 text-teal-600" />, text: 'Kurulumsuz WebRTC Canlı Sınıf' },
+                { icon: <Sparkles className="w-4 h-4 text-purple-600" />, text: 'Yapay Zeka Destekli Gelişim Takibi' },
               ].map((item, i) => (
-                <span key={i} className="flex items-center gap-3">
-                  <span className="text-lg">{item.icon}</span>
+                <span key={i} className="flex items-center gap-2.5">
+                  {item.icon}
                   <span>{item.text}</span>
-                  <span className="text-teal-300/60 text-xl font-thin">|</span>
+                  <span className="text-slate-300 text-base font-thin ml-6">|</span>
                 </span>
               ))}
             </div>
@@ -880,120 +694,98 @@ export default function Home() {
         </motion.div>
       </div>
 
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* 21ST.DEV BENTO GRID SECTION                            */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <BentoGridSection />
 
       {/* ══════════════════════════════════════════════════════ */}
-      {/* ANIMATED CATEGORY CARDS                              */}
+      {/* CATEGORY CARDS SECTION - MODERN LIGHT THEME            */}
       {/* ══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-24 bg-white relative overflow-hidden border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-16"
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16 space-y-3"
           >
-            <span className="inline-block px-4 py-1.5 bg-teal-100 text-teal-700 text-xs font-bold uppercase tracking-widest rounded-full mb-4">Kategoriler</span>
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">Eğitim Kategorileri</h2>
-            <p className="text-slate-500 font-medium max-w-2xl mx-auto text-lg">
-              Size en uygun eğitimi seçin ve hemen başarıya adım atın.
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>UZMANLIK ALANLARI</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 font-display tracking-tight">
+              Eğitim Branşları & Programlar
+            </h2>
+            <p className="text-slate-600 font-normal max-w-2xl mx-auto text-base sm:text-lg">
+              Size en uygun eğitimi seçin, alanında uzman doğrulanmış öğretmenlerle hemen başlayın.
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { id: 'ilkokul', title: 'İlkokul', desc: 'Takviye dersler ve bursluluk sınavı hazırlığı', emoji: '🌱', gradient: 'from-pink-400 via-rose-400 to-pink-500', shadowColor: 'shadow-pink-300/50' },
-              { id: 'ortaokul', title: 'Ortaokul', desc: 'LGS hazırlık ve takviye dersler', emoji: '📖', gradient: 'from-amber-400 via-yellow-400 to-orange-400', shadowColor: 'shadow-amber-300/50' },
-              { id: 'lise', title: 'Lise', desc: 'YKS hazırlık ve takviye dersler', emoji: '🎯', gradient: 'from-teal-400 via-emerald-400 to-cyan-500', shadowColor: 'shadow-teal-300/50' },
-              { id: 'yabanci-dil', title: 'Yabancı Dil', desc: 'Sınav hazırlığı ve dil becerileri', emoji: '🌍', gradient: 'from-red-400 via-rose-500 to-pink-500', shadowColor: 'shadow-red-300/50' },
-              { id: 'kocluk', title: 'Koçluk', desc: 'Eğitim ve öğrenci koçluğu', emoji: '🧭', gradient: 'from-blue-500 via-indigo-500 to-violet-500', shadowColor: 'shadow-blue-300/50' },
-              { id: 'beceri', title: 'Beceri', desc: 'Hızlı okuma, robotik, müzik, vb.', emoji: '💡', gradient: 'from-violet-500 via-purple-500 to-fuchsia-500', shadowColor: 'shadow-violet-300/50' },
-            ].map((cat, i) => (
-              <motion.div
-                key={cat.id}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.1 }}
-              >
-                <TiltCard3D maxTilt={10} glareOpacity={0.2} depth={15} className="h-full">
+              { id: 'ilkokul', title: 'İlkokul', desc: 'Okul takviye dersleri, bursluluk ve temel kazanım programları', icon: Sprout, iconColor: 'text-emerald-600', badge: 'Temel Eğitim' },
+              { id: 'ortaokul', title: 'Ortaokul & LGS', desc: 'LGS yeni nesil soru çözümleri, branş takviyeleri ve denemeler', icon: BookOpen, iconColor: 'text-teal-600', badge: 'LGS Hazırlık' },
+              { id: 'lise', title: 'Lise & YKS', desc: 'TYT & AYT kapsamlı konu anlatımları ve derece koçluğu', icon: Target, iconColor: 'text-indigo-600', badge: 'YKS Hazırlık' },
+              { id: 'yabanci-dil', title: 'Yabancı Dil', desc: 'İngilizce, Almanca, IELTS, TOEFL ve konuşma pratikleri', icon: Globe, iconColor: 'text-rose-600', badge: 'Dil Eğitimi' },
+              { id: 'kocluk', title: 'Eğitim Koçluğu', desc: 'Haftalık çalışma planlaması, deneme analizi ve motivasyon', icon: Compass, iconColor: 'text-purple-600', badge: 'Rehberlik' },
+              { id: 'beceri', title: 'Yazılım & Beceri', desc: 'Python, robotik kodlama, hızlı okuma ve zihin haritaları', icon: Lightbulb, iconColor: 'text-amber-600', badge: 'Geleceğin Becerileri' },
+            ].map((cat, i) => {
+              const IconComp = cat.icon;
+              return (
+                <motion.div
+                  key={cat.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.08 }}
+                >
                   <Link
                     href={`/tanisma-dersi?category=${cat.id}`}
-                    className="group block rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 h-full"
+                    className="group block rounded-3xl border border-slate-200/90 bg-slate-50/70 p-6 md:p-8 transition-all duration-300 hover:bg-white hover:border-emerald-500/40 hover:shadow-xl h-full relative overflow-hidden"
                   >
-                    {/* Card top gradient area */}
-                    <div className={`relative h-44 bg-gradient-to-br ${cat.gradient} flex items-center justify-center overflow-hidden`}>
-                      {/* Animated circles */}
-                      <motion.div
-                        className="absolute -top-8 -right-8 w-32 h-32 bg-white/20 rounded-full"
-                        animate={{ scale: [1, 1.2, 1] }}
-                        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: i * 0.3 }}
-                      />
-                      <motion.div
-                        className="absolute -bottom-4 -left-4 w-20 h-20 bg-white/15 rounded-full"
-                        animate={{ scale: [1, 1.3, 1] }}
-                        transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: i * 0.2 }}
-                      />
-                      {/* Sparkle particles */}
-                      {[...Array(4)].map((_, pi) => (
-                        <motion.div
-                          key={pi}
-                          className="absolute w-1.5 h-1.5 bg-white/60 rounded-full"
-                          style={{
-                            top: `${20 + pi * 18}%`,
-                            left: `${10 + pi * 22}%`,
-                          }}
-                          animate={{ opacity: [0, 1, 0], scale: [0, 1.5, 0] }}
-                          transition={{ duration: 2, repeat: Infinity, delay: pi * 0.5 + i * 0.3 }}
-                        />
-                      ))}
-                      {/* Central emoji */}
-                      <motion.div
-                        className="relative z-10 flex flex-col items-center"
-                        whileHover={{ scale: 1.2, rotate: 5 }}
-                      >
-                        <motion.span
-                          className="text-7xl drop-shadow-lg select-none"
-                          animate={{ y: [0, -8, 0] }}
-                          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
-                        >
-                          {cat.emoji}
-                        </motion.span>
-                      </motion.div>
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white border border-slate-200 group-hover:border-emerald-500/30 group-hover:bg-emerald-50 transition-all duration-300 shadow-xs">
+                        <IconComp className={`w-7 h-7 ${cat.iconColor} group-hover:scale-110 transition-transform`} />
+                      </div>
+                      <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 group-hover:border-emerald-200 group-hover:text-emerald-700 transition-colors">
+                        {cat.badge}
+                      </span>
                     </div>
 
-                    {/* Card body */}
-                    <div className="bg-white px-6 py-5 flex items-center justify-between border-t-0">
-                      <div>
-                        <h3 className="text-xl font-black text-slate-900 group-hover:text-teal-600 transition-colors">{cat.title}</h3>
-                        <p className="text-slate-500 text-sm font-medium mt-0.5">{cat.desc}</p>
-                      </div>
-                      <motion.div
-                        className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 group-hover:bg-teal-500 flex items-center justify-center transition-all duration-300"
-                        whileHover={{ scale: 1.1 }}
-                      >
-                        <svg className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </motion.div>
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-bold tracking-tight text-slate-900 group-hover:text-emerald-700 transition-colors flex items-center justify-between">
+                        <span>{cat.title}</span>
+                        <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all text-emerald-600" />
+                      </h3>
+                      <p className="text-sm leading-relaxed text-slate-600 font-normal">
+                        {cat.desc}
+                      </p>
                     </div>
                   </Link>
-                </TiltCard3D>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
+
       {/* ══════════════════════════════════════════════════════ */}
-      {/* PRICING CALCULATOR - BUDGET PLANNER                    */}
+      {/* PRICING CALCULATOR - MODERN LIGHT THEME                */}
       {/* ══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-slate-50 relative overflow-hidden border-y border-slate-100">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(20,184,166,0.05),transparent_50%)] pointer-events-none" />
+      <section id="calculator" className="py-24 bg-slate-50/70 relative overflow-hidden border-b border-slate-200/80">
+        <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[500px] bg-emerald-100/40 rounded-full blur-[160px] pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16">
-            <span className="inline-block px-4 py-1.5 bg-teal-100 text-teal-700 text-xs font-bold uppercase tracking-widest rounded-full mb-4">Şeffaf Fiyatlandırma</span>
-            <h2 className="text-4xl font-black text-slate-900 mb-4">Eğitim Bütçenizi Kolayca Planlayın</h2>
-            <p className="text-slate-500 font-medium max-w-2xl mx-auto text-base">
+          <div className="text-center mb-16 space-y-3">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>ŞEFFAF VE ESNEK BÜTÇE</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 font-display tracking-tight">
+              Eğitim Bütçenizi Planlayın
+            </h2>
+            <p className="text-slate-600 font-normal max-w-2xl mx-auto text-base sm:text-lg">
               Gizli ücretler, sürpriz ödemeler yok. Almak istediğiniz ders saatine göre bütçenizi kendiniz belirleyin.
             </p>
           </div>
@@ -1014,11 +806,11 @@ export default function Home() {
             return (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
                 {/* Sliders Area */}
-                <div className="lg:col-span-7 bg-white rounded-3xl p-8 shadow-xl border border-slate-100/50 flex flex-col justify-between space-y-8">
+                <div className="lg:col-span-7 bg-white rounded-3xl p-8 border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-8">
                   {/* Step 1: Sınav / Program Seçimi */}
                   <div className="space-y-3">
-                    <label className="text-lg font-bold text-slate-800">Sınav / Program Seçin</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">1. Sınav / Program Seçin</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                       {Object.entries(EXAM_SUBJECTS).map(([key, val]) => (
                         <button
                           key={key}
@@ -1027,14 +819,16 @@ export default function Home() {
                             setCalcExam(key === calcExam ? "" : key);
                             setCalcSubjects([]);
                           }}
-                          className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl border-2 font-bold text-xs transition-all text-left ${
+                          className={`flex items-center justify-between px-3.5 py-3 rounded-2xl border font-bold text-xs transition-all text-left ${
                             calcExam === key
-                              ? "border-teal-500 bg-teal-50 text-teal-800 shadow-sm"
-                              : "border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200 hover:bg-slate-100"
+                              ? "border-emerald-500 bg-emerald-50 text-emerald-800 shadow-sm"
+                              : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100"
                           }`}
                         >
-                          <span className="text-lg flex-shrink-0">{val.emoji}</span>
                           <span className="leading-tight">{val.label}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-500 font-mono">
+                            {val.tag}
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -1044,14 +838,15 @@ export default function Home() {
                   {calcExam && EXAM_SUBJECTS[calcExam] && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold text-slate-800">Ders / Branş Tercihiniz</label>
+                        <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">2. Ders / Branş Tercihiniz</label>
                         {calcSubjects.length > 0 && (
                           <button
                             type="button"
                             onClick={() => setCalcSubjects([])}
-                            className="text-xs text-rose-500 font-bold hover:underline"
+                            className="text-xs text-rose-500 font-bold hover:underline flex items-center gap-1"
                           >
-                            Temizle ✕
+                            <span>Temizle</span>
+                            <X className="w-3 h-3" />
                           </button>
                         )}
                       </div>
@@ -1061,10 +856,10 @@ export default function Home() {
                             key={s}
                             type="button"
                             onClick={() => toggleCalcSubject(s)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
                               calcSubjects.includes(s)
-                                ? "bg-teal-500 text-white border-teal-500 shadow-sm"
-                                : "bg-slate-50 text-slate-600 border-slate-100 hover:border-teal-300 hover:text-teal-600"
+                                ? "bg-emerald-600 text-white font-bold border-emerald-500 shadow-sm"
+                                : "bg-slate-50 text-slate-700 border-slate-200 hover:border-emerald-500/40 hover:bg-emerald-50/50"
                             }`}
                           >
                             {s}
@@ -1077,8 +872,10 @@ export default function Home() {
                   {/* Slider 1: Hours per Week */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <label htmlFor="calc-hours-slider" className="text-lg font-bold text-slate-800">Haftalık Birebir Ders Saati</label>
-                      <span className="text-2xl font-black text-teal-600 font-mono">{calcHours} Saat</span>
+                      <label htmlFor="calc-hours-slider" className="text-sm font-bold text-slate-700 uppercase tracking-wider">
+                        Haftalık Birebir Ders Saati
+                      </label>
+                      <span className="text-2xl font-black text-emerald-700 font-mono">{calcHours} Saat</span>
                     </div>
                     <input
                       id="calc-hours-slider"
@@ -1087,10 +884,10 @@ export default function Home() {
                       max="10"
                       value={calcHours}
                       onChange={(e) => setCalcHours(parseInt(e.target.value))}
-                      className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-teal-500"
+                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                     />
-                    <div className="flex justify-between text-xs text-slate-400 font-semibold">
-                      <span>1 Saat (Minimum)</span>
+                    <div className="flex justify-between text-xs text-slate-500 font-medium">
+                      <span>1 Saat (Temel)</span>
                       <span>5 Saat (Önerilen)</span>
                       <span>10 Saat (Yoğun)</span>
                     </div>
@@ -1099,29 +896,31 @@ export default function Home() {
                   {/* Slider 2: Duration in Weeks */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <label htmlFor="calc-weeks-select" className="text-lg font-bold text-slate-800">Toplam Program Süresi</label>
-                      <span className="text-2xl font-black text-teal-600 font-mono">{calcWeeks} Hafta</span>
+                      <label htmlFor="calc-weeks-select" className="text-sm font-bold text-slate-700 uppercase tracking-wider">
+                        Toplam Program Süresi
+                      </label>
+                      <span className="text-2xl font-black text-emerald-700 font-mono">{calcWeeks} Hafta</span>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {[
                         { label: "4 Hafta (1 Ay)", value: 4, discount: 0 },
                         { label: "12 Hafta (3 Ay)", value: 12, discount: discount12 },
                         { label: "24 Hafta (6 Ay)", value: 24, discount: discount24 },
-                        { label: "36 Hafta (Eğitim Dönemi)", value: 36, discount: discount36 },
+                        { label: "36 Hafta (Tam Dönem)", value: 36, discount: discount36 },
                       ].map((item) => (
                         <button
                           key={item.value}
                           id={`calc-weeks-select-${item.value}`}
                           type="button"
                           onClick={() => setCalcWeeks(item.value)}
-                          className={`p-4 rounded-2xl border-2 font-bold text-xs transition-all relative flex flex-col items-center justify-center gap-1.5 ${
+                          className={`p-3.5 rounded-2xl border font-bold text-xs transition-all relative flex flex-col items-center justify-center gap-1.5 ${
                             calcWeeks === item.value
-                              ? "border-teal-500 bg-teal-50/20 text-teal-800"
-                              : "border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200"
+                              ? "border-emerald-500 bg-emerald-50 text-emerald-800 shadow-sm"
+                              : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:text-slate-900"
                           }`}
                         >
                           {item.discount > 0 && (
-                            <span className="absolute -top-2.5 bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+                            <span className="absolute -top-2.5 bg-emerald-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-xs">
                               %{item.discount} İndirim
                             </span>
                           )}
@@ -1131,51 +930,56 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="bg-teal-50/30 rounded-2xl p-4 border border-teal-100/30 flex items-start gap-3">
-                    <span className="text-xl">💡</span>
-                    <p className="text-xs text-teal-800 leading-relaxed font-medium">
-                      Uzun vadeli programlarda <strong>peşin fiyatına taksit</strong> ve <strong>%{discount36}'ye varan ek saat indirimleri</strong> otomatik olarak bütçenize yansıtılır. Memnun kalınmadığı takdirde kalan saatlerin ücreti koşulsuz iade edilir.
+                  <div className="rounded-2xl p-4 border border-emerald-200 bg-emerald-50 flex items-start gap-3">
+                    <Sparkles className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-emerald-800 leading-relaxed font-normal">
+                      Uzun vadeli programlarda <strong>peşin fiyatına taksit</strong> ve <strong>%{discount36}&apos;ye varan ek saat indirimleri</strong> otomatik yansıtılır. Memnun kalınmadığında kalan saatler koşulsuz iade edilir.
                     </p>
                   </div>
                 </div>
 
                 {/* Calculations Card Area */}
-                <div className="lg:col-span-5 bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-3xl p-8 shadow-xl flex flex-col justify-between relative overflow-hidden">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.15),transparent_60%)] pointer-events-none" />
+                <div className="lg:col-span-5 bg-white rounded-3xl p-8 border border-slate-200/90 shadow-xl flex flex-col justify-between relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none" />
                   
                   <div className="space-y-6 relative z-10">
-                    <h3 className="text-xl font-bold text-slate-200">Planlama Özeti</h3>
+                    <h3 className="text-xl font-bold text-slate-900 flex items-center justify-between">
+                      <span>Planlama Özeti</span>
+                      <span className="text-xs font-mono text-emerald-700 font-semibold px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80">
+                        {totalHours} Saat Canlı
+                      </span>
+                    </h3>
                     
-                    <div className="space-y-4 border-b border-slate-800 pb-6 text-sm font-semibold">
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Toplam Canlı Ders</span>
-                        <span>{totalHours} Saat</span>
+                    <div className="space-y-3.5 border-b border-slate-100 pb-6 text-sm">
+                      <div className="flex justify-between text-slate-600">
+                        <span className="text-slate-500">Toplam Canlı Ders</span>
+                        <span className="font-semibold text-slate-800">{totalHours} Saat</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Saatlik Taban Ücret</span>
-                        <span>{hourlyRate.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                      <div className="flex justify-between text-slate-600">
+                        <span className="text-slate-500">Saatlik Taban Ücret</span>
+                        <span className="font-mono font-semibold text-slate-800">{hourlyRate.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
                       </div>
                       {selectedDiscount > 0 && (
-                        <div className="flex justify-between text-rose-400 font-bold">
+                        <div className="flex justify-between text-emerald-700 font-semibold">
                           <span>Süreye Özel İndirim</span>
-                          <span>-%{selectedDiscount}</span>
+                          <span className="font-mono font-bold">-%{selectedDiscount}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="space-y-1">
-                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Tahmini Toplam Tutar</span>
-                      <div className="text-4xl font-black tracking-tight text-white font-mono">
-                        {Math.round(netPrice).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                    <div className="space-y-1.5">
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tahmini Toplam Tutar</span>
+                      <div className="text-4xl font-black tracking-tight text-slate-900 font-mono">
+                        {Math.round(netPrice).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} <span className="text-emerald-600 text-2xl">TL</span>
                       </div>
-                      <p className="text-[10px] text-slate-500 font-semibold mt-1">
-                        *Fiyatlar öğretmenlerin tecrübe seviyesine göre değişiklik gösterebilir.
+                      <p className="text-[11px] text-slate-500 font-normal">
+                        *Eğitmen tecrübesine ve öğrenci talebine göre tekliflerde fiyat esnekliği sağlanır.
                       </p>
                     </div>
 
                     {/* PayTR Taksit Tablosu */}
-                    <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-800/30">
-                      <div className="text-xs font-bold text-slate-400 uppercase mb-3">Taksit Seçenekleri</div>
+                    <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
+                      <div className="text-xs font-bold text-slate-600 uppercase mb-3 tracking-wider">Taksit Seçenekleri</div>
                       <PayTRTaksitWidget amount={calcNetPrice} />
                     </div>
                   </div>
@@ -1183,9 +987,9 @@ export default function Home() {
                   <div className="mt-8 relative z-10">
                     <Link
                       href={`/teachers?hours=${calcHours}&weeks=${calcWeeks}&budget=${Math.round(netPrice)}&discount=${selectedDiscount}&branch=${calcExam}&subjects=${encodeURIComponent(calcSubjects.join(','))}`}
-                      className="w-full block text-center bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-teal-500/20 hover:shadow-teal-500/30 text-sm"
+                      className="w-full block text-center py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow-lg shadow-emerald-600/20 transition-all"
                     >
-                      Bu Planla Eğitmen Keşfet
+                      Bu Planla Eğitmen Keşfet →
                     </Link>
                   </div>
                 </div>
@@ -1195,115 +999,107 @@ export default function Home() {
         </div>
       </section>
 
-
-
-
-      {/* Ads placements Banners */}
-      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-8 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <AdBanner placementCode="homepage_banner" />
-        </div>
-      </motion.section>
-
-      {/* "Seni Neler Bekliyor?" Section */}
-      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-white relative overflow-hidden">
-        {/* Decorative background glow */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-teal-500/5 rounded-full filter blur-3xl -z-10"></div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <h2 className="text-4xl font-black text-gray-900 tracking-tight">Seni Neler Bekliyor?</h2>
-            <p className="text-gray-600 font-semibold text-base">
-              bihocam.com ayrıcalıklarıyla çevrimiçi öğrenme deneyimine hazır mısın?
+      {/* 21ST.DEV "Seni Neler Bekliyor?" Section */}
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-white relative overflow-hidden border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>ÖĞRENME DENEYİMİ</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 font-display tracking-tight">
+              Seni Neler Bekliyor?
+            </h2>
+            <p className="text-slate-600 font-normal text-base sm:text-lg">
+              BiHocam ayrıcalıklarıyla çevrimiçi öğrenmede yeni nesil akıllı deneyim.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Card 1 - Kişiselleştirilmiş Öğretim Planı */}
-            <div className="bg-white rounded-3xl border border-gray-200/60 p-8 shadow-sm hover:shadow-xl hover:border-teal-300/50 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
-              <div className="space-y-6">
-                <div className="w-14 h-14 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-600 shadow-inner group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 11a3 3 0 106 0a3 3 0 00-6 0z" />
-                  </svg>
+            <div className="bg-slate-50 rounded-3xl border border-slate-200/90 p-8 hover:bg-white hover:border-emerald-500/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+              <div className="space-y-5">
+                <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
+                  <Compass className="w-6 h-6" />
                 </div>
-                <div className="space-y-3">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-teal-600 transition-colors">Kişiselleştirilmiş Öğretim Planı</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">
-                    Öğrencilerimizin ihtiyaç duydukları derslere başlamadan önce uzmanlarımız tarafından hazırlanan ön testlerin sonuçlarına göre hangi konuda neler bildiğine dair bir değerlendirme süreci gerçekleştirilir.
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                    Kişiselleştirilmiş Plan
+                  </h3>
+                  <p className="text-slate-600 text-sm leading-relaxed font-normal">
+                    Seviye tespit testleriyle eksik kazanımlar belirlenir; hedefinize özel birebir çalışma yol haritası çizilir.
                   </p>
                 </div>
               </div>
-              <div className="mt-8">
-                <Link href="/courses" className="text-rose-500 font-bold text-sm inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  Daha Fazla Öğren <span className="text-lg">→</span>
+              <div className="mt-6 pt-4 border-t border-slate-200/80">
+                <Link href="/courses" className="text-emerald-700 font-bold text-xs inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  Daha Fazla Öğren <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
 
-            {/* Card 2 - Birebir veya Grup Dersleri */}
-            <div className="bg-white rounded-3xl border border-gray-200/60 p-8 shadow-sm hover:shadow-xl hover:border-teal-300/50 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
-              <div className="space-y-6">
-                <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 shadow-inner group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
+            {/* Card 2 - Birebir Canlı Dersler */}
+            <div className="bg-slate-900/60 rounded-3xl border border-white/10 p-8 backdrop-blur-xl hover:border-emerald-500/40 hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+              <div className="space-y-5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+                  <Users className="w-6 h-6" />
                 </div>
-                <div className="space-y-3">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-teal-600 transition-colors">Birebir veya Grup Dersleri</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">
-                    Birebir veya grup dersleri, öğrencilerin öğrenme hızlarına, öğrenme stillerine ve ihtiyaçlarına uygun özelleştirilmiş bir öğrenme deneyimi sunar.
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
+                    Birebir Canlı Ders
+                  </h3>
+                  <p className="text-slate-400 text-sm leading-relaxed font-normal">
+                    Öğrencinin anlama hızına uygun, interaktif beyaz tahta ve anlık soru-cevapla desteklenen canlı seanslar.
                   </p>
                 </div>
               </div>
-              <div className="mt-8">
-                <Link href="/courses" className="text-rose-500 font-bold text-sm inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  Daha Fazla Öğren <span className="text-lg">→</span>
+              <div className="mt-6 pt-4 border-t border-white/5">
+                <Link href="/courses" className="text-emerald-400 font-bold text-xs inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  Daha Fazla Öğren <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
 
             {/* Card 3 - Her Derse Özel Kaynaklar */}
-            <div className="bg-white rounded-3xl border border-gray-200/60 p-8 shadow-sm hover:shadow-xl hover:border-teal-300/50 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
-              <div className="space-y-6">
-                <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
+            <div className="bg-slate-900/60 rounded-3xl border border-white/10 p-8 backdrop-blur-xl hover:border-emerald-500/40 hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+              <div className="space-y-5">
+                <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                  <BookOpen className="w-6 h-6" />
                 </div>
-                <div className="space-y-3">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-teal-600 transition-colors">Her Derse Özel Kaynaklar</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">
-                    Dijital kaynaklar, öğrencilerin internet erişimi olan herhangi bir yerden ders materyallerine erişmelerine ve öğrenmelerine yardımcı olur.
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
+                    Özel Dijital Kaynaklar
+                  </h3>
+                  <p className="text-slate-400 text-sm leading-relaxed font-normal">
+                    Ders PDF&apos;leri, yeni nesil soru bankaları ve konu özetleri bulut arşivinizde 7/24 erişiminize açıktır.
                   </p>
                 </div>
               </div>
-              <div className="mt-8">
-                <Link href="/courses" className="text-rose-500 font-bold text-sm inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  Daha Fazla Öğren <span className="text-lg">→</span>
+              <div className="mt-6 pt-4 border-t border-white/5">
+                <Link href="/courses" className="text-emerald-400 font-bold text-xs inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  Daha Fazla Öğren <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
 
             {/* Card 4 - Ders Sonu Öğrenme Raporları */}
-            <div className="bg-white rounded-3xl border border-gray-200/60 p-8 shadow-sm hover:shadow-xl hover:border-teal-300/50 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
-              <div className="space-y-6">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-inner group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+            <div className="bg-slate-900/60 rounded-3xl border border-white/10 p-8 backdrop-blur-xl hover:border-emerald-500/40 hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+              <div className="space-y-5">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                  <Award className="w-6 h-6" />
                 </div>
-                <div className="space-y-3">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-teal-600 transition-colors">Ders Sonu Öğrenme Raporları</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">
-                    Ders raporları ve ölçme değerlendirme, öğrencilerin öğrenme sürecini değerlendirmek için önemli bir araçtır.
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
+                    Haftalık İlerleme Karnesi
+                  </h3>
+                  <p className="text-slate-400 text-sm leading-relaxed font-normal">
+                    İşlenen kazanımlar, öğretmen geri bildirimleri ve yapay zeka analizleriyle gelişim veli ve öğrenciye raporlanır.
                   </p>
                 </div>
               </div>
-              <div className="mt-8">
-                <Link href="/courses" className="text-rose-500 font-bold text-sm inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  Daha Fazla Öğren <span className="text-lg">→</span>
+              <div className="mt-6 pt-4 border-t border-white/5">
+                <Link href="/courses" className="text-emerald-400 font-bold text-xs inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  Daha Fazla Öğren <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
@@ -1312,43 +1108,48 @@ export default function Home() {
       </motion.section>
 
       {/* ══════════════════════════════════════════════════════ */}
-      {/* WHY BIHOCAM? - COMPARISON TABLE                       */}
+      {/* WHY BIHOCAM? - 21ST.DEV COMPARISON TABLE               */}
       {/* ══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-white relative overflow-hidden border-t border-slate-100">
+      <section className="py-24 bg-[#07090E] relative overflow-hidden border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16">
-            <span className="inline-block px-4 py-1.5 bg-teal-100 text-teal-700 text-xs font-bold uppercase tracking-widest rounded-full mb-4">Şeffaf Karşılaştırma</span>
-            <h2 className="text-4xl font-black text-slate-900 mb-4">Neden BiHocam'ı Tercih Etmelisiniz?</h2>
-            <p className="text-slate-500 font-medium max-w-2xl mx-auto text-base">
-              Geleneksel yöntemlerin kısıtlamalarından kurtulun. BiHocam ile geleceğin eğitimini bugünden yaşayın.
+          <div className="text-center mb-16 space-y-3">
+            <div className="badge-21st border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>ŞEFFAF KARŞILAŞTIRMA</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white font-display tracking-tight">
+              Neden BiHocam&apos;ı Tercih Etmelisiniz?
+            </h2>
+            <p className="text-slate-400 font-normal max-w-2xl mx-auto text-base sm:text-lg">
+              Geleneksel dershane ve verimsiz yol kayıplarından kurtulun; birebir odaklı modern eğitim standardına geçin.
             </p>
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden lg:block overflow-hidden rounded-3xl border border-slate-100 shadow-xl">
-            <table className="w-full text-left border-collapse bg-white">
+          <div className="hidden lg:block overflow-hidden rounded-3xl border border-white/10 shadow-2xl bg-slate-900/40 backdrop-blur-xl">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/50 border-b border-slate-100">
-                  <th className="p-6 text-sm font-bold text-slate-400 uppercase tracking-wider w-1/4">Özellikler</th>
-                  <th className="p-6 text-sm font-black text-teal-600 uppercase tracking-wider w-1/4 bg-teal-50/30 border-x border-teal-100/50 text-center">BiHocam Birebir</th>
-                  <th className="p-6 text-sm font-bold text-slate-500 uppercase tracking-wider w-1/4 text-center">Fiziksel Özel Ders</th>
-                  <th className="p-6 text-sm font-bold text-slate-500 uppercase tracking-wider w-1/4 text-center">Geleneksel Dershane</th>
+                <tr className="bg-white/[0.02] border-b border-white/10">
+                  <th className="p-6 text-xs font-bold text-slate-400 uppercase tracking-wider w-1/4">Özellikler</th>
+                  <th className="p-6 text-xs font-black text-emerald-400 uppercase tracking-wider w-1/4 bg-emerald-500/10 border-x border-emerald-500/20 text-center">BiHocam Birebir</th>
+                  <th className="p-6 text-xs font-bold text-slate-400 uppercase tracking-wider w-1/4 text-center">Fiziksel Özel Ders</th>
+                  <th className="p-6 text-xs font-bold text-slate-400 uppercase tracking-wider w-1/4 text-center">Geleneksel Dershane</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+              <tbody className="divide-y divide-white/5 text-slate-300 text-sm">
                 {[
-                  { name: "Saatlik Ders Ücreti", bihocam: "Ekonomik & Esnek Ödeme", ozel: "Çok Yüksek & Peşin", dershane: "Yıllık Sabit Yüksek Paket" },
-                  { name: "Eğitmen Seçimi", bihocam: "✓ 100+ Onaylı Hoca Arasından Özgürce", ozel: "✗ Referansla Sınırlı Tanıdık Hocalar", dershane: "✗ Atanmış Öğretmen (Seçim Yok)" },
-                  { name: "Ders Kaydı ve Tekrarı", bihocam: "✓ Sınırsız & İstediğin Zaman Tekrar İzle", ozel: "✗ Ders Anında Biter, Tekrarı Yok", dershane: "✗ Kaçırılan Dersin Telafisi Yok" },
-                  { name: "Yapay Zeka Destekli Rapor", bihocam: "✓ Haftalık Detaylı Gelişim Raporları", ozel: "✗ Sadece Sözlü Geri Bildirim", dershane: "✗ Yılda Birkaç Kez Toplu Sınav Raporu" },
+                  { name: "Saatlik Ders Ücreti", bihocam: "Ekonomik & Esnek Paketler", ozel: "Yüksek & Peşin Zorunluluğu", dershane: "Yıllık Katı Senetler" },
+                  { name: "Eğitmen Seçimi", bihocam: "✓ 100+ Onaylı Hoca & Teklif Alabilme", ozel: "✗ Referansla Sınırlı Çevre", dershane: "✗ Atanmış Öğretmen (Seçim Yok)" },
+                  { name: "Ders Kaydı ve Tekrarı", bihocam: "✓ Sınırsız & İstediğin Zaman Tekrar İzle", ozel: "✗ Ders Biter, Tekrarı Yok", dershane: "✗ Kaçırılan Ders Telafi Edilemez" },
+                  { name: "Yapay Zeka Destekli Rapor", bihocam: "✓ Haftalık Detaylı Gelişim Karnesi", ozel: "✗ Yalnızca Sözlü Geri Bildirim", dershane: "✗ Dönemlik Genel Toplu Sınav" },
                   { name: "Ulaşım / Zaman Kaybı", bihocam: "✓ 0 Dakika (Ev Konforunda Online)", ozel: "✗ Trafikte Günde 1-2 Saat Kayıp", dershane: "✗ Her Gün Git-Gel Yol Yorgunluğu" },
-                  { name: "Güvenlik & Doğrulama", bihocam: "✓ Diploma, Sabıka ve Mülakat Kontrollü", ozel: "✗ Belgesiz / Kontrolsüz Güven İlişkisi", dershane: "✓ Kurumsal Denetimli Öğretmen" },
+                  { name: "Güvenlik & Doğrulama", bihocam: "✓ Diploma, Sabıka ve Mülakat Onaylı", ozel: "✗ Belgesiz / Kontrolsüz Güven", dershane: "✓ Kurumsal Denetimli Öğretmen" },
                 ].map((row, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/30 transition-colors">
-                    <td className="p-6 text-slate-900 font-bold text-sm">{row.name}</td>
-                    <td className="p-6 text-teal-700 font-black text-sm bg-teal-50/20 border-x border-teal-100/30 text-center">{row.bihocam}</td>
-                    <td className="p-6 text-slate-500 text-sm text-center">{row.ozel}</td>
-                    <td className="p-6 text-slate-500 text-sm text-center">{row.dershane}</td>
+                  <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="p-6 text-white font-semibold text-sm">{row.name}</td>
+                    <td className="p-6 text-emerald-300 font-bold text-sm bg-emerald-500/10 border-x border-emerald-500/20 text-center">{row.bihocam}</td>
+                    <td className="p-6 text-slate-400 text-sm text-center">{row.ozel}</td>
+                    <td className="p-6 text-slate-400 text-sm text-center">{row.dershane}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1358,74 +1159,74 @@ export default function Home() {
           {/* Mobile Card Grid View */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:hidden">
             {/* BiHocam Card */}
-            <div className="bg-gradient-to-b from-teal-50/50 to-white rounded-3xl p-6 border-2 border-teal-500 shadow-lg relative overflow-hidden">
-              <div className="absolute right-0 top-0 bg-teal-500 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-bl-2xl tracking-wider">Önerilen</div>
-              <h3 className="text-xl font-black text-teal-800 mb-4">BiHocam Birebir</h3>
-              <ul className="space-y-3.5 text-sm font-semibold text-slate-700">
+            <div className="bg-slate-900/80 rounded-3xl p-6 border-2 border-emerald-500/40 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+              <div className="absolute right-0 top-0 bg-emerald-500 text-slate-950 text-[10px] font-black uppercase px-4 py-1.5 rounded-bl-2xl tracking-wider">Önerilen</div>
+              <h3 className="text-xl font-black text-white mb-4">BiHocam Birebir</h3>
+              <ul className="space-y-3.5 text-sm font-medium text-slate-300">
                 <li className="flex items-start gap-2.5">
-                  <span className="text-teal-500 text-lg leading-none">✓</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                   <span><strong>Ekonomik & Esnek:</strong> Bütçenize en uygun saat paketini kendiniz belirleyin.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-teal-500 text-lg leading-none">✓</span>
-                  <span><strong>Seçim Özgürlüğü:</strong> 100+ onaylı, tecrübeli öğretmen arasından dilediğinizi seçin.</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <span><strong>Seçim Özgürlüğü:</strong> 100+ onaylı, tecrübeli öğretmen arasından dilediğinizi seçin veya teklif toplayın.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-teal-500 text-lg leading-none">✓</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                   <span><strong>Sınırsız Tekrar:</strong> İşlenen tüm dersleri kaydedip dilediğiniz an tekrar izleyin.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-teal-500 text-lg leading-none">✓</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                   <span><strong>Yapay Zeka Takibi:</strong> Haftalık gelişim raporlarıyla ilerlemenizi adım adım izleyin.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-teal-500 text-lg leading-none">✓</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                   <span><strong>Ev Konforu:</strong> Yol stresi, yorgunluk ve ulaşım maliyeti olmadan ders yapın.</span>
                 </li>
               </ul>
             </div>
 
             {/* Fiziksel Ozel Ders Card */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-md">
-              <h3 className="text-xl font-bold text-slate-800 mb-4">Fiziksel Özel Ders</h3>
-              <ul className="space-y-3.5 text-sm text-slate-600 font-medium">
+            <div className="bg-slate-900/50 rounded-3xl p-6 border border-white/10">
+              <h3 className="text-xl font-bold text-white mb-4">Fiziksel Özel Ders</h3>
+              <ul className="space-y-3.5 text-sm text-slate-400 font-normal">
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-500 text-lg leading-none">✗</span>
-                  <span><strong>Çok Yüksek Maliyet:</strong> Saatlik ders ücretleri ve ulaşım maliyetleri yüksektir.</span>
+                  <span className="text-rose-400 font-bold">✕</span>
+                  <span><strong>Yüksek Maliyet:</strong> Saatlik ders ücretleri ve ulaşım maliyetleri yüksektir.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span className="text-rose-400 font-bold">✕</span>
                   <span><strong>Kısıtlı Seçim:</strong> Sadece yakın çevreden tavsiye ile öğretmen bulabilirsiniz.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span className="text-rose-400 font-bold">✕</span>
                   <span><strong>Tekrar İzleme Yok:</strong> Ders bittiği an her şey unutulur, tekrar izleme şansı yoktur.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span className="text-rose-400 font-bold">✕</span>
                   <span><strong>Yol Yorgunluğu:</strong> Öğretmenin veya öğrencinin git-gel yapması vakit kaybettirir.</span>
                 </li>
               </ul>
             </div>
 
             {/* Geleneksel Dershane Card */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-md">
-              <h3 className="text-xl font-bold text-slate-800 mb-4">Geleneksel Dershane</h3>
-              <ul className="space-y-3.5 text-sm text-slate-600 font-medium">
+            <div className="bg-slate-900/50 rounded-3xl p-6 border border-white/10">
+              <h3 className="text-xl font-bold text-white mb-4">Geleneksel Dershane</h3>
+              <ul className="space-y-3.5 text-sm text-slate-400 font-normal">
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span className="text-rose-400 font-bold">✕</span>
                   <span><strong>Katı Yıllık Senetler:</strong> Memnun kalmasanız dahi yıllık taahhüt ödemek zorundasınız.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span className="text-rose-400 font-bold">✕</span>
                   <span><strong>Atanmış Eğitmen:</strong> Hangi hocanın derse gireceğini kurum belirler, seçemezsiniz.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span className="text-rose-400 font-bold">✕</span>
                   <span><strong>Kalabalık Sınıflar:</strong> 15-20 kişilik sınıflarda soru sorma şansı oldukça düşüktür.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-500 text-lg leading-none">✗</span>
+                  <span className="text-rose-400 font-bold">✕</span>
                   <span><strong>Zaman Kaybı:</strong> Her gün dershaneye gidiş-dönüş saatler sürer ve fiziksel yorgunluk verir.</span>
                 </li>
               </ul>
@@ -1435,50 +1236,53 @@ export default function Home() {
       </section>
 
       {/* Popular Categories Grid */}
-      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-slate-50">
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-slate-950 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
             <div className="space-y-2">
-              <h2 className="text-3xl font-black text-gray-900 tracking-tight">Branşlara Göre Keşfedin</h2>
-              <p className="text-gray-500 font-semibold text-sm">Hangi alanda yardıma ihtiyacınız varsa uzman eğitmenimiz hazır.</p>
+              <h2 className="text-3xl font-black text-white font-display tracking-tight">Branşlara Göre Keşfedin</h2>
+              <p className="text-slate-400 font-normal text-sm">Hangi alanda desteğe ihtiyacınız varsa uzman eğitmenimiz hazır.</p>
             </div>
             <Link
               href="/courses"
-              className="text-teal-600 hover:text-teal-700 font-bold text-sm inline-flex items-center gap-1 group"
+              className="text-emerald-400 hover:text-emerald-300 font-bold text-sm inline-flex items-center gap-1 group"
             >
-              Tümünü Gör <span className="group-hover:translate-x-1 transition-transform">→</span>
+              Tümünü Gör <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
             {[
-              { icon: "🎯", name: "YKS", color: "from-orange-400 to-red-500", desc: "Üniversite Hazırlık" },
-              { icon: "📖", name: "LGS", color: "from-teal-400 to-cyan-500", desc: "Lise Hazırlık" },
-              { icon: "🔢", name: "Matematik", color: "from-blue-400 to-indigo-500", desc: "Analiz & Geometri" },
-              { icon: "⚛️", name: "Fizik", color: "from-purple-400 to-pink-500", desc: "Mekanik & Optik" },
-              { icon: "🧪", name: "Kimya", color: "from-emerald-400 to-green-500", desc: "Organik & Temel" },
-              { icon: "🧬", name: "Biyoloji", color: "from-yellow-400 to-orange-500", desc: "Genetik & Canlı" },
-            ].map((cat) => (
-              <Link
-                key={cat.name}
-                href={`/courses?category=${cat.name.toLowerCase()}`}
-                className="group relative p-6 bg-white rounded-2xl border border-gray-200/60 shadow-sm hover:shadow-xl hover:border-teal-300 transition-all duration-300 flex flex-col justify-between overflow-hidden"
-              >
-                {/* Accent line */}
-                <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${cat.color}`}></div>
-                <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">{cat.icon}</div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-lg mb-1">{cat.name}</h3>
-                  <p className="text-xs font-semibold text-gray-400">{cat.desc}</p>
-                </div>
-              </Link>
-            ))}
+              { icon: Target, name: "YKS", iconColor: "text-orange-400", desc: "Üniversite Hazırlık" },
+              { icon: BookOpen, name: "LGS", iconColor: "text-cyan-400", desc: "Lise Hazırlık" },
+              { icon: Zap, name: "Matematik", iconColor: "text-emerald-400", desc: "Analiz & Geometri" },
+              { icon: Sparkles, name: "Fizik", iconColor: "text-purple-400", desc: "Mekanik & Optik" },
+              { icon: Sprout, name: "Kimya", iconColor: "text-teal-400", desc: "Organik & Temel" },
+              { icon: Award, name: "Biyoloji", iconColor: "text-yellow-400", desc: "Genetik & Canlı" },
+            ].map((cat) => {
+              const IconComponent = cat.icon;
+              return (
+                <Link
+                  key={cat.name}
+                  href={`/courses?category=${cat.name.toLowerCase()}`}
+                  className="group relative p-6 bg-slate-900/60 rounded-2xl border border-white/10 backdrop-blur-xl hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 flex flex-col justify-between overflow-hidden"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:border-emerald-500/30 transition-all">
+                    <IconComponent className={`w-5 h-5 ${cat.iconColor}`} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-base mb-0.5 group-hover:text-emerald-300 transition-colors">{cat.name}</h3>
+                    <p className="text-xs text-slate-400 font-normal">{cat.desc}</p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </motion.section>
 
       {/* Featured Courses placements */}
-      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-white">
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-[#07090E] border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FeaturedCourses limit={6} showTitle={true} />
         </div>
@@ -1486,12 +1290,12 @@ export default function Home() {
 
       {/* Popular Courses list */}
       {((featuredCourses && featuredCourses.length > 0) || (courses && courses.length > 0)) && (
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-slate-50">
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-slate-950 border-t border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
               <div className="space-y-2">
-                <h2 className="text-3xl font-black text-gray-900 tracking-tight">Popüler Kurslar</h2>
-                <p className="text-gray-500 font-semibold text-sm">
+                <h2 className="text-3xl font-black text-white font-display tracking-tight">Popüler Kurslar</h2>
+                <p className="text-slate-400 font-normal text-sm">
                   {featuredCourses && featuredCourses.length > 0
                     ? "Öne çıkan seçili kurslarımız"
                     : "En çok tercih edilen kurslarımız"}
@@ -1499,19 +1303,19 @@ export default function Home() {
               </div>
               <Link
                 href="/courses"
-                className="text-teal-600 hover:text-teal-700 font-bold text-sm inline-flex items-center gap-1 group"
+                className="text-emerald-400 hover:text-emerald-300 font-bold text-sm inline-flex items-center gap-1 group"
               >
-                Tümünü Keşfet <span className="group-hover:translate-x-1 transition-transform">→</span>
+                Tümünü Keşfet <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {(featuredCourses && featuredCourses.length > 0 ? featuredCourses : courses || []).slice(0, 8).map((course) => (
                 <Link key={course.id} href={`/courses/${course.slug}`} className="group">
-                  <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full">
+                  <div className="bg-slate-900/60 rounded-2xl border border-white/10 overflow-hidden shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full backdrop-blur-xl">
                     <div>
                       {/* Image / Thumbnail placeholder */}
-                      <div className="aspect-video bg-gradient-to-br from-teal-500 to-indigo-600 relative overflow-hidden">
+                      <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 relative overflow-hidden">
                         {course.thumbnail_path ? (
                           <img
                             src={course.thumbnail_path}
@@ -1519,10 +1323,12 @@ export default function Home() {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-white/50 text-5xl font-black">📚</div>
+                          <div className="w-full h-full flex items-center justify-center text-slate-600">
+                            <BookOpen className="w-12 h-12" />
+                          </div>
                         )}
                         {course.discount_price && (
-                          <span className="absolute top-3 left-3 px-2 py-1 bg-orange-500 text-white text-xs font-bold rounded-lg shadow-md">
+                          <span className="absolute top-3 left-3 px-2 py-1 bg-rose-500 text-white text-[10px] font-black rounded-md shadow-md">
                             %{Math.round((1 - course.discount_price / course.price) * 100)} İNDİRİM
                           </span>
                         )}
@@ -1530,29 +1336,29 @@ export default function Home() {
                       
                       {/* Card Content */}
                       <div className="p-5 space-y-2">
-                        <h3 className="font-bold text-gray-900 group-hover:text-teal-600 transition-colors line-clamp-2 leading-tight">
+                        <h3 className="font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-2 leading-tight text-sm sm:text-base">
                           {course.title}
                         </h3>
-                        <p className="text-sm font-semibold text-gray-400">{course.teacher?.full_name || "Seçkin Eğitmen"}</p>
+                        <p className="text-xs text-slate-400 font-medium">{course.teacher?.full_name || "Seçkin Eğitmen"}</p>
                       </div>
                     </div>
 
-                    <div className="p-5 border-t border-gray-100 flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-sm font-bold text-gray-700">
-                        <span className="text-yellow-500 text-base">★</span>
+                    <div className="p-5 border-t border-white/5 flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-xs font-bold text-slate-300">
+                        <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                         <span>4.8</span>
-                        <span className="text-gray-400 font-semibold text-xs">(84)</span>
+                        <span className="text-slate-500 font-normal">(84)</span>
                       </div>
-                      <div className="font-black text-gray-900 text-lg">
+                      <div className="font-mono font-bold text-sm sm:text-base">
                         {course.discount_price ? (
                           <div className="flex flex-col items-end">
-                            <span className="text-xs text-gray-400 line-through font-semibold">₺{course.price}</span>
-                            <span className="text-teal-600">₺{course.discount_price}</span>
+                            <span className="text-[10px] text-slate-500 line-through">₺{course.price}</span>
+                            <span className="text-emerald-400">₺{course.discount_price}</span>
                           </div>
                         ) : course.price === 0 ? (
-                          <span className="text-teal-600 font-bold">Ücretsiz</span>
+                          <span className="text-emerald-400 font-bold">Ücretsiz</span>
                         ) : (
-                          <span>₺{course.price}</span>
+                          <span className="text-white">₺{course.price}</span>
                         )}
                       </div>
                     </div>
@@ -1571,22 +1377,22 @@ export default function Home() {
           whileInView="visible" 
           viewport={{ once: true, amount: 0.1 }} 
           variants={fadeUpVariants} 
-          className="py-24 bg-gradient-to-b from-slate-50 to-slate-100 relative overflow-hidden"
+          className="py-24 bg-[#07090E] relative overflow-hidden border-t border-white/10"
         >
-          {/* Animated Background blobs */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
-            <div className="absolute top-20 left-10 w-72 h-72 bg-teal-200 rounded-full filter blur-3xl animate-blob"></div>
-            <div className="absolute bottom-20 right-10 w-72 h-72 bg-indigo-200 rounded-full filter blur-3xl animate-blob animation-delay-2000"></div>
-          </div>
+          <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/5 rounded-full filter blur-3xl pointer-events-none" />
+          <div className="absolute bottom-20 right-10 w-72 h-72 bg-indigo-500/5 rounded-full filter blur-3xl pointer-events-none" />
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-4">
               <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-teal-50 border border-teal-100 rounded-full text-teal-600 text-xs font-bold uppercase tracking-wider">
-                  <Headphones className="w-3.5 h-3.5" /> BiHocam Popcast
+                <div className="badge-21st border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+                  <Headphones className="w-3.5 h-3.5" />
+                  <span>BİHOCAM POPCAST</span>
                 </div>
-                <h2 className="text-4xl font-black text-gray-900 tracking-tight">Popcast ile Dinleyerek Öğren</h2>
-                <p className="text-gray-500 font-semibold text-base max-w-2xl">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white font-display tracking-tight">
+                  Popcast ile Dinleyerek Öğren
+                </h2>
+                <p className="text-slate-400 font-normal text-base max-w-2xl">
                   Eğitmenlerimizin hazırladığı kısa, keyifli sesli ders notlarını dinleyerek konuları pekiştirin. İstediğiniz an favorilerinize ekleyin veya çevrimdışı dinlemek üzere indirin.
                 </p>
               </div>
@@ -1601,11 +1407,11 @@ export default function Home() {
                 return (
                   <div 
                     key={popcast.id} 
-                    className="relative group bg-white/70 backdrop-blur-md rounded-3xl border border-white/40 p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+                    className="relative group bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-white/10 p-6 shadow-xl hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between"
                   >
                     <div>
                       {/* Cover Image / Audio Visualizer */}
-                      <div className="relative aspect-video rounded-2xl bg-gradient-to-br from-teal-400 to-indigo-500 overflow-hidden mb-6 flex items-center justify-center shadow-inner">
+                      <div className="relative aspect-video rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden mb-6 flex items-center justify-center border border-white/10">
                         {popcast.cover_image_url ? (
                           <img 
                             src={popcast.cover_image_url} 
@@ -1613,62 +1419,62 @@ export default function Home() {
                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
                           />
                         ) : (
-                          <Headphones className="w-16 h-16 text-white/30 relative z-10" />
+                          <Headphones className="w-16 h-16 text-slate-600 relative z-10" />
                         )}
-                        <div className="absolute inset-0 bg-black/35 transition-opacity group-hover:bg-black/45" />
+                        <div className="absolute inset-0 bg-slate-950/40 transition-opacity group-hover:bg-slate-950/60" />
 
                         {/* Floating Duration */}
-                        <span className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-[11px] font-black px-2.5 py-1 rounded-lg">
+                        <span className="absolute bottom-3 right-3 bg-slate-950/80 backdrop-blur-md text-white text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg border border-white/10">
                           {Math.floor(popcast.duration / 60)}:{(Math.floor(popcast.duration % 60)).toString().padStart(2, '0')}
                         </span>
 
                         {/* Play/Pause overlay */}
                         <button 
                           onClick={() => handlePlayPause(popcast)}
-                          className="absolute w-14 h-14 bg-teal-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 hover:bg-teal-600 transition-all duration-200 z-10"
+                          className="absolute w-14 h-14 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all duration-200 z-10"
                         >
                           {isPlayingThis ? (
-                            <Pause className="w-6 h-6 fill-white" />
+                            <Pause className="w-6 h-6 fill-slate-950 text-slate-950" />
                           ) : (
-                            <Play className="w-6 h-6 fill-white translate-x-0.5" />
+                            <Play className="w-6 h-6 fill-slate-950 text-slate-950 translate-x-0.5" />
                           )}
                         </button>
 
                         {/* Playing Visualizer Wave */}
                         {isPlayingThis && (
                           <div className="absolute bottom-3 left-3 flex items-end gap-0.5 h-6 z-10">
-                            <span className="w-1 bg-teal-400 animate-audio-bar-1 rounded-t"></span>
-                            <span className="w-1 bg-teal-400 animate-audio-bar-2 rounded-t"></span>
-                            <span className="w-1 bg-teal-400 animate-audio-bar-3 rounded-t"></span>
-                            <span className="w-1 bg-teal-400 animate-audio-bar-4 rounded-t"></span>
+                            <span className="w-1 bg-emerald-400 animate-audio-bar-1 rounded-t"></span>
+                            <span className="w-1 bg-emerald-400 animate-audio-bar-2 rounded-t"></span>
+                            <span className="w-1 bg-emerald-400 animate-audio-bar-3 rounded-t"></span>
+                            <span className="w-1 bg-emerald-400 animate-audio-bar-4 rounded-t"></span>
                           </div>
                         )}
                       </div>
 
                       {/* Title & Desc */}
                       <div className="space-y-2">
-                        <h3 className="font-bold text-gray-900 group-hover:text-teal-600 transition-colors text-lg line-clamp-1">
+                        <h3 className="font-bold text-white group-hover:text-emerald-300 transition-colors text-lg line-clamp-1">
                           {popcast.title}
                         </h3>
-                        <p className="text-gray-400 text-sm line-clamp-2 leading-relaxed">
+                        <p className="text-slate-400 text-sm line-clamp-2 leading-relaxed font-normal">
                           {popcast.description || "Bu popcast için açıklama bulunmamaktadır."}
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-6 pt-5 border-t border-gray-100 flex items-center justify-between">
+                    <div className="mt-6 pt-5 border-t border-white/5 flex items-center justify-between">
                       {/* Teacher Profile */}
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+                        <div className="w-8 h-8 rounded-full bg-slate-800 overflow-hidden border border-white/10">
                           {popcast.teacher?.avatar_url ? (
                             <img src={popcast.teacher.avatar_url} alt={popcast.teacher.full_name} className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full bg-teal-600 text-white flex items-center justify-center text-xs font-bold">
+                            <div className="w-full h-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-xs font-bold font-mono">
                               {popcast.teacher?.full_name?.charAt(0) || "E"}
                             </div>
                           )}
                         </div>
-                        <span className="text-xs font-bold text-gray-700">{popcast.teacher?.full_name || "Eğitmen"}</span>
+                        <span className="text-xs font-semibold text-slate-300">{popcast.teacher?.full_name || "Eğitmen"}</span>
                       </div>
 
                       {/* Action buttons */}
@@ -1676,13 +1482,13 @@ export default function Home() {
                         <button 
                           onClick={(e) => handleToggleFavorite(e, popcast.id, popcast.is_favorited)}
                           disabled={favoriteMutation.isPending}
-                          className={`w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center transition-colors ${popcast.is_favorited ? 'bg-rose-50 border-rose-100 text-rose-500 hover:bg-rose-100' : 'bg-white hover:bg-slate-50 text-gray-400 hover:text-gray-600'}`}
+                          className={`w-9 h-9 rounded-xl border border-white/10 flex items-center justify-center transition-colors ${popcast.is_favorited ? 'bg-rose-500/20 border-rose-500/40 text-rose-400' : 'bg-white/[0.03] text-slate-400 hover:text-white hover:bg-white/[0.06]'}`}
                         >
                           <Heart className={`w-4 h-4 ${popcast.is_favorited ? 'fill-rose-500' : ''}`} />
                         </button>
                         <button 
                           onClick={(e) => handleDownload(e, popcast.audio_url, popcast.title)}
-                          className="w-9 h-9 bg-white hover:bg-slate-50 border border-gray-200 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                          className="w-9 h-9 bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors"
                         >
                           <Download className="w-4 h-4" />
                         </button>
@@ -1701,39 +1507,38 @@ export default function Home() {
                 initial={{ y: 100, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 100, opacity: 0 }}
-                className="fixed bottom-6 left-1/2 -translate-x-1/2 max-w-xl w-[calc(100%-2rem)] bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-800 p-4 shadow-2xl flex items-center justify-between gap-4 z-50 text-white"
+                className="fixed bottom-6 left-1/2 -translate-x-1/2 max-w-xl w-[calc(100%-2rem)] bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-emerald-500/30 p-4 shadow-2xl flex items-center justify-between gap-4 z-50 text-white"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-lg bg-teal-500/20 flex items-center justify-center flex-shrink-0 border border-teal-500/30 overflow-hidden">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/30 overflow-hidden">
                     {currentPlayingPopcast.cover_image_url ? (
                       <img src={currentPlayingPopcast.cover_image_url} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <Headphones className="w-5 h-5 text-teal-400" />
+                      <Headphones className="w-5 h-5 text-emerald-400" />
                     )}
                   </div>
                   <div className="min-w-0">
                     <h4 className="font-bold text-sm truncate leading-snug">{currentPlayingPopcast.title}</h4>
-                    <p className="text-[11px] text-teal-400/90 font-semibold truncate mt-0.5">{currentPlayingPopcast.teacher?.full_name || "Eğitmen"}</p>
+                    <p className="text-[11px] text-emerald-400 font-semibold truncate mt-0.5">{currentPlayingPopcast.teacher?.full_name || "Eğitmen"}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {/* Timeline progress indicator */}
-                  <div className="hidden sm:block text-xs font-semibold text-slate-400 tabular-nums">
+                  <div className="hidden sm:block text-xs font-mono text-slate-400 tabular-nums">
                     {Math.floor(currentTime / 60)}:{(Math.floor(currentTime % 60)).toString().padStart(2, '0')}
                   </div>
                   <div className="w-20 sm:w-32 h-1.5 bg-slate-800 rounded-full overflow-hidden relative">
-                    <div className="bg-teal-400 h-full transition-all duration-100" style={{ width: `${audioProgress}%` }}></div>
+                    <div className="bg-emerald-400 h-full transition-all duration-100" style={{ width: `${audioProgress}%` }}></div>
                   </div>
-                  <div className="hidden sm:block text-xs font-semibold text-slate-400 tabular-nums">
+                  <div className="hidden sm:block text-xs font-mono text-slate-400 tabular-nums">
                     {Math.floor(audioDuration / 60)}:{(Math.floor(audioDuration % 60)).toString().padStart(2, '0')}
                   </div>
 
                   <button 
                     onClick={() => handlePlayPause(currentPlayingPopcast)}
-                    className="w-10 h-10 bg-teal-500 text-white rounded-full flex items-center justify-center hover:scale-105 hover:bg-teal-600 transition-transform flex-shrink-0"
+                    className="w-10 h-10 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-full flex items-center justify-center hover:scale-105 transition-transform flex-shrink-0"
                   >
-                    {isPlaying ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white translate-x-0.5" />}
+                    {isPlaying ? <Pause className="w-4 h-4 fill-slate-950 text-slate-950" /> : <Play className="w-4 h-4 fill-slate-950 text-slate-950 translate-x-0.5" />}
                   </button>
                 </div>
               </motion.div>
@@ -1744,20 +1549,20 @@ export default function Home() {
 
       {/* Popular Education Programs list */}
       {educationPrograms && educationPrograms.length > 0 && (
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-white">
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-slate-950 border-t border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
               <div className="space-y-2">
-                <h2 className="text-3xl font-black text-gray-900 tracking-tight">Popüler Eğitim Programları</h2>
-                <p className="text-gray-500 font-semibold text-sm">
+                <h2 className="text-3xl font-black text-white font-display tracking-tight">Popüler Eğitim Programları</h2>
+                <p className="text-slate-400 font-normal text-sm">
                   Geleceğinizi şekillendiren kapsamlı hazırlık paketlerimiz
                 </p>
               </div>
               <Link
                 href="/egitim-programlari"
-                className="text-teal-600 hover:text-teal-700 font-bold text-sm inline-flex items-center gap-1 group"
+                className="text-emerald-400 hover:text-emerald-300 font-bold text-sm inline-flex items-center gap-1 group"
               >
-                Tümünü Keşfet <span className="group-hover:translate-x-1 transition-transform">→</span>
+                Tümünü Keşfet <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
@@ -1766,7 +1571,7 @@ export default function Home() {
                 const cardGradient = getGradientBySlug(rp.slug);
                 return (
                   <Link key={rp.slug} href={`/egitim-programlari/${rp.slug}`} className="group flex flex-col h-full">
-                    <div className="bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full">
+                    <div className="bg-slate-900/60 rounded-3xl border border-white/10 shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full backdrop-blur-xl">
                       <div>
                         {/* Banner */}
                         <div className={`h-40 bg-gradient-to-br ${cardGradient} flex items-center justify-center p-4 relative`}>
@@ -1775,37 +1580,30 @@ export default function Home() {
                         
                         {/* Content */}
                         <div className="p-6">
-                          <h3 className="font-extrabold text-gray-900 text-lg mb-2 group-hover:text-teal-600 transition-colors leading-tight line-clamp-1">
+                          <h3 className="font-extrabold text-white text-lg mb-2 group-hover:text-emerald-300 transition-colors leading-tight line-clamp-1">
                             {rp.title}
                           </h3>
-                          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4">
+                          <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-4 font-normal">
                             {rp.short_description || "BiHocam uzman kadrosuyla hazırlanan LGS ve YKS programları; canlı ders, deneme ve rehberlik desteğiyle tek platformda kolaylaşıyor."}
                           </p>
                           
-                          <div className="flex items-center gap-1 text-sm font-bold text-gray-700 mb-2">
-                            <span className="text-yellow-500 text-base">★</span>
+                          <div className="flex items-center gap-1 text-sm font-bold text-slate-300 mb-2">
+                            <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                             <span>{rp.rating || 4.8}</span>
-                            <span className="text-gray-400 font-semibold text-xs">({rp.review_count || 84})</span>
+                            <span className="text-slate-500 font-normal text-xs">({rp.review_count || 84})</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Footer Info */}
-                      <div className="px-6 pb-6 pt-4 flex items-center justify-between border-t border-gray-50 bg-slate-50/20">
+                      <div className="px-6 pb-6 pt-4 flex items-center justify-between border-t border-white/5 bg-white/[0.01]">
                         <div>
-                          <p className="text-rose-500 font-black text-xl">{formatProgramPrice(rp.price)}</p>
-                          <p className="text-[8px] text-gray-400 font-extrabold uppercase tracking-widest">+ KDV</p>
+                          <p className="text-emerald-400 font-black font-mono text-xl">{formatProgramPrice(rp.price)}</p>
+                          <p className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">+ KDV</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="bg-rose-50 text-rose-500 text-[10px] font-extrabold px-2.5 py-1 rounded-lg border border-rose-100">
-                            %95
-                          </span>
-                          <span 
-                            className="px-5 py-2.5 bg-rose-500 text-white text-xs font-bold rounded-xl hover:bg-rose-600 transition-colors shadow-sm hover:shadow cursor-pointer"
-                          >
-                            Detay
-                          </span>
-                        </div>
+                        <span className="btn-21st-primary px-4 py-2 text-xs font-bold">
+                          İncele →
+                        </span>
                       </div>
                     </div>
                   </Link>
@@ -1819,68 +1617,74 @@ export default function Home() {
       {/* SİZİ ARAYABİLİRİZ */}
       <motion.section 
         initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={fadeUpVariants}
-        className="py-12 bg-slate-50"
+        className="py-16 bg-[#07090E] border-t border-white/10"
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gray-200/50 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row gap-8 items-center justify-between">
-            <div className="space-y-4 md:w-1/2">
-               <div className="text-blue-600 font-bold uppercase tracking-wider text-sm">SİZİ ARAYABİLİRİZ</div>
-               <h3 className="text-3xl font-black text-slate-900">Numaranızı bırakabilirsiniz.</h3>
-               <p className="text-slate-700 text-sm font-medium">
-                 Size aşağıdaki kurumsal iletişim hattımızdan ulaşacağız: <br />
-                 <span className="font-bold text-slate-900">+90 (850) 840 55 43</span>
+          <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row gap-8 items-center justify-between backdrop-blur-xl">
+            <div className="space-y-3 md:w-1/2">
+               <div className="badge-21st border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+                 <span>BİZE DANIŞIN</span>
+               </div>
+               <h3 className="text-2xl sm:text-3xl font-black text-white font-display">Sizi Ücretsiz Arayalım</h3>
+               <p className="text-slate-400 text-sm font-normal leading-relaxed">
+                 Hedeflerinize en uygun eğitmen ve program planlamasını eğitim uzmanlarımızla birlikte yapın: <br />
+                 <span className="font-mono font-bold text-emerald-400 text-base">+90 (850) 840 55 43</span>
                </p>
             </div>
-            <div className="w-full md:w-1/2 space-y-4">
-               <input type="text" placeholder="Adınız ve soyadınız" className="w-full px-5 py-4 rounded-xl border border-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-               <input type="tel" placeholder="Telefon 5xx xxx xx xx" className="w-full px-5 py-4 rounded-xl border border-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-               <button className="w-full bg-orange-400 hover:bg-orange-500 text-white font-bold py-4 rounded-xl shadow-md transition-colors">
-                 Arama Talebi Oluştur
+            <div className="w-full md:w-1/2 space-y-3">
+               <input 
+                 type="text" 
+                 placeholder="Adınız ve Soyadınız" 
+                 className="w-full px-4 py-3.5 rounded-xl border border-white/10 bg-slate-950/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-emerald-500/60" 
+               />
+               <input 
+                 type="tel" 
+                 placeholder="Telefon (05xx xxx xx xx)" 
+                 className="w-full px-4 py-3.5 rounded-xl border border-white/10 bg-slate-950/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-emerald-500/60" 
+               />
+               <button className="btn-21st-primary w-full py-3.5 text-sm font-bold">
+                 Arama Talebi Gönder →
                </button>
             </div>
           </div>
         </div>
       </motion.section>
 
-      {/* Become an Instructor Dedicated Promo Section (dersheryerde.com Vibe) */}
-      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-white relative overflow-hidden">
-        <div className="absolute -top-32 -right-32 w-[30rem] h-[30rem] bg-indigo-50 rounded-full blur-3xl -z-10"></div>
-        <div className="absolute -bottom-32 -left-32 w-[30rem] h-[30rem] bg-teal-50 rounded-full blur-3xl -z-10"></div>
-        
+      {/* Become an Instructor Dedicated Promo Section */}
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-slate-950 relative overflow-hidden border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-[3rem] p-8 md:p-16 text-white shadow-2xl relative overflow-hidden">
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0YzAtMS4xLS45LTItMi0ycy0yIC45LTIgMiAuOSAyIDIgMiAyLS45IDItMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30"></div>
-            
+          <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-emerald-950/40 rounded-[2.5rem] p-8 md:p-16 text-white border border-white/10 shadow-2xl relative overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
               <div className="space-y-6">
-                <div className="inline-flex px-4 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-bold uppercase tracking-wider">
-                  Eğitmen Kadromuza Katılın
+                <div className="badge-21st border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+                  <span>EĞİTMEN KADROMUZA KATILIN</span>
                 </div>
-                <h2 className="text-4xl md:text-5xl font-black tracking-tight leading-tight">
-                  Bilginizi Kazanca Dönüştürün!
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-display tracking-tight leading-tight">
+                  Bilginizi Değere ve Kazanca Dönüştürün!
                 </h2>
-                <p className="text-indigo-100/80 leading-relaxed font-medium">
+                <p className="text-slate-300 leading-relaxed font-normal text-base">
                   BiHocam çatısı altında ders vererek binlerce öğrenciye ulaşabilir, kendi çalışma saatlerinizi belirleyebilir, modern yapay zeka araçlarıyla ders planlarınızı kolayca hazırlayabilirsiniz.
                 </p>
                 <div className="space-y-3 pt-2">
                   {[
-                    "Kendi ders saatlerinizi ve ücretinizi serbestçe belirleyin.",
-                    "Öğrenci eşleştirme sistemimiz ile derslerinizi anında başlatın.",
+                    "Kendi ders saatlerinizi ve saatlik ücretinizi serbestçe belirleyin.",
+                    "Öğrenci talep masasında açılan ilanlara doğrudan teklif verin.",
                     "Yapay zeka asistanı desteği ile ders hazırlığı ve takibini kolaylaştırın.",
-                    "Haftalık kazanç ödemeleri ve şeffaf IBAN hesap yönetimi.",
+                    "Haftalık kazanç ödemeleri ve GİB VUK uyumlu yasal altyapı güvencesi.",
                   ].map((item, idx) => (
                     <div key={idx} className="flex items-start gap-3">
-                      <span className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-xs text-white font-bold flex-shrink-0 mt-0.5">✓</span>
-                      <span className="text-sm font-semibold text-slate-100">{item}</span>
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm font-medium text-slate-300">{item}</span>
                     </div>
                   ))}
                 </div>
-                <div className="pt-6">
+                <div className="pt-4">
                   <Link
                     href="/become-instructor"
-                    className="inline-flex px-8 py-4 bg-gradient-to-r from-teal-400 to-teal-500 text-slate-900 font-bold rounded-2xl hover:shadow-xl hover:shadow-teal-400/20 transform hover:-translate-y-0.5 transition-all"
+                    className="btn-21st-primary px-8 py-4 text-sm font-bold inline-flex items-center gap-2"
                   >
-                    Hemen Başvuruda Bulun →
+                    <span>Eğitmen Başvurusu Yap</span>
+                    <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
               </div>
@@ -1892,7 +1696,7 @@ export default function Home() {
                   onError={(e) => {
                     e.currentTarget.src = "https://images.unsplash.com/photo-1531497865144-0464ef8fb9a9?auto=format&fit=crop&w=600&q=80";
                   }}
-                  className="w-full h-[320px] md:h-[400px] object-cover drop-shadow-2xl rounded-[2.5rem] border border-white/10 shadow-2xl"
+                  className="w-full h-[320px] md:h-[400px] object-cover rounded-3xl border border-white/10 shadow-2xl"
                 />
               </div>
             </div>
@@ -1902,30 +1706,30 @@ export default function Home() {
 
       {/* Blog Posts Section */}
       {blogPosts && blogPosts.length > 0 && (
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-slate-50">
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-[#07090E] border-t border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
               <div className="space-y-2">
-                <h2 className="text-3xl font-black text-gray-900 tracking-tight">Son Yazılarımız</h2>
-                <p className="text-gray-500 font-semibold text-sm">
-                  Eğitim dünyasındaki güncel gelişmeler, çalışma taktikleri ve rehberlik içeriklerimiz
+                <h2 className="text-3xl font-black text-white font-display tracking-tight">Rehberlik & Blog</h2>
+                <p className="text-slate-400 font-normal text-sm">
+                  Eğitim dünyasındaki güncel gelişmeler, çalışma taktikleri ve sınav analizleri.
                 </p>
               </div>
               <Link
                 href="/blog"
-                className="text-teal-600 hover:text-teal-700 font-bold text-sm inline-flex items-center gap-1 group"
+                className="text-emerald-400 hover:text-emerald-300 font-bold text-sm inline-flex items-center gap-1 group"
               >
-                Tüm Blog Yazıları <span className="group-hover:translate-x-1 transition-transform">→</span>
+                Tüm Yazılar <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
               {blogPosts.slice(0, 3).map((post) => (
                 <Link key={post.slug} href={`/blog/${post.slug}`} className="group flex flex-col h-full">
-                  <div className="bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full">
+                  <div className="bg-slate-900/60 rounded-3xl border border-white/10 shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full backdrop-blur-xl">
                     <div>
                       {/* Featured Image */}
-                      <div className="aspect-video bg-gradient-to-br from-teal-500 to-indigo-600 relative overflow-hidden">
+                      <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 relative overflow-hidden">
                         <img
                           src={post.featured_image_url || getFallbackBlogImage(post.slug)}
                           alt={post.title}
@@ -1935,15 +1739,15 @@ export default function Home() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                         {post.categories && post.categories.length > 0 && (
-                          <span className="absolute top-3 left-3 px-2.5 py-1 bg-teal-500 text-white text-[10px] font-bold rounded-lg shadow-md uppercase tracking-wider">
+                          <span className="absolute top-3 left-3 px-2.5 py-1 bg-slate-950/80 backdrop-blur-md border border-white/10 text-emerald-300 text-[10px] font-bold rounded-lg uppercase tracking-wider">
                             {post.categories[0].name}
                           </span>
                         )}
                       </div>
 
                       {/* Card Body */}
-                      <div className="p-6 space-y-3">
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                      <div className="p-6 space-y-2.5">
+                        <p className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">
                           {post.published_at
                             ? new Date(post.published_at).toLocaleDateString("tr-TR", {
                                 year: "numeric",
@@ -1952,18 +1756,18 @@ export default function Home() {
                               })
                             : ""}
                         </p>
-                        <h3 className="font-extrabold text-gray-900 group-hover:text-teal-600 transition-colors leading-snug line-clamp-2 text-lg">
+                        <h3 className="font-bold text-white group-hover:text-emerald-300 transition-colors leading-snug line-clamp-2 text-base sm:text-lg">
                           {post.title}
                         </h3>
-                        <p className="text-xs text-gray-500 line-clamp-3 leading-relaxed">
+                        <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed font-normal">
                           {post.excerpt || "BiHocam rehberlik ekibinin en güncel analizlerini ve eğitim tavsiyelerini hemen inceleyin."}
                         </p>
                       </div>
                     </div>
 
                     {/* Card Footer */}
-                    <div className="p-6 border-t border-gray-100 flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 font-bold text-xs shadow-inner flex-shrink-0">
+                    <div className="p-6 border-t border-white/5 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-emerald-400 font-bold text-xs border border-white/10 flex-shrink-0">
                         {post.author?.avatar_url ? (
                           <img src={post.author.avatar_url} alt={post.author.full_name} className="w-full h-full rounded-full object-cover" />
                         ) : (
@@ -1971,8 +1775,8 @@ export default function Home() {
                         )}
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-gray-900 leading-none">{post.author?.full_name || "BiHocam Yazar"}</p>
-                        <p className="text-[9px] text-gray-400 font-semibold mt-0.5">Yazar</p>
+                        <p className="text-xs font-semibold text-white leading-none">{post.author?.full_name || "BiHocam Yazar"}</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">Eğitim Danışmanı</p>
                       </div>
                     </div>
                   </div>
@@ -1984,15 +1788,20 @@ export default function Home() {
       )}
 
       {/* ══════════════════════════════════════════════════════ */}
-      {/* FAQ SECTION - OBJECTION BUSTER ACCORDION                */}
+      {/* FAQ SECTION - 21ST.DEV ACCORDION                       */}
       {/* ══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-white relative overflow-hidden border-t border-slate-100">
+      <section className="py-24 bg-slate-950 relative overflow-hidden border-t border-white/10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16">
-            <span className="inline-block px-4 py-1.5 bg-teal-100 text-teal-700 text-xs font-bold uppercase tracking-widest rounded-full mb-4">Aklınızdaki Sorular</span>
-            <h2 className="text-4xl font-black text-slate-900 mb-4">Sıkça Sorulan Sorular</h2>
-            <p className="text-slate-500 font-medium max-w-2xl mx-auto text-base">
-              Canlı ders süreçleri, ödemeler ve eğitmenler hakkında merak ettiğiniz tüm detaylar.
+          <div className="text-center mb-16 space-y-3">
+            <div className="badge-21st border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>AKLINIZDAKİ SORULAR</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white font-display tracking-tight">
+              Sıkça Sorulan Sorular
+            </h2>
+            <p className="text-slate-400 font-normal max-w-2xl mx-auto text-base sm:text-lg">
+              Canlı ders süreçleri, ödemeler, özel ders talepleri ve eğitmenler hakkında tüm detaylar.
             </p>
           </div>
 
@@ -2000,11 +1809,15 @@ export default function Home() {
             {[
               {
                 q: "Canlı dersler için bilgisayarıma ek bir uygulama kurmam gerekiyor mu?",
-                a: "Hayır. BiHocam canlı dersleri tamamen tarayıcınız üzerinden çalışacak şekilde geliştirilmiştir. Zoom, Skype veya benzeri herhangi bir ek program indirmenize veya kurmanıza gerek kalmadan, tek tıkla derse bağlanır, interaktif beyaz tahtayı ve kaynakları kullanırsınız."
+                a: "Hayır. BiHocam canlı dersleri tamamen tarayıcınız üzerinden çalışacak şekilde modern WebRTC altyapısıyla geliştirilmiştir. Zoom veya Skype gibi ek program indirmenize gerek kalmadan, tek tıkla derse bağlanır, interaktif beyaz tahtayı ve kaynakları kullanırsınız."
+              },
+              {
+                q: "Özel ders talebi nasıl çalışır ve teklifleri nasıl değerlendiririm?",
+                a: "İhtiyaç duyduğunuz branşı, sınıf düzeyini ve bütçe aralığınızı belirterek ücretsiz ders talebi açarsınız. İlgili branştaki onaylı öğretmenler talebinizi inceler ve size özel saatlik ders teklifleri sunar. Gelen teklifleri profilleri, yorumları ve fiyatları inceleyerek tek tıkla kabul edebilirsiniz."
               },
               {
                 q: "Eğitmenlerinizin kalitesinden ve tecrübesinden nasıl emin oluyorsunuz?",
-                a: "Platformumuzda ders veren her öğretmen; kimlik, diploma/öğretmenlik belgesi doğrulaması, adli sicil kaydı kontrolü ve BiHocam eğitim kurulunun gerçekleştirdiği deneme dersi mülakatı aşamalarını başarıyla geçmek zorundadır. Sadece bu süreçleri geçen seçkin öğretmenler platformda yer alabilir."
+                a: "Platformumuzda ders veren her öğretmen; kimlik, diploma/öğretmenlik belgesi doğrulaması, adli sicil kaydı kontrolü ve BiHocam eğitim kurulunun gerçekleştirdiği deneme dersi mülakatı aşamalarını başarıyla geçmek zorundadır. Yalnızca bu süreçleri geçen seçkin öğretmenler platformda yer alabilir."
               },
               {
                 q: "Memnun kalmadığım takdirde ders ücretimi iade alabilir miyim?",
@@ -2012,7 +1825,7 @@ export default function Home() {
               },
               {
                 q: "Ödemeler nasıl yapılıyor? Taksit seçeneği var mı?",
-                a: "Ödemeleriniz BDDK onaylı İyzico altyapısı üzerinden 3D Secure güvencesiyle gerçekleştirilir. Tüm kredi kartları ile peşin fiyatına taksit veya banka kartlarıyla güvenli peşin ödeme yapabilirsiniz."
+                a: "Ödemeleriniz BDDK lisanslı güvenli ödeme altyapısı üzerinden 3D Secure ve emanet havuz korumasıyla gerçekleştirilir. Tüm kredi kartları ile peşin fiyatına 6 taksite varan seçeneklerle veya banka kartlarıyla güvenli ödeme yapabilirsiniz. Öğretmen dersi tamamlamadan ücret havuzdan aktarılmaz."
               },
               {
                 q: "Satın aldığım ders saatlerini ne kadar süre içinde kullanmalıyım?",
@@ -2021,15 +1834,15 @@ export default function Home() {
             ].map((faq, idx) => (
               <div
                 key={idx}
-                className="border border-slate-100 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                className="border border-white/10 rounded-2xl overflow-hidden bg-slate-900/60 backdrop-blur-xl hover:border-white/20 transition-all duration-200"
               >
                 <button
                   type="button"
                   onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
-                  className="w-full p-6 text-left flex items-center justify-between gap-4 font-bold text-slate-800 hover:text-teal-600 transition-colors"
+                  className="w-full p-6 text-left flex items-center justify-between gap-4 font-bold text-slate-200 hover:text-emerald-300 transition-colors"
                 >
-                  <span>{faq.q}</span>
-                  <span className="text-xl text-teal-600 font-mono select-none">
+                  <span className="text-sm sm:text-base">{faq.q}</span>
+                  <span className="text-lg text-emerald-400 font-mono select-none flex-shrink-0">
                     {activeFaq === idx ? "−" : "+"}
                   </span>
                 </button>
@@ -2041,7 +1854,7 @@ export default function Home() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.2, ease: "easeInOut" }}
                     >
-                      <div className="px-6 pb-6 text-slate-600 text-sm leading-relaxed border-t border-slate-50 pt-4 font-medium bg-slate-50/20">
+                      <div className="px-6 pb-6 text-slate-300 text-sm leading-relaxed border-t border-white/5 pt-4 font-normal bg-white/[0.01]">
                         {faq.a}
                       </div>
                     </motion.div>
@@ -2053,21 +1866,33 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Teal/Emerald Registration CTA Banner Section */}
-      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-12 bg-gradient-to-r from-teal-600 to-emerald-600 border-y border-teal-700/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-          <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-none">
-            Eğitim Yolculuğunuza Bugün Başlayın
+      {/* 21ST.DEV FINAL CTA BANNER */}
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-gradient-to-r from-slate-950 via-emerald-950/50 to-slate-950 border-y border-emerald-500/20 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-subtle opacity-40 pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 relative z-10">
+          <div className="badge-21st border-emerald-500/30 bg-emerald-500/10 text-emerald-400 mx-auto">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>HEMEN BAŞLAYIN</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white font-display tracking-tight leading-tight">
+            Eğitim Hedeflerinize Bugün Adım Atın
           </h2>
-          <p className="text-white/90 font-medium text-sm md:text-base max-w-xl mx-auto">
-            Binlerce öğrenci ile birlikte öğrenmeye başlayın
+          <p className="text-slate-300 font-normal text-base sm:text-lg max-w-xl mx-auto">
+            Binlerce öğrenci ve yüzlerce doğrulanmış eğitmen BiHocam&apos;da buluşuyor.
           </p>
-          <div className="pt-2">
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/tenders/new"
+              className="btn-21st-primary px-8 py-4 text-sm sm:text-base font-bold flex items-center justify-center gap-2"
+            >
+              <span>Ders Talebi Aç</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
             <Link
               href="/register"
-              className="inline-flex px-8 py-3.5 bg-white text-teal-600 hover:text-teal-700 font-bold rounded-full hover:shadow-xl hover:shadow-teal-950/20 transform hover:-translate-y-0.5 hover:scale-[1.03] transition-all text-sm"
+              className="btn-21st-secondary px-8 py-4 text-sm sm:text-base font-bold"
             >
-              Ücretsiz Kayıt Ol →
+              Ücretsiz Kayıt Ol
             </Link>
           </div>
         </div>

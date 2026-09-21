@@ -1,0 +1,30 @@
+{
+    email admin@bihocam.com
+}
+
+bihocam.com, www.bihocam.com {
+    encode zstd gzip
+
+    # Güvenlik Başlıkları
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # 5651 ve GİB için Gerçek İstemci Başlıklarını Aktar
+    handle /api/* {
+        reverse_proxy backend:8000 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Port {remote_port}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Next.js Frontend SSR & Static
+    handle {
+        reverse_proxy frontend:3000
+    }
+}

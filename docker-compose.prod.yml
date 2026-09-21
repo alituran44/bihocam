@@ -1,0 +1,91 @@
+version: "3.8"
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: bihocam_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3 (QUIC)
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - bihocam_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bihocam_frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://bihocam.com/api/v1
+    networks:
+      - bihocam_net
+    expose:
+      - "3000"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bihocam_backend
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4 --proxy-headers --forwarded-allow-ips="*"
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql+asyncpg://bihocam_user:bihocam_secure_pass_2026@db:5432/bihocam_db
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+    depends_on:
+      - db
+      - redis
+    networks:
+      - bihocam_net
+    expose:
+      - "8000"
+
+  db:
+    image: postgres:16-alpine
+    container_name: bihocam_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=bihocam_user
+      - POSTGRES_PASSWORD=bihocam_secure_pass_2026
+      - POSTGRES_DB=bihocam_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - bihocam_net
+    expose:
+      - "5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: bihocam_redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - bihocam_net
+    expose:
+      - "6379"
+
+volumes:
+  caddy_data:
+  caddy_config:
+  postgres_data:
+  redis_data:
+
+networks:
+  bihocam_net:
+    driver: bridge
