@@ -10,9 +10,7 @@ import {
   Clock, 
   TrendingUp, 
   ArrowUpRight,
-  CheckCircle2,
   Lock,
-  Zap,
   ArrowRight
 } from "lucide-react";
 
@@ -141,27 +139,7 @@ export default function BentoGridSection() {
             badge="Akıllı Teklif Masası"
             icon={<Clock className="w-6 h-6" />}
             href="/tenders"
-          >
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 space-y-2.5">
-              <div className="flex items-center justify-between text-xs text-slate-600 font-semibold border-b border-slate-200/80 pb-2">
-                <span className="text-emerald-700 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600 animate-ping" />
-                  Güncel Ders Talepleri
-                </span>
-                <span className="text-slate-500">Anlık 4 Teklif</span>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs sm:text-sm bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-xs">
-                  <span className="font-semibold text-slate-800">YKS Matematik - Limit & Türev</span>
-                  <span className="font-mono font-bold text-emerald-700">₺1.500/saat</span>
-                </div>
-                <div className="flex items-center justify-between text-xs sm:text-sm bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-xs">
-                  <span className="font-semibold text-slate-800">LGS Fen - Basit Makineler</span>
-                  <span className="font-mono font-bold text-emerald-700">₺1.350/saat</span>
-                </div>
-              </div>
-            </div>
-          </BentoCard>
+          />
 
           {/* Card 2: Doğrulanmış Eğitmenler */}
           <BentoCard
@@ -170,22 +148,7 @@ export default function BentoGridSection() {
             badge="%100 Doğrulanmış"
             icon={<ShieldCheck className="w-6 h-6" />}
             href="/teachers"
-          >
-            <div className="space-y-2.5 pt-1">
-              <div className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span className="font-medium">Akademik geçmiş ve diploma kontrolü</span>
-              </div>
-              <div className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span className="font-medium">MEB ve ÖSYM sınav uzmanlığı mülakatı</span>
-              </div>
-              <div className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span className="font-medium">Şeffaf öğrenci ve veli referansları</span>
-              </div>
-            </div>
-          </BentoCard>
+          />
 
           {/* Card 3: Canlı Etkileşimli Ders Odaları */}
           <BentoCard
@@ -194,18 +157,7 @@ export default function BentoGridSection() {
             badge="WebRTC Gücü"
             icon={<Video className="w-6 h-6" />}
             href="/courses"
-          >
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="rounded-2xl bg-emerald-50 border border-emerald-200/80 p-3 text-center">
-                <span className="text-2xl font-black text-emerald-700 font-mono">0.2s</span>
-                <p className="text-xs text-emerald-800 font-medium mt-0.5">Ultra Düşük Gecikme</p>
-              </div>
-              <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-3 text-center flex flex-col items-center justify-center">
-                <Zap className="w-5 h-5 text-amber-500 mb-1" />
-                <p className="text-xs text-slate-700 font-semibold">Sıfır Kurulum</p>
-              </div>
-            </div>
-          </BentoCard>
+          />
 
           {/* Card 4: Yapay Zeka Analiz & Gelişim Takibi */}
           <BentoCard
@@ -214,22 +166,7 @@ export default function BentoGridSection() {
             badge="AI Koçluk"
             icon={<TrendingUp className="w-6 h-6" />}
             href="/tanisma-dersi"
-          >
-            <div className="grid grid-cols-3 gap-2.5 pt-1">
-              <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-3 text-center">
-                <div className="text-xl font-black text-slate-900 font-mono">%94</div>
-                <div className="text-[11px] text-slate-600 font-medium mt-0.5">Hedefe Ulaşma</div>
-              </div>
-              <div className="rounded-2xl bg-emerald-50 border border-emerald-200/80 p-3 text-center">
-                <div className="text-xl font-black text-emerald-700 font-mono">15 dk</div>
-                <div className="text-[11px] text-emerald-800 font-medium mt-0.5">Ücretsiz Tanışma</div>
-              </div>
-              <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-3 text-center">
-                <div className="text-xl font-black text-amber-600 font-mono">4.9/5</div>
-                <div className="text-[11px] text-slate-600 font-medium mt-0.5">Memnuniyet</div>
-              </div>
-            </div>
-          </BentoCard>
+          />
 
           {/* Card 5: GİB & VUK Yasal Güvence */}
           <BentoCard
@@ -237,18 +174,7 @@ export default function BentoGridSection() {
             description="Ödemeniz ders tamamlanıp onay verene kadar BDDK lisanslı emanet havuzda güvende kalır. 12 taksit ve resmi e-fatura desteği."
             badge="GİB & VUK Uyumlu"
             icon={<Lock className="w-6 h-6" />}
-          >
-            <div className="space-y-2 pt-1">
-              <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 border border-slate-200/80 p-2.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0" />
-                <span className="text-xs sm:text-sm text-slate-700 font-semibold">BDDK Lisanslı Emanet Havuz Koruması</span>
-              </div>
-              <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 border border-slate-200/80 p-2.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0" />
-                <span className="text-xs sm:text-sm text-slate-700 font-semibold">%100 Koşulsuz Ücret İade Garantisi</span>
-              </div>
-            </div>
-          </BentoCard>
+          />
 
           {/* Card 6: Hemen Başla CTA */}
           <BentoCard
