@@ -6,9 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.core.security import create_access_token, create_refresh_token
-from app.db.session import get_db
+from app.db.session import get_db, AsyncSessionLocal
 from app.models.user import User
 from app.schemas.user import Token, UserCreate, UserResponse
+from app.services.email_service import EmailService
 from app.services.user_service import authenticate_user, create_user, get_user_by_email, get_user_by_id
 
 router = APIRouter()
