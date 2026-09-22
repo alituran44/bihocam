@@ -1042,66 +1042,66 @@ export default function Home() {
             </div>
 
             {/* Card 2 - Birebir Canlı Dersler */}
-            <div className="bg-slate-900/60 rounded-3xl border border-white/10 p-8 backdrop-blur-xl hover:border-emerald-500/40 hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+            <div className="bg-slate-50 rounded-3xl border border-slate-200/90 p-8 hover:bg-white hover:border-emerald-500/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
               <div className="space-y-5">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
                   <Users className="w-6 h-6" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
+                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
                     Birebir Canlı Ders
                   </h3>
-                  <p className="text-slate-400 text-sm leading-relaxed font-normal">
+                  <p className="text-slate-600 text-sm leading-relaxed font-normal">
                     Öğrencinin anlama hızına uygun, interaktif beyaz tahta ve anlık soru-cevapla desteklenen canlı seanslar.
                   </p>
                 </div>
               </div>
-              <div className="mt-6 pt-4 border-t border-white/5">
-                <Link href="/courses" className="text-emerald-400 font-bold text-xs inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <div className="mt-6 pt-4 border-t border-slate-200/80">
+                <Link href="/courses" className="text-emerald-700 font-bold text-xs inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                   Daha Fazla Öğren <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
 
             {/* Card 3 - Her Derse Özel Kaynaklar */}
-            <div className="bg-slate-900/60 rounded-3xl border border-white/10 p-8 backdrop-blur-xl hover:border-emerald-500/40 hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+            <div className="bg-slate-50 rounded-3xl border border-slate-200/90 p-8 hover:bg-white hover:border-emerald-500/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
               <div className="space-y-5">
-                <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-600 group-hover:scale-110 transition-transform">
                   <BookOpen className="w-6 h-6" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
+                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
                     Özel Dijital Kaynaklar
                   </h3>
-                  <p className="text-slate-400 text-sm leading-relaxed font-normal">
+                  <p className="text-slate-600 text-sm leading-relaxed font-normal">
                     Ders PDF&apos;leri, yeni nesil soru bankaları ve konu özetleri bulut arşivinizde 7/24 erişiminize açıktır.
                   </p>
                 </div>
               </div>
-              <div className="mt-6 pt-4 border-t border-white/5">
-                <Link href="/courses" className="text-emerald-400 font-bold text-xs inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <div className="mt-6 pt-4 border-t border-slate-200/80">
+                <Link href="/courses" className="text-emerald-700 font-bold text-xs inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                   Daha Fazla Öğren <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
 
             {/* Card 4 - Ders Sonu Öğrenme Raporları */}
-            <div className="bg-slate-900/60 rounded-3xl border border-white/10 p-8 backdrop-blur-xl hover:border-emerald-500/40 hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
+            <div className="bg-slate-50 rounded-3xl border border-slate-200/90 p-8 hover:bg-white hover:border-emerald-500/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
               <div className="space-y-5">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
                   <Award className="w-6 h-6" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
+                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
                     Haftalık İlerleme Karnesi
                   </h3>
-                  <p className="text-slate-400 text-sm leading-relaxed font-normal">
+                  <p className="text-slate-600 text-sm leading-relaxed font-normal">
                     İşlenen kazanımlar, öğretmen geri bildirimleri ve yapay zeka analizleriyle gelişim veli ve öğrenciye raporlanır.
                   </p>
                 </div>
               </div>
-              <div className="mt-6 pt-4 border-t border-white/5">
-                <Link href="/courses" className="text-emerald-400 font-bold text-xs inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <div className="mt-6 pt-4 border-t border-slate-200/80">
+                <Link href="/courses" className="text-emerald-700 font-bold text-xs inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                   Daha Fazla Öğren <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -1111,35 +1111,35 @@ export default function Home() {
       </motion.section>
 
       {/* ══════════════════════════════════════════════════════ */}
-      {/* WHY BIHOCAM? - 21ST.DEV COMPARISON TABLE               */}
+      {/* WHY BIHOCAM? - COMPARISON TABLE (LIGHT THEME)          */}
       {/* ══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-[#07090E] relative overflow-hidden border-t border-white/10">
+      <section className="py-24 bg-slate-50/70 relative overflow-hidden border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16 space-y-3">
-            <div className="badge-21st border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
-              <Sparkles className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
               <span>ŞEFFAF KARŞILAŞTIRMA</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white font-display tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 font-display tracking-tight">
               Neden BiHocam&apos;ı Tercih Etmelisiniz?
             </h2>
-            <p className="text-slate-400 font-normal max-w-2xl mx-auto text-base sm:text-lg">
+            <p className="text-slate-600 font-normal max-w-2xl mx-auto text-base sm:text-lg">
               Geleneksel dershane ve verimsiz yol kayıplarından kurtulun; birebir odaklı modern eğitim standardına geçin.
             </p>
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden lg:block overflow-hidden rounded-3xl border border-white/10 shadow-2xl bg-slate-900/40 backdrop-blur-xl">
+          <div className="hidden lg:block overflow-hidden rounded-3xl border border-slate-200 shadow-xl bg-white">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-white/[0.02] border-b border-white/10">
-                  <th className="p-6 text-xs font-bold text-slate-400 uppercase tracking-wider w-1/4">Özellikler</th>
-                  <th className="p-6 text-xs font-black text-emerald-400 uppercase tracking-wider w-1/4 bg-emerald-500/10 border-x border-emerald-500/20 text-center">BiHocam Birebir</th>
-                  <th className="p-6 text-xs font-bold text-slate-400 uppercase tracking-wider w-1/4 text-center">Fiziksel Özel Ders</th>
-                  <th className="p-6 text-xs font-bold text-slate-400 uppercase tracking-wider w-1/4 text-center">Geleneksel Dershane</th>
+                <tr className="bg-slate-50/80 border-b border-slate-200">
+                  <th className="p-6 text-xs font-bold text-slate-600 uppercase tracking-wider w-1/4">Özellikler</th>
+                  <th className="p-6 text-xs font-black text-emerald-950 uppercase tracking-wider w-1/4 bg-emerald-50/90 border-x border-emerald-200 text-center">BiHocam Birebir</th>
+                  <th className="p-6 text-xs font-bold text-slate-600 uppercase tracking-wider w-1/4 text-center">Fiziksel Özel Ders</th>
+                  <th className="p-6 text-xs font-bold text-slate-600 uppercase tracking-wider w-1/4 text-center">Geleneksel Dershane</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-slate-300 text-sm">
+              <tbody className="divide-y divide-slate-100 text-slate-700 text-sm">
                 {[
                   { name: "Saatlik Ders Ücreti", bihocam: "Ekonomik & Esnek Paketler", ozel: "Yüksek & Peşin Zorunluluğu", dershane: "Yıllık Katı Senetler" },
                   { name: "Eğitmen Seçimi", bihocam: "✓ 100+ Onaylı Hoca & Teklif Alabilme", ozel: "✗ Referansla Sınırlı Çevre", dershane: "✗ Atanmış Öğretmen (Seçim Yok)" },
@@ -1148,11 +1148,11 @@ export default function Home() {
                   { name: "Ulaşım / Zaman Kaybı", bihocam: "✓ 0 Dakika (Ev Konforunda Online)", ozel: "✗ Trafikte Günde 1-2 Saat Kayıp", dershane: "✗ Her Gün Git-Gel Yol Yorgunluğu" },
                   { name: "Güvenlik & Doğrulama", bihocam: "✓ Diploma, Sabıka ve Mülakat Onaylı", ozel: "✗ Belgesiz / Kontrolsüz Güven", dershane: "✓ Kurumsal Denetimli Öğretmen" },
                 ].map((row, idx) => (
-                  <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="p-6 text-white font-semibold text-sm">{row.name}</td>
-                    <td className="p-6 text-emerald-300 font-bold text-sm bg-emerald-500/10 border-x border-emerald-500/20 text-center">{row.bihocam}</td>
-                    <td className="p-6 text-slate-400 text-sm text-center">{row.ozel}</td>
-                    <td className="p-6 text-slate-400 text-sm text-center">{row.dershane}</td>
+                  <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="p-6 text-slate-900 font-bold text-sm">{row.name}</td>
+                    <td className="p-6 text-emerald-900 font-black text-sm bg-emerald-50/50 border-x border-emerald-200 text-center">{row.bihocam}</td>
+                    <td className="p-6 text-slate-600 font-medium text-sm text-center">{row.ozel}</td>
+                    <td className="p-6 text-slate-600 font-medium text-sm text-center">{row.dershane}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1162,74 +1162,74 @@ export default function Home() {
           {/* Mobile Card Grid View */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:hidden">
             {/* BiHocam Card */}
-            <div className="bg-slate-900/80 rounded-3xl p-6 border-2 border-emerald-500/40 shadow-2xl relative overflow-hidden backdrop-blur-xl">
-              <div className="absolute right-0 top-0 bg-emerald-500 text-slate-950 text-[10px] font-black uppercase px-4 py-1.5 rounded-bl-2xl tracking-wider">Önerilen</div>
-              <h3 className="text-xl font-black text-white mb-4">BiHocam Birebir</h3>
-              <ul className="space-y-3.5 text-sm font-medium text-slate-300">
+            <div className="bg-white rounded-3xl p-6 border-2 border-emerald-500 shadow-xl relative overflow-hidden">
+              <div className="absolute right-0 top-0 bg-emerald-600 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-bl-2xl tracking-wider">Önerilen</div>
+              <h3 className="text-xl font-black text-slate-900 mb-4">BiHocam Birebir</h3>
+              <ul className="space-y-3.5 text-sm font-medium text-slate-700">
                 <li className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <span><strong>Ekonomik & Esnek:</strong> Bütçenize en uygun saat paketini kendiniz belirleyin.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <span><strong>Seçim Özgürlüğü:</strong> 100+ onaylı, tecrübeli öğretmen arasından dilediğinizi seçin veya teklif toplayın.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <span><strong>Sınırsız Tekrar:</strong> İşlenen tüm dersleri kaydedip dilediğiniz an tekrar izleyin.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <span><strong>Yapay Zeka Takibi:</strong> Haftalık gelişim raporlarıyla ilerlemenizi adım adım izleyin.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <span><strong>Ev Konforu:</strong> Yol stresi, yorgunluk ve ulaşım maliyeti olmadan ders yapın.</span>
                 </li>
               </ul>
             </div>
 
             {/* Fiziksel Ozel Ders Card */}
-            <div className="bg-slate-900/50 rounded-3xl p-6 border border-white/10">
-              <h3 className="text-xl font-bold text-white mb-4">Fiziksel Özel Ders</h3>
-              <ul className="space-y-3.5 text-sm text-slate-400 font-normal">
+            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+              <h3 className="text-xl font-bold text-slate-900 mb-4">Fiziksel Özel Ders</h3>
+              <ul className="space-y-3.5 text-sm text-slate-600 font-normal">
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-400 font-bold">✕</span>
+                  <span className="text-rose-500 font-bold">✕</span>
                   <span><strong>Yüksek Maliyet:</strong> Saatlik ders ücretleri ve ulaşım maliyetleri yüksektir.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-400 font-bold">✕</span>
+                  <span className="text-rose-500 font-bold">✕</span>
                   <span><strong>Kısıtlı Seçim:</strong> Sadece yakın çevreden tavsiye ile öğretmen bulabilirsiniz.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-400 font-bold">✕</span>
+                  <span className="text-rose-500 font-bold">✕</span>
                   <span><strong>Tekrar İzleme Yok:</strong> Ders bittiği an her şey unutulur, tekrar izleme şansı yoktur.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-400 font-bold">✕</span>
+                  <span className="text-rose-500 font-bold">✕</span>
                   <span><strong>Yol Yorgunluğu:</strong> Öğretmenin veya öğrencinin git-gel yapması vakit kaybettirir.</span>
                 </li>
               </ul>
             </div>
 
             {/* Geleneksel Dershane Card */}
-            <div className="bg-slate-900/50 rounded-3xl p-6 border border-white/10">
-              <h3 className="text-xl font-bold text-white mb-4">Geleneksel Dershane</h3>
-              <ul className="space-y-3.5 text-sm text-slate-400 font-normal">
+            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+              <h3 className="text-xl font-bold text-slate-900 mb-4">Geleneksel Dershane</h3>
+              <ul className="space-y-3.5 text-sm text-slate-600 font-normal">
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-400 font-bold">✕</span>
+                  <span className="text-rose-500 font-bold">✕</span>
                   <span><strong>Katı Yıllık Senetler:</strong> Memnun kalmasanız dahi yıllık taahhüt ödemek zorundasınız.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-400 font-bold">✕</span>
+                  <span className="text-rose-500 font-bold">✕</span>
                   <span><strong>Atanmış Eğitmen:</strong> Hangi hocanın derse gireceğini kurum belirler, seçemezsiniz.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-400 font-bold">✕</span>
+                  <span className="text-rose-500 font-bold">✕</span>
                   <span><strong>Kalabalık Sınıflar:</strong> 15-20 kişilik sınıflarda soru sorma şansı oldukça düşüktür.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-400 font-bold">✕</span>
+                  <span className="text-rose-500 font-bold">✕</span>
                   <span><strong>Zaman Kaybı:</strong> Her gün dershaneye gidiş-dönüş saatler sürer ve fiziksel yorgunluk verir.</span>
                 </li>
               </ul>
@@ -1239,16 +1239,17 @@ export default function Home() {
       </section>
 
       {/* Popular Categories Grid */}
-      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-slate-950 border-t border-white/10">
+      {/* Popular Categories Grid (Light Theme) */}
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-white border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
             <div className="space-y-2">
-              <h2 className="text-3xl font-black text-white font-display tracking-tight">Branşlara Göre Keşfedin</h2>
-              <p className="text-slate-400 font-normal text-sm">Hangi alanda desteğe ihtiyacınız varsa uzman eğitmenimiz hazır.</p>
+              <h2 className="text-3xl font-black text-slate-900 font-display tracking-tight">Branşlara Göre Keşfedin</h2>
+              <p className="text-slate-600 font-normal text-sm">Hangi alanda desteğe ihtiyacınız varsa uzman eğitmenimiz hazır.</p>
             </div>
             <Link
               href="/courses"
-              className="text-emerald-400 hover:text-emerald-300 font-bold text-sm inline-flex items-center gap-1 group"
+              className="text-emerald-700 hover:text-emerald-800 font-bold text-sm inline-flex items-center gap-1 group"
             >
               Tümünü Gör <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
@@ -1256,26 +1257,26 @@ export default function Home() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
             {[
-              { icon: Target, name: "YKS", iconColor: "text-orange-400", desc: "Üniversite Hazırlık" },
-              { icon: BookOpen, name: "LGS", iconColor: "text-cyan-400", desc: "Lise Hazırlık" },
-              { icon: Zap, name: "Matematik", iconColor: "text-emerald-400", desc: "Analiz & Geometri" },
-              { icon: Sparkles, name: "Fizik", iconColor: "text-purple-400", desc: "Mekanik & Optik" },
-              { icon: Sprout, name: "Kimya", iconColor: "text-teal-400", desc: "Organik & Temel" },
-              { icon: Award, name: "Biyoloji", iconColor: "text-yellow-400", desc: "Genetik & Canlı" },
+              { icon: Target, name: "YKS", iconColor: "text-orange-600", desc: "Üniversite Hazırlık" },
+              { icon: BookOpen, name: "LGS", iconColor: "text-cyan-600", desc: "Lise Hazırlık" },
+              { icon: Zap, name: "Matematik", iconColor: "text-emerald-600", desc: "Analiz & Geometri" },
+              { icon: Sparkles, name: "Fizik", iconColor: "text-purple-600", desc: "Mekanik & Optik" },
+              { icon: Sprout, name: "Kimya", iconColor: "text-teal-600", desc: "Organik & Temel" },
+              { icon: Award, name: "Biyoloji", iconColor: "text-yellow-600", desc: "Genetik & Canlı" },
             ].map((cat) => {
               const IconComponent = cat.icon;
               return (
                 <Link
                   key={cat.name}
                   href={`/courses?category=${cat.name.toLowerCase()}`}
-                  className="group relative p-6 bg-slate-900/60 rounded-2xl border border-white/10 backdrop-blur-xl hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 flex flex-col justify-between overflow-hidden"
+                  className="group relative p-6 bg-slate-50 rounded-2xl border border-slate-200/90 hover:bg-white hover:border-emerald-500/40 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between overflow-hidden"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:border-emerald-500/30 transition-all">
-                    <IconComponent className={`w-5 h-5 ${cat.iconColor}`} />
+                  <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:border-emerald-300 transition-all shadow-xs">
+                    <IconComponent className={`w-6 h-6 ${cat.iconColor}`} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-base mb-0.5 group-hover:text-emerald-300 transition-colors">{cat.name}</h3>
-                    <p className="text-xs text-slate-400 font-normal">{cat.desc}</p>
+                    <h3 className="font-bold text-slate-900 text-base mb-0.5 group-hover:text-emerald-700 transition-colors">{cat.name}</h3>
+                    <p className="text-xs text-slate-600 font-medium">{cat.desc}</p>
                   </div>
                 </Link>
               );
@@ -1284,21 +1285,21 @@ export default function Home() {
         </div>
       </motion.section>
 
-      {/* Featured Courses placements */}
-      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-[#07090E] border-t border-white/10">
+      {/* Featured Courses placements (Light Theme) */}
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-slate-50/50 border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FeaturedCourses limit={6} showTitle={true} />
         </div>
       </motion.section>
 
-      {/* Popular Courses list */}
+      {/* Popular Courses list (Light Theme) */}
       {((featuredCourses && featuredCourses.length > 0) || (courses && courses.length > 0)) && (
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-slate-950 border-t border-white/10">
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-slate-50/80 border-t border-slate-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
               <div className="space-y-2">
-                <h2 className="text-3xl font-black text-white font-display tracking-tight">Popüler Kurslar</h2>
-                <p className="text-slate-400 font-normal text-sm">
+                <h2 className="text-3xl font-black text-slate-900 font-display tracking-tight">Popüler Kurslar</h2>
+                <p className="text-slate-600 font-normal text-sm">
                   {featuredCourses && featuredCourses.length > 0
                     ? "Öne çıkan seçili kurslarımız"
                     : "En çok tercih edilen kurslarımız"}
@@ -1306,7 +1307,7 @@ export default function Home() {
               </div>
               <Link
                 href="/courses"
-                className="text-emerald-400 hover:text-emerald-300 font-bold text-sm inline-flex items-center gap-1 group"
+                className="text-emerald-700 hover:text-emerald-800 font-bold text-sm inline-flex items-center gap-1 group"
               >
                 Tümünü Keşfet <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -1315,10 +1316,10 @@ export default function Home() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {(featuredCourses && featuredCourses.length > 0 ? featuredCourses : courses || []).slice(0, 8).map((course) => (
                 <Link key={course.id} href={`/courses/${course.slug}`} className="group">
-                  <div className="bg-slate-900/60 rounded-2xl border border-white/10 overflow-hidden shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full backdrop-blur-xl">
+                  <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full">
                     <div>
                       {/* Image / Thumbnail placeholder */}
-                      <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 relative overflow-hidden">
+                      <div className="aspect-video bg-slate-100 relative overflow-hidden">
                         {course.thumbnail_path ? (
                           <img
                             src={course.thumbnail_path}
@@ -1326,7 +1327,7 @@ export default function Home() {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-600">
+                          <div className="w-full h-full flex items-center justify-center text-slate-400">
                             <BookOpen className="w-12 h-12" />
                           </div>
                         )}
@@ -1339,29 +1340,29 @@ export default function Home() {
                       
                       {/* Card Content */}
                       <div className="p-5 space-y-2">
-                        <h3 className="font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-2 leading-tight text-sm sm:text-base">
+                        <h3 className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-2 leading-tight text-sm sm:text-base">
                           {course.title}
                         </h3>
-                        <p className="text-xs text-slate-400 font-medium">{course.teacher?.full_name || "Seçkin Eğitmen"}</p>
+                        <p className="text-xs text-slate-500 font-medium">{course.teacher?.full_name || "Seçkin Eğitmen"}</p>
                       </div>
                     </div>
 
-                    <div className="p-5 border-t border-white/5 flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-xs font-bold text-slate-300">
-                        <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                    <div className="p-5 border-t border-slate-100 flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-xs font-bold text-slate-700">
+                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                         <span>4.8</span>
-                        <span className="text-slate-500 font-normal">(84)</span>
+                        <span className="text-slate-400 font-normal">(84)</span>
                       </div>
                       <div className="font-mono font-bold text-sm sm:text-base">
                         {course.discount_price ? (
                           <div className="flex flex-col items-end">
-                            <span className="text-[10px] text-slate-500 line-through">₺{course.price}</span>
-                            <span className="text-emerald-400">₺{course.discount_price}</span>
+                            <span className="text-[10px] text-slate-400 line-through">₺{course.price}</span>
+                            <span className="text-emerald-700 font-black">₺{course.discount_price}</span>
                           </div>
                         ) : course.price === 0 ? (
-                          <span className="text-emerald-400 font-bold">Ücretsiz</span>
+                          <span className="text-emerald-700 font-bold">Ücretsiz</span>
                         ) : (
-                          <span className="text-white">₺{course.price}</span>
+                          <span className="text-slate-900 font-black">₺{course.price}</span>
                         )}
                       </div>
                     </div>
@@ -1380,22 +1381,19 @@ export default function Home() {
           whileInView="visible" 
           viewport={{ once: true, amount: 0.1 }} 
           variants={fadeUpVariants} 
-          className="py-24 bg-[#07090E] relative overflow-hidden border-t border-white/10"
+          className="py-24 bg-slate-50/70 relative overflow-hidden border-t border-slate-200"
         >
-          <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/5 rounded-full filter blur-3xl pointer-events-none" />
-          <div className="absolute bottom-20 right-10 w-72 h-72 bg-indigo-500/5 rounded-full filter blur-3xl pointer-events-none" />
-
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-4">
               <div className="space-y-3">
-                <div className="badge-21st border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
-                  <Headphones className="w-3.5 h-3.5" />
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold uppercase tracking-wider">
+                  <Headphones className="w-3.5 h-3.5 text-emerald-600" />
                   <span>BİHOCAM POPCAST</span>
                 </div>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white font-display tracking-tight">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 font-display tracking-tight">
                   Popcast ile Dinleyerek Öğren
                 </h2>
-                <p className="text-slate-400 font-normal text-base max-w-2xl">
+                <p className="text-slate-600 font-normal text-base max-w-2xl">
                   Eğitmenlerimizin hazırladığı kısa, keyifli sesli ders notlarını dinleyerek konuları pekiştirin. İstediğiniz an favorilerinize ekleyin veya çevrimdışı dinlemek üzere indirin.
                 </p>
               </div>
@@ -1410,11 +1408,11 @@ export default function Home() {
                 return (
                   <div 
                     key={popcast.id} 
-                    className="relative group bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-white/10 p-6 shadow-xl hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between"
+                    className="relative group bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm hover:shadow-xl hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between"
                   >
                     <div>
                       {/* Cover Image / Audio Visualizer */}
-                      <div className="relative aspect-video rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden mb-6 flex items-center justify-center border border-white/10">
+                      <div className="relative aspect-video rounded-2xl bg-slate-100 overflow-hidden mb-6 flex items-center justify-center border border-slate-200">
                         {popcast.cover_image_url ? (
                           <img 
                             src={popcast.cover_image_url} 
@@ -1422,24 +1420,24 @@ export default function Home() {
                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
                           />
                         ) : (
-                          <Headphones className="w-16 h-16 text-slate-600 relative z-10" />
+                          <Headphones className="w-16 h-16 text-slate-400 relative z-10" />
                         )}
-                        <div className="absolute inset-0 bg-slate-950/40 transition-opacity group-hover:bg-slate-950/60" />
+                        <div className="absolute inset-0 bg-slate-900/20 transition-opacity group-hover:bg-slate-900/40" />
 
                         {/* Floating Duration */}
-                        <span className="absolute bottom-3 right-3 bg-slate-950/80 backdrop-blur-md text-white text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg border border-white/10">
+                        <span className="absolute bottom-3 right-3 bg-slate-900/80 backdrop-blur-md text-white text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg">
                           {Math.floor(popcast.duration / 60)}:{(Math.floor(popcast.duration % 60)).toString().padStart(2, '0')}
                         </span>
 
                         {/* Play/Pause overlay */}
                         <button 
                           onClick={() => handlePlayPause(popcast)}
-                          className="absolute w-14 h-14 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all duration-200 z-10"
+                          className="absolute w-14 h-14 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all duration-200 z-10"
                         >
                           {isPlayingThis ? (
-                            <Pause className="w-6 h-6 fill-slate-950 text-slate-950" />
+                            <Pause className="w-6 h-6 fill-white text-white" />
                           ) : (
-                            <Play className="w-6 h-6 fill-slate-950 text-slate-950 translate-x-0.5" />
+                            <Play className="w-6 h-6 fill-white text-white translate-x-0.5" />
                           )}
                         </button>
 
@@ -1456,28 +1454,28 @@ export default function Home() {
 
                       {/* Title & Desc */}
                       <div className="space-y-2">
-                        <h3 className="font-bold text-white group-hover:text-emerald-300 transition-colors text-lg line-clamp-1">
+                        <h3 className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors text-lg line-clamp-1">
                           {popcast.title}
                         </h3>
-                        <p className="text-slate-400 text-sm line-clamp-2 leading-relaxed font-normal">
+                        <p className="text-slate-600 text-sm line-clamp-2 leading-relaxed font-normal">
                           {popcast.description || "Bu popcast için açıklama bulunmamaktadır."}
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-6 pt-5 border-t border-white/5 flex items-center justify-between">
+                    <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between">
                       {/* Teacher Profile */}
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-800 overflow-hidden border border-white/10">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
                           {popcast.teacher?.avatar_url ? (
                             <img src={popcast.teacher.avatar_url} alt={popcast.teacher.full_name} className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-xs font-bold font-mono">
+                            <div className="w-full h-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold font-mono">
                               {popcast.teacher?.full_name?.charAt(0) || "E"}
                             </div>
                           )}
                         </div>
-                        <span className="text-xs font-semibold text-slate-300">{popcast.teacher?.full_name || "Eğitmen"}</span>
+                        <span className="text-xs font-bold text-slate-800">{popcast.teacher?.full_name || "Eğitmen"}</span>
                       </div>
 
                       {/* Action buttons */}
@@ -1485,13 +1483,13 @@ export default function Home() {
                         <button 
                           onClick={(e) => handleToggleFavorite(e, popcast.id, popcast.is_favorited)}
                           disabled={favoriteMutation.isPending}
-                          className={`w-9 h-9 rounded-xl border border-white/10 flex items-center justify-center transition-colors ${popcast.is_favorited ? 'bg-rose-500/20 border-rose-500/40 text-rose-400' : 'bg-white/[0.03] text-slate-400 hover:text-white hover:bg-white/[0.06]'}`}
+                          className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${popcast.is_favorited ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                         >
-                          <Heart className={`w-4 h-4 ${popcast.is_favorited ? 'fill-rose-500' : ''}`} />
+                          <Heart className={`w-4 h-4 ${popcast.is_favorited ? 'fill-rose-500 text-rose-500' : ''}`} />
                         </button>
                         <button 
                           onClick={(e) => handleDownload(e, popcast.audio_url, popcast.title)}
-                          className="w-9 h-9 bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+                          className="w-9 h-9 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center text-slate-600 hover:text-slate-900 transition-colors"
                         >
                           <Download className="w-4 h-4" />
                         </button>
@@ -1550,20 +1548,20 @@ export default function Home() {
         </motion.section>
       )}
 
-      {/* Popular Education Programs list */}
+      {/* Popular Education Programs list (Light Theme) */}
       {educationPrograms && educationPrograms.length > 0 && (
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-slate-950 border-t border-white/10">
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-white border-t border-slate-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
               <div className="space-y-2">
-                <h2 className="text-3xl font-black text-white font-display tracking-tight">Popüler Eğitim Programları</h2>
-                <p className="text-slate-400 font-normal text-sm">
+                <h2 className="text-3xl font-black text-slate-900 font-display tracking-tight">Popüler Eğitim Programları</h2>
+                <p className="text-slate-600 font-normal text-sm">
                   Geleceğinizi şekillendiren kapsamlı hazırlık paketlerimiz
                 </p>
               </div>
               <Link
                 href="/egitim-programlari"
-                className="text-emerald-400 hover:text-emerald-300 font-bold text-sm inline-flex items-center gap-1 group"
+                className="text-emerald-700 hover:text-emerald-800 font-bold text-sm inline-flex items-center gap-1 group"
               >
                 Tümünü Keşfet <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -1574,7 +1572,7 @@ export default function Home() {
                 const cardGradient = getGradientBySlug(rp.slug);
                 return (
                   <Link key={rp.slug} href={`/egitim-programlari/${rp.slug}`} className="group flex flex-col h-full">
-                    <div className="bg-slate-900/60 rounded-3xl border border-white/10 shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full backdrop-blur-xl">
+                    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full">
                       <div>
                         {/* Banner */}
                         <div className={`h-40 bg-gradient-to-br ${cardGradient} flex items-center justify-center p-4 relative`}>
@@ -1583,28 +1581,28 @@ export default function Home() {
                         
                         {/* Content */}
                         <div className="p-6">
-                          <h3 className="font-extrabold text-white text-lg mb-2 group-hover:text-emerald-300 transition-colors leading-tight line-clamp-1">
+                          <h3 className="font-extrabold text-slate-900 text-lg mb-2 group-hover:text-emerald-700 transition-colors leading-tight line-clamp-1">
                             {rp.title}
                           </h3>
-                          <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-4 font-normal">
+                          <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-4 font-normal">
                             {rp.short_description || "BiHocam uzman kadrosuyla hazırlanan LGS ve YKS programları; canlı ders, deneme ve rehberlik desteğiyle tek platformda kolaylaşıyor."}
                           </p>
                           
-                          <div className="flex items-center gap-1 text-sm font-bold text-slate-300 mb-2">
-                            <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                          <div className="flex items-center gap-1 text-sm font-bold text-slate-700 mb-2">
+                            <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
                             <span>{rp.rating || 4.8}</span>
-                            <span className="text-slate-500 font-normal text-xs">({rp.review_count || 84})</span>
+                            <span className="text-slate-400 font-normal text-xs">({rp.review_count || 84})</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Footer Info */}
-                      <div className="px-6 pb-6 pt-4 flex items-center justify-between border-t border-white/5 bg-white/[0.01]">
+                      <div className="px-6 pb-6 pt-4 flex items-center justify-between border-t border-slate-100 bg-slate-50/50">
                         <div>
-                          <p className="text-emerald-400 font-black font-mono text-xl">{formatProgramPrice(rp.price)}</p>
+                          <p className="text-emerald-800 font-black font-mono text-xl">{formatProgramPrice(rp.price)}</p>
                           <p className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">+ KDV</p>
                         </div>
-                        <span className="btn-21st-primary px-4 py-2 text-xs font-bold">
+                        <span className="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors">
                           İncele →
                         </span>
                       </div>
@@ -1617,35 +1615,35 @@ export default function Home() {
         </motion.section>
       )}
 
-      {/* SİZİ ARAYABİLİRİZ */}
+      {/* SİZİ ARAYABİLİRİZ (Light Theme) */}
       <motion.section 
         initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={fadeUpVariants}
-        className="py-16 bg-[#07090E] border-t border-white/10"
+        className="py-16 bg-slate-50/70 border-t border-slate-200"
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row gap-8 items-center justify-between backdrop-blur-xl">
+          <div className="bg-white border border-slate-200/90 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row gap-8 items-center justify-between shadow-xl">
             <div className="space-y-3 md:w-1/2">
-               <div className="badge-21st border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold uppercase tracking-wider">
                  <span>BİZE DANIŞIN</span>
                </div>
-               <h3 className="text-2xl sm:text-3xl font-black text-white font-display">Sizi Ücretsiz Arayalım</h3>
-               <p className="text-slate-400 text-sm font-normal leading-relaxed">
+               <h3 className="text-2xl sm:text-3xl font-black text-slate-900 font-display">Sizi Ücretsiz Arayalım</h3>
+               <p className="text-slate-600 text-sm font-normal leading-relaxed">
                  Hedeflerinize en uygun eğitmen ve program planlamasını eğitim uzmanlarımızla birlikte yapın: <br />
-                 <span className="font-mono font-bold text-emerald-400 text-base">+90 (850) 840 55 43</span>
+                 <span className="font-mono font-bold text-emerald-700 text-base">+90 (850) 840 55 43</span>
                </p>
             </div>
             <div className="w-full md:w-1/2 space-y-3">
                <input 
                  type="text" 
                  placeholder="Adınız ve Soyadınız" 
-                 className="w-full px-4 py-3.5 rounded-xl border border-white/10 bg-slate-950/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-emerald-500/60" 
+                 className="w-full px-4 py-3.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all font-medium" 
                />
                <input 
                  type="tel" 
                  placeholder="Telefon (05xx xxx xx xx)" 
-                 className="w-full px-4 py-3.5 rounded-xl border border-white/10 bg-slate-950/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-emerald-500/60" 
+                 className="w-full px-4 py-3.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all font-medium" 
                />
-               <button className="btn-21st-primary w-full py-3.5 text-sm font-bold">
+               <button className="w-full py-3.5 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all">
                  Arama Talebi Gönder →
                </button>
             </div>
@@ -1707,20 +1705,20 @@ export default function Home() {
         </div>
       </motion.section>
 
-      {/* Blog Posts Section */}
+      {/* Blog Posts Section (Light Theme) */}
       {blogPosts && blogPosts.length > 0 && (
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-[#07090E] border-t border-white/10">
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-slate-50/70 border-t border-slate-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
               <div className="space-y-2">
-                <h2 className="text-3xl font-black text-white font-display tracking-tight">Rehberlik & Blog</h2>
-                <p className="text-slate-400 font-normal text-sm">
+                <h2 className="text-3xl font-black text-slate-900 font-display tracking-tight">Rehberlik & Blog</h2>
+                <p className="text-slate-600 font-normal text-sm">
                   Eğitim dünyasındaki güncel gelişmeler, çalışma taktikleri ve sınav analizleri.
                 </p>
               </div>
               <Link
                 href="/blog"
-                className="text-emerald-400 hover:text-emerald-300 font-bold text-sm inline-flex items-center gap-1 group"
+                className="text-emerald-700 hover:text-emerald-800 font-bold text-sm inline-flex items-center gap-1 group"
               >
                 Tüm Yazılar <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -1729,10 +1727,10 @@ export default function Home() {
             <div className="grid md:grid-cols-3 gap-8">
               {blogPosts.slice(0, 3).map((post) => (
                 <Link key={post.slug} href={`/blog/${post.slug}`} className="group flex flex-col h-full">
-                  <div className="bg-slate-900/60 rounded-3xl border border-white/10 shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full backdrop-blur-xl">
+                  <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full">
                     <div>
                       {/* Featured Image */}
-                      <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 relative overflow-hidden">
+                      <div className="aspect-video bg-slate-100 relative overflow-hidden">
                         <img
                           src={post.featured_image_url || getFallbackBlogImage(post.slug)}
                           alt={post.title}
@@ -1742,7 +1740,7 @@ export default function Home() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                         {post.categories && post.categories.length > 0 && (
-                          <span className="absolute top-3 left-3 px-2.5 py-1 bg-slate-950/80 backdrop-blur-md border border-white/10 text-emerald-300 text-[10px] font-bold rounded-lg uppercase tracking-wider">
+                          <span className="absolute top-3 left-3 px-2.5 py-1 bg-white/95 backdrop-blur-md border border-slate-200 text-emerald-800 text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-xs">
                             {post.categories[0].name}
                           </span>
                         )}
@@ -1759,18 +1757,18 @@ export default function Home() {
                               })
                             : ""}
                         </p>
-                        <h3 className="font-bold text-white group-hover:text-emerald-300 transition-colors leading-snug line-clamp-2 text-base sm:text-lg">
+                        <h3 className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors leading-snug line-clamp-2 text-base sm:text-lg">
                           {post.title}
                         </h3>
-                        <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed font-normal">
+                        <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed font-normal">
                           {post.excerpt || "BiHocam rehberlik ekibinin en güncel analizlerini ve eğitim tavsiyelerini hemen inceleyin."}
                         </p>
                       </div>
                     </div>
 
                     {/* Card Footer */}
-                    <div className="p-6 border-t border-white/5 flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-emerald-400 font-bold text-xs border border-white/10 flex-shrink-0">
+                    <div className="p-6 border-t border-slate-100 flex items-center gap-3 bg-slate-50/40">
+                      <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-800 font-bold text-xs border border-emerald-200 flex-shrink-0">
                         {post.author?.avatar_url ? (
                           <img src={post.author.avatar_url} alt={post.author.full_name} className="w-full h-full rounded-full object-cover" />
                         ) : (
@@ -1778,8 +1776,8 @@ export default function Home() {
                         )}
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-white leading-none">{post.author?.full_name || "BiHocam Yazar"}</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">Eğitim Danışmanı</p>
+                        <p className="text-xs font-bold text-slate-900 leading-none">{post.author?.full_name || "BiHocam Yazar"}</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Eğitim Danışmanı</p>
                       </div>
                     </div>
                   </div>
@@ -1791,19 +1789,19 @@ export default function Home() {
       )}
 
       {/* ══════════════════════════════════════════════════════ */}
-      {/* FAQ SECTION - 21ST.DEV ACCORDION                       */}
+      {/* FAQ SECTION - ACCORDION (LIGHT THEME)                  */}
       {/* ══════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-slate-950 relative overflow-hidden border-t border-white/10">
+      <section className="py-24 bg-white relative overflow-hidden border-t border-slate-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16 space-y-3">
-            <div className="badge-21st border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
-              <HelpCircle className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold uppercase tracking-wider">
+              <HelpCircle className="w-3.5 h-3.5 text-emerald-600" />
               <span>AKLINIZDAKİ SORULAR</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white font-display tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 font-display tracking-tight">
               Sıkça Sorulan Sorular
             </h2>
-            <p className="text-slate-400 font-normal max-w-2xl mx-auto text-base sm:text-lg">
+            <p className="text-slate-600 font-normal max-w-2xl mx-auto text-base sm:text-lg">
               Canlı ders süreçleri, ödemeler, özel ders talepleri ve eğitmenler hakkında tüm detaylar.
             </p>
           </div>
@@ -1837,15 +1835,15 @@ export default function Home() {
             ].map((faq, idx) => (
               <div
                 key={idx}
-                className="border border-white/10 rounded-2xl overflow-hidden bg-slate-900/60 backdrop-blur-xl hover:border-white/20 transition-all duration-200"
+                className="border border-slate-200/90 rounded-2xl overflow-hidden bg-slate-50/70 hover:border-emerald-300 hover:bg-slate-50 transition-all duration-200"
               >
                 <button
                   type="button"
                   onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
-                  className="w-full p-6 text-left flex items-center justify-between gap-4 font-bold text-slate-200 hover:text-emerald-300 transition-colors"
+                  className="w-full p-6 text-left flex items-center justify-between gap-4 font-bold text-slate-900 hover:text-emerald-700 transition-colors"
                 >
                   <span className="text-sm sm:text-base">{faq.q}</span>
-                  <span className="text-lg text-emerald-400 font-mono select-none flex-shrink-0">
+                  <span className="text-lg text-emerald-600 font-mono font-bold select-none flex-shrink-0">
                     {activeFaq === idx ? "−" : "+"}
                   </span>
                 </button>
@@ -1857,7 +1855,7 @@ export default function Home() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.2, ease: "easeInOut" }}
                     >
-                      <div className="px-6 pb-6 text-slate-300 text-sm leading-relaxed border-t border-white/5 pt-4 font-normal bg-white/[0.01]">
+                      <div className="px-6 pb-6 text-slate-600 text-sm leading-relaxed border-t border-slate-200/70 pt-4 font-normal bg-white">
                         {faq.a}
                       </div>
                     </motion.div>

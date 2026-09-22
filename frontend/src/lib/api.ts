@@ -1,6 +1,12 @@
 import axios, { AxiosRequestConfig } from "axios";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+export const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== "undefined"
+    ? "/api/v1"
+    : process.env.NODE_ENV === "production"
+    ? "http://backend:8000/api/v1"
+    : "http://127.0.0.1:8000/api/v1");
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -109,6 +115,10 @@ export const authApi = {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
     }
+  },
+  forgotPassword: async (email: string) => {
+    const { data } = await api.post("/auth/forgot-password", { email });
+    return data;
   },
   resetPassword: async (payload: { token: string; new_password: string }) => {
     const { data } = await api.post("/auth/reset-password", payload);

@@ -10,7 +10,9 @@ bihocam.com, www.bihocam.com {
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
         X-Content-Type-Options "nosniff"
         X-Frame-Options "SAMEORIGIN"
+        X-XSS-Protection "1; mode=block"
         Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(self), microphone=(self), geolocation=()"
     }
 
     # 5651 ve GİB için Gerçek İstemci Başlıklarını Aktar

@@ -182,10 +182,79 @@ async def get_demo_accounts():
 
 
 from pydantic import BaseModel
+from fastapi import BackgroundTasks
 
 class PublicPasswordResetPayload(BaseModel):
     token: str
     new_password: str
+
+class ForgotPasswordPayload(BaseModel):
+    email: str
+
+
+@router.post("/forgot-password")
+@limiter.limit("5/minute")
+async def forgot_password(
+    request: Request,
+    payload: ForgotPasswordPayload,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db)
+):
+    """Kullanıcı şifre sıfırlama bağlantısı talep eder."""
+    email_clean = payload.email.strip().lower()
+    user = await get_user_by_email(db, email_clean)
+    if user and user.is_active:
+        from datetime import datetime, timedelta
+        expires_delta = timedelta(hours=1)
+        expire = datetime.utcnow() + expires_delta
+        to_encode = {
+            "sub": str(user.id),
+            "type": "password_reset",
+            "exp": expire,
+            "email": user.email,
+        }
+        reset_token = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+        reset_url = f"https://bihocam.com/reset-password?token={reset_token}"
+
+        async def send_reset_mail():
+            try:
+                from app.services.email_service import EmailService
+                email_service = EmailService()
+                subject = "BiHocam - Şifre Sıfırlama Bağlantısı"
+                html_content = f"""
+                <div style="font-family: Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <h2 style="color: #0f172a; margin-bottom: 8px;">Şifrenizi mi Unuttunuz?</h2>
+                        <p style="color: #475569; font-size: 14px; margin: 0;">Merhaba {user.full_name}, hesabınız için şifre sıfırlama talebinde bulundunuz.</p>
+                    </div>
+                    <div style="text-align: center; margin: 32px 0;">
+                        <a href="{reset_url}" style="background-color: #059669; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 15px; display: inline-block;">
+                            Şifremi Sıfırla
+                        </a>
+                    </div>
+                    <p style="color: #64748b; font-size: 13px; line-height: 1.5; text-align: center;">
+                        Veya şu linki tarayıcınıza yapıştırın:<br />
+                        <a href="{reset_url}" style="color: #059669; word-break: break-all;">{reset_url}</a>
+                    </p>
+                    <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 24px 0;" />
+                    <p style="color: #94a3b8; font-size: 11px; line-height: 1.5; text-align: center;">
+                        Bu bağlantı 1 saat boyunca geçerlidir. Bu talebi siz yapmadıysanız bu mesajı güvenle yok sayabilirsiniz.
+                    </p>
+                </div>
+                """
+                await email_service.send_email(
+                    to=[user.email],
+                    subject=subject,
+                    body=f"Şifre sıfırlama linkiniz: {reset_url}",
+                    html=html_content
+                )
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Password reset email error: {e}")
+
+        background_tasks.add_task(send_reset_mail)
+
+    return {"message": "Eğer bu e-posta adresi kayıtlı ise, şifre sıfırlama bağlantısı gönderilmiştir."}
 
 
 @router.post("/reset-password")

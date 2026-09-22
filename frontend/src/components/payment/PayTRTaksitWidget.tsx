@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { CreditCard, ShieldCheck } from "lucide-react";
 
 interface PayTRTaksitWidgetProps {
   amount: number;
@@ -11,29 +12,76 @@ const PAYTR_TOKEN    = "397bc72b1d356cf409e84d9abb800380afc4955a108bc65be3ad8078
 const PAYTR_MERCHANT = "623775";
 const PAYTR_BASE     = "https://www.paytr.com/odeme/taksit-tablosu/v2";
 
+const BANK_NAMES = ["World", "Bonus", "Maximum", "Axess", "CardFinans", "Paraf"];
+
 export default function PayTRTaksitWidget({ amount, className = "" }: PayTRTaksitWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scriptRef    = useRef<HTMLScriptElement | null>(null);
   const prevAmount   = useRef<number>(-1);
+  const [hasPayTRContent, setHasPayTRContent] = useState<boolean>(false);
+  const [selectedBank, setSelectedBank] = useState<string>("Tüm Kartlar");
+
+  const roundedAmount = Math.max(1, Math.round(amount || 0));
 
   useEffect(() => {
-    if (prevAmount.current === amount) return;
-    prevAmount.current = amount;
+    if (prevAmount.current === roundedAmount) return;
+    prevAmount.current = roundedAmount;
+    setHasPayTRContent(false);
 
-    if (scriptRef.current) { scriptRef.current.remove(); scriptRef.current = null; }
-    if (containerRef.current)  containerRef.current.innerHTML = "";
+    if (scriptRef.current) {
+      scriptRef.current.remove();
+      scriptRef.current = null;
+    }
+    if (containerRef.current) {
+      containerRef.current.innerHTML = "";
+    }
 
-    const amountParam = Math.round(amount);
-    if (amountParam <= 0) return;
+    if (roundedAmount <= 0) return;
 
-    // taksit=6 => yalnizca 6 taksit secenegi | tumu=0 => populer bankalar
-    const src = `${PAYTR_BASE}?token=${PAYTR_TOKEN}&merchant_id=${PAYTR_MERCHANT}&amount=${amountParam}&taksit=6&tumu=0`;
+    // Try loading PayTR
+    const src = `${PAYTR_BASE}?token=${PAYTR_TOKEN}&merchant_id=${PAYTR_MERCHANT}&amount=${roundedAmount}&taksit=6&tumu=0`;
     const script = document.createElement("script");
-    script.src = src; script.async = true;
+    script.src = src;
+    script.async = true;
+
+    // Watch for PayTR injection
+    const timer = setTimeout(() => {
+      if (containerRef.current && containerRef.current.children.length > 0) {
+        setHasPayTRContent(true);
+      }
+    }, 1200);
+
+    script.onload = () => {
+      setTimeout(() => {
+        if (containerRef.current && containerRef.current.children.length > 0) {
+          setHasPayTRContent(true);
+        }
+      }, 500);
+    };
+
+    script.onerror = () => {
+      setHasPayTRContent(false);
+    };
+
     document.body.appendChild(script);
     scriptRef.current = script;
-    return () => { script.remove(); scriptRef.current = null; };
-  }, [amount]);
+
+    return () => {
+      clearTimeout(timer);
+      script.remove();
+      scriptRef.current = null;
+    };
+  }, [roundedAmount]);
+
+  // Installment plans for fallback
+  const plans = [
+    { installments: 1, label: "Tek Çekim", isNoInterest: true, monthly: roundedAmount, total: roundedAmount },
+    { installments: 2, label: "2 Taksit", isNoInterest: true, monthly: Math.round(roundedAmount / 2), total: roundedAmount },
+    { installments: 3, label: "3 Taksit", isNoInterest: true, monthly: Math.round(roundedAmount / 3), total: roundedAmount },
+    { installments: 6, label: "6 Taksit", isNoInterest: true, monthly: Math.round(roundedAmount / 6), total: roundedAmount, badge: "Vade Farksız" },
+    { installments: 9, label: "9 Taksit", isNoInterest: false, monthly: Math.round((roundedAmount * 1.06) / 9), total: Math.round(roundedAmount * 1.06) },
+    { installments: 12, label: "12 Taksit", isNoInterest: false, monthly: Math.round((roundedAmount * 1.09) / 12), total: Math.round(roundedAmount * 1.09) },
+  ];
 
   return (
     <div className={className}>
@@ -100,7 +148,70 @@ export default function PayTRTaksitWidget({ amount, className = "" }: PayTRTaksi
         }
       `}</style>
 
-      <div id="paytr_taksit_tablosu" ref={containerRef} className="w-full" />
+      {/* PayTR container */}
+      <div
+        id="paytr_taksit_tablosu"
+        ref={containerRef}
+        className={`w-full ${hasPayTRContent ? "block" : "hidden"}`}
+      />
+
+      {/* High-contrast Native Installment Fallback */}
+      {!hasPayTRContent && (
+        <div className="space-y-3 pt-1">
+          <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium px-1">
+            <span className="flex items-center gap-1 text-slate-700 font-semibold">
+              <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
+              Tüm Kartlara 6 Aya Varan Taksit
+            </span>
+            <span className="flex items-center gap-1 text-emerald-700 font-bold">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              3D Secure
+            </span>
+          </div>
+
+          {/* Bank Badges */}
+          <div className="flex flex-wrap gap-1.5 justify-start">
+            {BANK_NAMES.map((b) => (
+              <span
+                key={b}
+                className="px-2 py-0.5 bg-white border border-slate-200 text-slate-700 font-bold text-[10px] rounded-md shadow-2xs"
+              >
+                {b}
+              </span>
+            ))}
+          </div>
+
+          {/* Installment Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {plans.map((p) => (
+              <div
+                key={p.installments}
+                className={`p-2.5 rounded-xl border transition-all text-left ${
+                  p.badge
+                    ? "bg-emerald-50/70 border-emerald-300 shadow-2xs"
+                    : "bg-white border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-slate-900">{p.label}</span>
+                  {p.badge && (
+                    <span className="text-[9px] font-black uppercase text-emerald-800 bg-emerald-100/90 px-1.5 py-0.5 rounded border border-emerald-200">
+                      {p.badge}
+                    </span>
+                  )}
+                </div>
+                <div className="text-sm font-black text-slate-900 font-mono">
+                  {p.monthly.toLocaleString("tr-TR")} <span className="text-[10px] font-bold text-slate-500">TL/ay</span>
+                </div>
+                <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                  Toplam: {p.total.toLocaleString("tr-TR")} TL
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

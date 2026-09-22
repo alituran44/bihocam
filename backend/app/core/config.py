@@ -26,7 +26,9 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "http://localhost:3001",
         "http://127.0.0.1:3001",
-        "https://bihocam.vercel.app"
+        "https://bihocam.com",
+        "https://www.bihocam.com",
+        "https://bihocam.vercel.app",
     ]
 
     # Redis (for future use)
