@@ -216,41 +216,81 @@ async def forgot_password(
         reset_token = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
         reset_url = f"https://bihocam.com/reset-password?token={reset_token}"
 
+        # Email service'i DB SMTP yapılandırmasından yükle
+        email_service = await EmailService.from_db(db)
+
+        # EmailLog kaydı oluştur (Admin panelinden takip için)
+        try:
+            from app.models.email_log import EmailLog, EmailStatus
+            email_log = EmailLog(
+                to_email=user.email,
+                subject="BiHocam - Şifre Sıfırlama Bağlantısı",
+                template_name="password_reset",
+                status=EmailStatus.PENDING,
+                attempt_count=0,
+                payload={"to_email": user.email, "reset_url": reset_url},
+            )
+            db.add(email_log)
+            await db.commit()
+            await db.refresh(email_log)
+            log_id = email_log.id
+        except Exception:
+            log_id = None
+
         async def send_reset_mail():
-            try:
-                from app.services.email_service import EmailService
-                email_service = EmailService()
-                subject = "BiHocam - Şifre Sıfırlama Bağlantısı"
-                html_content = f"""
-                <div style="font-family: Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
-                    <div style="text-align: center; margin-bottom: 24px;">
-                        <h2 style="color: #0f172a; margin-bottom: 8px;">Şifrenizi mi Unuttunuz?</h2>
-                        <p style="color: #475569; font-size: 14px; margin: 0;">Merhaba {user.full_name}, hesabınız için şifre sıfırlama talebinde bulundunuz.</p>
-                    </div>
-                    <div style="text-align: center; margin: 32px 0;">
-                        <a href="{reset_url}" style="background-color: #059669; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 15px; display: inline-block;">
-                            Şifremi Sıfırla
-                        </a>
-                    </div>
-                    <p style="color: #64748b; font-size: 13px; line-height: 1.5; text-align: center;">
-                        Veya şu linki tarayıcınıza yapıştırın:<br />
-                        <a href="{reset_url}" style="color: #059669; word-break: break-all;">{reset_url}</a>
-                    </p>
-                    <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 24px 0;" />
-                    <p style="color: #94a3b8; font-size: 11px; line-height: 1.5; text-align: center;">
-                        Bu bağlantı 1 saat boyunca geçerlidir. Bu talebi siz yapmadıysanız bu mesajı güvenle yok sayabilirsiniz.
-                    </p>
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"[AUTH] Şifre sıfırlama linki oluşturuldu ({user.email}): {reset_url}")
+
+            subject = "BiHocam - Şifre Sıfırlama Bağlantısı"
+            html_content = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h2 style="color: #0f172a; margin-bottom: 8px;">Şifrenizi mi Unuttunuz?</h2>
+                    <p style="color: #475569; font-size: 14px; margin: 0;">Merhaba {user.full_name}, hesabınız için şifre sıfırlama talebinde bulundunuz.</p>
                 </div>
-                """
+                <div style="text-align: center; margin: 32px 0;">
+                    <a href="{reset_url}" style="background-color: #059669; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 15px; display: inline-block;">
+                        Şifremi Sıfırla
+                    </a>
+                </div>
+                <p style="color: #64748b; font-size: 13px; line-height: 1.5; text-align: center;">
+                    Veya şu linki tarayıcınıza yapıştırın:<br />
+                    <a href="{reset_url}" style="color: #059669; word-break: break-all;">{reset_url}</a>
+                </p>
+                <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 24px 0;" />
+                <p style="color: #94a3b8; font-size: 11px; line-height: 1.5; text-align: center;">
+                    Bu bağlantı 1 saat boyunca geçerlidir. Bu talebi siz yapmadıysanız bu mesajı güvenle yok sayabilirsiniz.
+                </p>
+            </div>
+            """
+            try:
                 await email_service.send_email(
                     to=[user.email],
                     subject=subject,
                     body=f"Şifre sıfırlama linkiniz: {reset_url}",
                     html=html_content
                 )
+                logger.info(f"[AUTH] Şifre sıfırlama e-postası başarıyla iletildi: {user.email}")
+                if log_id:
+                    async with AsyncSessionLocal() as session:
+                        from app.models.email_log import EmailLog, EmailStatus
+                        from datetime import datetime
+                        el = await session.get(EmailLog, log_id)
+                        if el:
+                            el.status = EmailStatus.SENT
+                            el.sent_at = datetime.utcnow()
+                            await session.commit()
             except Exception as e:
-                import logging
-                logging.getLogger(__name__).warning(f"Password reset email error: {e}")
+                logger.error(f"[AUTH] Şifre sıfırlama e-posta gönderimi başarısız ({user.email}). SMTP sunucusu yapılandırılmamış olabilir: {e}")
+                if log_id:
+                    async with AsyncSessionLocal() as session:
+                        from app.models.email_log import EmailLog, EmailStatus
+                        el = await session.get(EmailLog, log_id)
+                        if el:
+                            el.status = EmailStatus.FAILED
+                            el.last_error = str(e)
+                            await session.commit()
 
         background_tasks.add_task(send_reset_mail)
 
