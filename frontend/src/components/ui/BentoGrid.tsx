@@ -153,11 +153,11 @@ export default function BentoGridSection() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs sm:text-sm bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-xs">
                   <span className="font-semibold text-slate-800">YKS Matematik - Limit & Türev</span>
-                  <span className="font-mono font-bold text-emerald-700">₺750/saat</span>
+                  <span className="font-mono font-bold text-emerald-700">₺1.500/saat</span>
                 </div>
                 <div className="flex items-center justify-between text-xs sm:text-sm bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-xs">
                   <span className="font-semibold text-slate-800">LGS Fen - Basit Makineler</span>
-                  <span className="font-mono font-bold text-amber-700">₺600/saat</span>
+                  <span className="font-mono font-bold text-emerald-700">₺1.350/saat</span>
                 </div>
               </div>
             </div>
