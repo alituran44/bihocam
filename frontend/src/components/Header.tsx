@@ -112,6 +112,7 @@ export default function Header() {
             {/* Cart Icon */}
             <Link 
               href="/cart" 
+              aria-label="Alışveriş Sepeti"
               className="relative p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl border border-slate-200 transition-all"
             >
               <ShoppingBag className="w-4 h-4" />
@@ -126,7 +127,10 @@ export default function Header() {
             {isAuthenticated && user ? (
               <div className="relative">
                 <button
+                  type="button"
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  aria-label="Kullanıcı Profil Menüsü"
+                  aria-expanded={userMenuOpen}
                   className="flex items-center gap-2 p-1 rounded-xl border border-slate-200 hover:border-emerald-500/40 bg-slate-50 transition-all"
                 >
                   <Avatar
@@ -203,7 +207,10 @@ export default function Header() {
 
             {/* Mobile Menu Toggle */}
             <button
+              type="button"
               onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? "Gezinme menüsünü kapat" : "Gezinme menüsünü aç"}
+              aria-expanded={mobileOpen}
               className="lg:hidden p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl border border-slate-200 transition-all"
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

@@ -1,0 +1,23 @@
+# BiHocam - Türkiye'nin Yeni Nesil Akıllı Özel Ders ve Canlı Eğitim Platformu
+
+> BiHocam, YKS, LGS, yabancı dil ve okul derslerinde öğrencileri doğrulanmış uzman eğitmenlerle buluşturan, tersine ihale (özel ders talebi) modeli ve canlı 1:1 etkileşimli dersler sunan yeni nesil eğitim teknolojisi platformudur.
+
+## Temel Hizmetler & Çözümler
+- **Özel Ders Talebi (Tender Sistemi):** Öğrenciler ihtiyaç duydukları ders ve bütçeyi belirterek ücretsiz ders talebi açar; branş eğitmenleri teklif sunar.
+- **Canlı 1:1 & Grup Dersleri:** Tarayıcı üzerinden sıfır kurulum gerektiren WebRTC tabanlı interaktif beyaz tahta ve video konferans sistemi.
+- **Doğrulanmış Eğitmen Havuzu:** Diploma, adli sicil ve deneme dersi mülakatından geçen bağımsız öğretmenler.
+- **Eğitim Programları:** TYT, AYT, LGS kapsamlı tüm dersler eğitim paketleri.
+- **Güvenli Ödeme:** 3D Secure ve BDDK lisanslı emanet havuz hesabı koruması, 6 taksit imkanı.
+
+## Anahtar Sayfalar
+- [Ders Talebi Aç](https://bihocam.com/tenders/new): Ücretsiz özel ders talebi oluşturma.
+- [Eğitmenleri Keşfet](https://bihocam.com/teachers): Branş ve şehre göre doğrulanmış öğretmen listesi.
+- [Kurslar & Dersler](https://bihocam.com/courses): Canlı ve kayıtlı dersler kataloğu.
+- [Eğitim Programları](https://bihocam.com/egitim-programlari): TYT ve AYT paket programları.
+- [Eğitmen Başvurusu](https://bihocam.com/register?role=teacher): Öğretmen olarak platforma katılma.
+- [Blog](https://bihocam.com/blog): YKS, LGS çalışma rehberleri ve eğitim içerikleri.
+
+## İletişim & Destek
+- Web: https://bihocam.com
+- E-posta: iletisim@bihocam.com
+- Güvenlik Bildirimi: https://bihocam.com/.well-known/security.txt

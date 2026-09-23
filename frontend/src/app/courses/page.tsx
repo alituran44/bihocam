@@ -383,6 +383,9 @@ export default function CoursesPage() {
                   </button>
                 </div>
                 <select
+                  id="course-sort-select"
+                  name="courseSort"
+                  aria-label="Kursları sıralama kriteri"
                   value={sort}
                   onChange={(e) => setSort(e.target.value)}
                   className="px-4 py-2.5 bg-gray-100 border-2 border-transparent rounded-xl text-sm text-gray-700 focus:outline-none focus:border-teal-300 cursor-pointer"

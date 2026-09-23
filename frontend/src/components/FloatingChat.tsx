@@ -549,14 +549,18 @@ export default function FloatingChat() {
                 >
                   <input
                     ref={inputRef}
+                    id="floating-chat-input"
+                    name="chatMessage"
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Sorunuzu yazın..."
+                    aria-label="Canlı destek mesajınızı buraya yazın"
                     className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 bg-gray-50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
                   />
                   <button
                     type="submit"
+                    aria-label="Mesajı gönder"
                     disabled={!input.trim()}
                     className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center text-white hover:shadow-lg hover:shadow-teal-500/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
                   >
@@ -575,6 +579,8 @@ export default function FloatingChat() {
         <button
           id="floating-chat-toggle"
           onClick={() => setOpen(!open)}
+          aria-label={open ? "Sohbet penceresini kapat" : "Canlı destek sohbetini aç"}
+          aria-expanded={open}
           className="relative w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center shadow-2xl shadow-teal-500/40 hover:shadow-teal-500/60 hover:scale-110 transition-all duration-200"
         >
           {open ? (

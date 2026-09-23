@@ -74,7 +74,12 @@ export function AIAssistantChat() {
               <span className="text-xl">✨</span>
               <h3 className="font-semibold">Bihocam Asistan</h3>
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">
+            <button 
+              type="button"
+              onClick={() => setIsOpen(false)} 
+              aria-label="Asistanı Kapat"
+              className="text-white/80 hover:text-white"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
@@ -108,6 +113,9 @@ export function AIAssistantChat() {
           <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-b-xl">
             <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
               <input
+                id="ai-assistant-chat-input"
+                name="aiQuestion"
+                aria-label="Yapay zeka asistanına bir soru sorun"
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -117,6 +125,7 @@ export function AIAssistantChat() {
               />
               <button
                 type="submit"
+                aria-label="Soruyu Gönder"
                 disabled={isLoading || !input.trim()}
                 className="bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >

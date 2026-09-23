@@ -26,6 +26,34 @@ import Hero3DCanvas from "@/components/3d/Hero3DCanvas";
 import TiltCard3D from "@/components/3d/TiltCard3D";
 import BentoGridSection from "@/components/ui/BentoGrid";
 import LiveDemandTicker from "@/components/home/LiveDemandTicker";
+import { FaqJsonLd } from "@/components/seo/JsonLd";
+
+export const HOME_FAQS = [
+  {
+    q: "Canlı dersler için bilgisayarıma ek bir uygulama kurmam gerekiyor mu?",
+    a: "Hayır. BiHocam canlı dersleri tamamen tarayıcınız üzerinden çalışacak şekilde modern WebRTC altyapısıyla geliştirilmiştir. Zoom veya Skype gibi ek program indirmenize gerek kalmadan, tek tıkla derse bağlanır, interaktif beyaz tahtayı ve kaynakları kullanırsınız."
+  },
+  {
+    q: "Özel ders talebi nasıl çalışır ve teklifleri nasıl değerlendiririm?",
+    a: "İhtiyaç duyduğunuz branşı, sınıf düzeyini ve bütçe aralığınızı belirterek ücretsiz ders talebi açarsınız. İlgili branştaki onaylı öğretmenler talebinizi inceler ve size özel saatlik ders teklifleri sunar. Gelen teklifleri profilleri, yorumları ve fiyatları inceleyerek tek tıkla kabul edebilirsiniz."
+  },
+  {
+    q: "Eğitmenlerinizin kalitesinden ve tecrübesinden nasıl emin oluyorsunuz?",
+    a: "Platformumuzda ders veren her öğretmen; kimlik, diploma/öğretmenlik belgesi doğrulaması, adli sicil kaydı kontrolü ve BiHocam eğitim kurulunun gerçekleştirdiği deneme dersi mülakatı aşamalarını başarıyla geçmek zorundadır. Yalnızca bu süreçleri geçen seçkin öğretmenler platformda yer alabilir."
+  },
+  {
+    q: "Memnun kalmadığım takdirde ders ücretimi iade alabilir miyim?",
+    a: "Evet, kesinlikle. İlk 15 dakikalık ücretsiz tanışma dersi ile öğretmeninizle uyumu test edersiniz. Eğer herhangi bir sebeple devam etmek istemezseniz veya aldığınız saat paketlerinden memnun kalmazsanız, kalan ders saatleriniz için koşulsuz ve kesintisiz %100 ücret iadesi talep edebilirsiniz."
+  },
+  {
+    q: "Ödemeler nasıl yapılıyor? Taksit seçeneği var mı?",
+    a: "Ödemeleriniz BDDK lisanslı güvenli ödeme altyapısı üzerinden 3D Secure ve emanet havuz korumasıyla gerçekleştirilir. Tüm kredi kartları ile peşin fiyatına 6 taksite varan seçeneklerle veya banka kartlarıyla güvenli ödeme yapabilirsiniz. Öğretmen dersi tamamlamadan ücret havuzdan aktarılmaz."
+  },
+  {
+    q: "Satın aldığım ders saatlerini ne kadar süre içinde kullanmalıyım?",
+    a: "Satın aldığınız ders saatleri eğitim-öğretim yılı sonuna kadar dilediğiniz gün ve saatte kullanılabilir. Saatlerinizde herhangi bir haftalık veya aylık zorunlu yanma süresi bulunmamaktadır, planlamayı öğretmeninizle esnekçe yapabilirsiniz."
+  }
+];
 
 // Visual helpers for education program banners
 const getGradientBySlug = (slug: string) => {
@@ -523,6 +551,9 @@ export default function Home() {
       )}
 
       <Header />
+
+      <main id="main-content" role="main" className="flex-1">
+        <FaqJsonLd faqs={HOME_FAQS} />
 
       {/* ══════════════════════════════════════════════════════ */}
       {/* HERO - MODERN ASYMMETRIC LIGHT REDESIGN                */}
@@ -1807,32 +1838,7 @@ export default function Home() {
           </div>
 
           <div className="space-y-4">
-            {[
-              {
-                q: "Canlı dersler için bilgisayarıma ek bir uygulama kurmam gerekiyor mu?",
-                a: "Hayır. BiHocam canlı dersleri tamamen tarayıcınız üzerinden çalışacak şekilde modern WebRTC altyapısıyla geliştirilmiştir. Zoom veya Skype gibi ek program indirmenize gerek kalmadan, tek tıkla derse bağlanır, interaktif beyaz tahtayı ve kaynakları kullanırsınız."
-              },
-              {
-                q: "Özel ders talebi nasıl çalışır ve teklifleri nasıl değerlendiririm?",
-                a: "İhtiyaç duyduğunuz branşı, sınıf düzeyini ve bütçe aralığınızı belirterek ücretsiz ders talebi açarsınız. İlgili branştaki onaylı öğretmenler talebinizi inceler ve size özel saatlik ders teklifleri sunar. Gelen teklifleri profilleri, yorumları ve fiyatları inceleyerek tek tıkla kabul edebilirsiniz."
-              },
-              {
-                q: "Eğitmenlerinizin kalitesinden ve tecrübesinden nasıl emin oluyorsunuz?",
-                a: "Platformumuzda ders veren her öğretmen; kimlik, diploma/öğretmenlik belgesi doğrulaması, adli sicil kaydı kontrolü ve BiHocam eğitim kurulunun gerçekleştirdiği deneme dersi mülakatı aşamalarını başarıyla geçmek zorundadır. Yalnızca bu süreçleri geçen seçkin öğretmenler platformda yer alabilir."
-              },
-              {
-                q: "Memnun kalmadığım takdirde ders ücretimi iade alabilir miyim?",
-                a: "Evet, kesinlikle. İlk 15 dakikalık ücretsiz tanışma dersi ile öğretmeninizle uyumu test edersiniz. Eğer herhangi bir sebeple devam etmek istemezseniz veya aldığınız saat paketlerinden memnun kalmazsanız, kalan ders saatleriniz için koşulsuz ve kesintisiz %100 ücret iadesi talep edebilirsiniz."
-              },
-              {
-                q: "Ödemeler nasıl yapılıyor? Taksit seçeneği var mı?",
-                a: "Ödemeleriniz BDDK lisanslı güvenli ödeme altyapısı üzerinden 3D Secure ve emanet havuz korumasıyla gerçekleştirilir. Tüm kredi kartları ile peşin fiyatına 6 taksite varan seçeneklerle veya banka kartlarıyla güvenli ödeme yapabilirsiniz. Öğretmen dersi tamamlamadan ücret havuzdan aktarılmaz."
-              },
-              {
-                q: "Satın aldığım ders saatlerini ne kadar süre içinde kullanmalıyım?",
-                a: "Satın aldığınız ders saatleri eğitim-öğretim yılı sonuna kadar dilediğiniz gün ve saatte kullanılabilir. Saatlerinizde herhangi bir haftalık veya aylık zorunlu yanma süresi bulunmamaktadır, planlamayı öğretmeninizle esnekçe yapabilirsiniz."
-              }
-            ].map((faq, idx) => (
+            {HOME_FAQS.map((faq, idx) => (
               <div
                 key={idx}
                 className="border border-slate-200/90 rounded-2xl overflow-hidden bg-slate-50/70 hover:border-emerald-300 hover:bg-slate-50 transition-all duration-200"
@@ -1898,7 +1904,7 @@ export default function Home() {
           </div>
         </div>
       </motion.section>
-
+      </main>
 
       <Footer />
     </div>

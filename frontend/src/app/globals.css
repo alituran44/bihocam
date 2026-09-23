@@ -48,6 +48,26 @@
 
 html { scroll-behavior: smooth; }
 
+/* WCAG 2.1 AA Accessible Focus-Visible Indicator */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #10b981 !important;
+  outline-offset: 2px !important;
+}
+
+/* 3D Perspective Card Utilities */
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
 body {
   font-family: var(--font-body);
   background: var(--obsidian-950);

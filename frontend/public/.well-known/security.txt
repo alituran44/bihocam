@@ -1,0 +1,7 @@
+# BiHocam RFC 9116 Security Policy & Contact Information
+Contact: mailto:security@bihocam.com
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: tr, en
+Canonical: https://bihocam.com/.well-known/security.txt
+Policy: https://bihocam.com/pages/gizlilik
+Acknowledgments: https://bihocam.com/hall-of-fame
