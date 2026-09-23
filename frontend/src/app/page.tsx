@@ -1663,21 +1663,50 @@ export default function Home() {
                  <span className="font-mono font-bold text-emerald-700 text-base">+90 (850) 840 55 43</span>
                </p>
             </div>
-            <div className="w-full md:w-1/2 space-y-3">
-               <input 
-                 type="text" 
-                 placeholder="Adınız ve Soyadınız" 
-                 className="w-full px-4 py-3.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all font-medium" 
-               />
-               <input 
-                 type="tel" 
-                 placeholder="Telefon (05xx xxx xx xx)" 
-                 className="w-full px-4 py-3.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all font-medium" 
-               />
-               <button className="w-full py-3.5 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all">
-                 Arama Talebi Gönder →
-               </button>
-            </div>
+            <form 
+              onSubmit={(e) => { e.preventDefault(); alert("Arama talebiniz başarıyla alındı. En kısa sürede sizinle iletişime geçilecektir."); }}
+              className="w-full md:w-1/2 space-y-3"
+            >
+              <div>
+                <label htmlFor="callback-fullname" className="sr-only">
+                  Adınız ve Soyadınız
+                </label>
+                <input 
+                  id="callback-fullname"
+                  name="callbackFullname"
+                  type="text" 
+                  aria-label="Adınız ve Soyadınız"
+                  autoComplete="name"
+                  required
+                  placeholder="Adınız ve Soyadınız" 
+                  className="w-full px-4 py-3.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all font-medium" 
+                />
+              </div>
+
+              <div>
+                <label htmlFor="callback-phone" className="sr-only">
+                  Telefon Numaranız
+                </label>
+                <input 
+                  id="callback-phone"
+                  name="callbackPhone"
+                  type="tel" 
+                  aria-label="Telefon Numaranız"
+                  autoComplete="tel"
+                  required
+                  placeholder="Telefon (05xx xxx xx xx)" 
+                  className="w-full px-4 py-3.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all font-medium" 
+                />
+              </div>
+
+              <button 
+                type="submit"
+                aria-label="Ücretsiz arama talebi gönder"
+                className="w-full py-3.5 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+              >
+                Arama Talebi Gönder →
+              </button>
+            </form>
           </div>
         </div>
       </motion.section>

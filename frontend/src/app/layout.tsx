@@ -8,7 +8,7 @@ import { AIAssistantChat } from "@/components/ui/AIAssistantChat";
 
 import { OrganizationJsonLd } from "@/components/seo/JsonLd";
 
-// Tüm sayfalar dynamic render — useSearchParams SSR hatalarını önler
+// Tüm sayfalar dynamic render — useSearchParams SSR uyumluluğu
 export const dynamic = "force-dynamic";
 
 const inter = Inter({

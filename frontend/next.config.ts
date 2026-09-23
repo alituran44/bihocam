@@ -26,6 +26,10 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  compress: true,
+  experimental: {
+    optimizePackageImports: ["lucide-react", "framer-motion", "@tanstack/react-query"],
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

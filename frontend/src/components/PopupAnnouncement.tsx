@@ -322,14 +322,17 @@ export default function PopupAnnouncement({
                     transition={{ delay: 0.7, duration: 0.5 }}
                     className="flex justify-center pt-6 border-t border-gray-200/50"
                   >
-                    <label className="flex items-center gap-3 cursor-pointer group">
+                    <label htmlFor="popup-dont-show-checkbox" className="flex items-center gap-3 cursor-pointer group">
                       <motion.div
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         className="relative"
                       >
                         <input
+                          id="popup-dont-show-checkbox"
+                          name="dontShowAgain"
                           type="checkbox"
+                          aria-label="Bu mesajı tekrar gösterme"
                           checked={dontShowAgain}
                           onChange={(e) => setDontShowAgain(e.target.checked)}
                           className="w-5 h-5 rounded-md border-2 border-gray-300 text-cyan-600 focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 transition-all appearance-none checked:bg-cyan-600 checked:border-cyan-600"
