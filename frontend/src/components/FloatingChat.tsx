@@ -361,9 +361,11 @@ export default function FloatingChat() {
               <div className="flex items-center gap-2">
                 {activeView === "chat" && (
                   <button
+                    type="button"
                     onClick={() => setActiveView("menu")}
                     className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-                    title="Ana Menü"
+                    title="Ana Menüye Dön"
+                    aria-label="Ana Menüye Dön"
                   >
                     <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -371,8 +373,11 @@ export default function FloatingChat() {
                   </button>
                 )}
                 <button
+                  type="button"
                   onClick={() => setOpen(false)}
                   className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                  title="Sohbeti Kapat"
+                  aria-label="Sohbet penceresini kapat"
                 >
                   <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

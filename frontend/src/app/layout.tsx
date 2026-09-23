@@ -3,9 +3,7 @@ import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/lib/providers";
 import SiteSettingsScripts from "@/components/SiteSettingsScripts";
-import FloatingChat from "@/components/FloatingChat";
-import { AIAssistantChat } from "@/components/ui/AIAssistantChat";
-
+import ClientChatWidgets from "@/components/ClientChatWidgets";
 import { OrganizationJsonLd } from "@/components/seo/JsonLd";
 
 // Tüm sayfalar dynamic render — useSearchParams SSR uyumluluğu
@@ -26,7 +24,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL("https://bihocam.com"),
   title: {
-    default: "BiHocam | Türkiye'nin Yeni Nesil Özel Ders & Eğitim Platformu",
+    default: "BiHocam | Türkiye'nin Yeni Nesil Özel Ders Platformu",
     template: "%s | BiHocam"
   },
   description: "YKS, LGS ve okul derslerinde doğrulanmış uzman eğitmenlerle çalış. Canlı dersler, özel ders talepleri ve kişiselleştirilmiş öğrenme.",
@@ -50,7 +48,7 @@ export const metadata: Metadata = {
     canonical: "https://bihocam.com",
   },
   openGraph: {
-    title: "BiHocam | Türkiye'nin Yeni Nesil Özel Ders & Eğitim Platformu",
+    title: "BiHocam | Türkiye'nin Yeni Nesil Özel Ders Platformu",
     description: "YKS, LGS ve okul derslerinde doğrulanmış uzman eğitmenlerle çalış. Canlı dersler, özel ders talepleri ve kişiselleştirilmiş öğrenme.",
     url: "https://bihocam.com",
     siteName: "BiHocam",
@@ -105,8 +103,7 @@ export default function RootLayout({
         <Providers>
           <SiteSettingsScripts />
           {children}
-          <FloatingChat />
-          <AIAssistantChat />
+          <ClientChatWidgets />
         </Providers>
       </body>
     </html>

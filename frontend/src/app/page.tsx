@@ -532,7 +532,7 @@ export default function Home() {
     queryKey: ["public-stats-home"],
     queryFn: async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/stats/public");
+        const res = await fetch("/api/v1/stats/public");
         if (res.ok) return await res.json();
       } catch {}
       return { total_courses: 36, total_programs: 33, total_tenders: 1, total_teachers: 1, average_rating: 4.9 };
