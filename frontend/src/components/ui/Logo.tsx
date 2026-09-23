@@ -29,6 +29,8 @@ export default function Logo({
       alt="BiHocam Online Eğitim Platformu"
       width={dimensions.width}
       height={dimensions.height}
+      fetchPriority="high"
+      decoding="async"
       className={`object-contain transition-transform duration-200 group-hover:scale-[1.02] ${className}`}
       style={{ height: dimensions.height, width: "auto" }}
     />

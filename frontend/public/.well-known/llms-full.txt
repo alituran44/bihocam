@@ -1,0 +1,28 @@
+# BiHocam - Tam Platform ve Müfredat Dokümantasyonu (llms-full.txt)
+
+## Şirket & Varlık Bilgileri
+- Platform Adı: BiHocam
+- URL: https://bihocam.com
+- Faaliyet Alanı: Eğitim Teknolojileri (EdTech), Özel Ders Pazar Yeri, Online Canlı Dersler
+- Dil Desteği: Türkçe (tr-TR)
+- Güvenlik: RFC 9116 security.txt, 3D Secure emanet ödeme havuzu, 5651 log uyumu
+
+## Platformun Çalışma Mantığı
+1. Öğrenci veya veli ders ihtiyacını belirtir (branş, seviye, bütçe aralığı).
+2. Sistem ilgili branştaki onaylı öğretmenlere anlık bildirim iletir.
+3. Eğitmenler öğrenciye özel saatlik ücret teklifinde bulunur.
+4. Öğrenci eğitmen profillerini, yorumlarını ve puanlarını inceleyerek teklifi onaylar.
+5. Canlı ders BiHocam dahili WebRTC interaktif beyaz tahtasında gerçekleşir.
+6. Ders tamamlanıp onaylanmadan eğitmenin hakedişi aktarılmaz.
+
+## Popüler Ders Branşları
+- YKS Matematik (TYT & AYT)
+- Fizik, Kimya, Biyoloji
+- LGS Hazırlık (Matematik, Fen Bilimleri, Türkçe)
+- İngilizce (IELTS, TOEFL, Konuşma Pratiği)
+- İlkokul & Ortaokul Okul Takviye
+
+## Yasal ve Sözleşmeler
+- [Üyelik Sözleşmesi](https://bihocam.com/pages/uyelik-sozlesmesi)
+- [Gizlilik Politikası](https://bihocam.com/pages/gizlilik)
+- [KVKK Aydınlatma Metni](https://bihocam.com/pages/KVKK-aydinlatma-metni)

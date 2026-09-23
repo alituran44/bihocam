@@ -3,7 +3,7 @@ export function OrganizationJsonLd() {
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "EducationalOrganization",
+        "@type": ["Organization", "EducationalOrganization"],
         "@id": "https://bihocam.com/#organization",
         "name": "BiHocam",
         "url": "https://bihocam.com",

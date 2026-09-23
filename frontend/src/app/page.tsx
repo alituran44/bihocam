@@ -1544,7 +1544,11 @@ export default function Home() {
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/30 overflow-hidden">
                     {currentPlayingPopcast.cover_image_url ? (
-                      <img src={currentPlayingPopcast.cover_image_url} alt="" className="w-full h-full object-cover" />
+                      <img 
+                        src={currentPlayingPopcast.cover_image_url} 
+                        alt={currentPlayingPopcast.title || "Popcast Kapak Görseli"} 
+                        className="w-full h-full object-cover" 
+                      />
                     ) : (
                       <Headphones className="w-5 h-5 text-emerald-400" />
                     )}

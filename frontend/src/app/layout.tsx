@@ -91,6 +91,7 @@ export default function RootLayout({
     <html lang="tr" className="scroll-smooth">
       <head>
         <OrganizationJsonLd />
+        <link rel="preload" href="/logo.png" as="image" type="image/png" fetchPriority="high" />
       </head>
       <body className={`${inter.variable} ${plusJakarta.variable} antialiased bg-slate-950 text-slate-100 selection:bg-emerald-500 selection:text-white`}>
         {/* WCAG 2.1 AA Skip Link */}
