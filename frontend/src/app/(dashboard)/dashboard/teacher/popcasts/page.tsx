@@ -186,7 +186,7 @@ export default function TeacherPopcastsPage() {
                 {/* Visual Cover fallback */}
                 <div className="aspect-video rounded-2xl bg-gradient-to-br from-teal-500 to-indigo-600 overflow-hidden relative flex items-center justify-center shadow-inner">
                   {popcast.cover_image_url ? (
-                    <img src={popcast.cover_image_url} alt="" className="w-full h-full object-cover" />
+                    <img src={popcast.cover_image_url} alt={popcast.title || "Popcast Kapak Görseli"} className="w-full h-full object-cover" />
                   ) : (
                     <Headphones className="w-12 h-12 text-white/30" />
                   )}

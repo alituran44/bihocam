@@ -1639,7 +1639,7 @@ function StudentDashboard() {
               {activePopcast.cover_image_url && (
                 <img
                   src={activePopcast.cover_image_url}
-                  alt=""
+                  alt={activePopcast.title || "Popcast Kapak Görseli"}
                   className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay"
                 />
               )}
@@ -1648,6 +1648,8 @@ function StudentDashboard() {
                   Popcast Dinle
                 </span>
                 <button
+                  type="button"
+                  aria-label="Popcast oynatıcıyı kapat"
                   onClick={() => {
                     if (audioElRef) audioElRef.pause();
                     setIsPlaying(false);
@@ -1672,7 +1674,7 @@ function StudentDashboard() {
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-150">
                     {activePopcast.teacher?.avatar_url ? (
-                      <img src={activePopcast.teacher.avatar_url} alt="" className="w-full h-full object-cover" />
+                      <img src={activePopcast.teacher.avatar_url} alt={activePopcast.teacher?.full_name || "Eğitmen Profil Fotoğrafı"} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg">
                         {activePopcast.teacher?.full_name?.slice(0,1).toUpperCase() || "E"}

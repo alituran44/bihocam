@@ -145,7 +145,7 @@ export default function StudentPopcastsPage() {
                   {/* Cover fallback */}
                   <div className="aspect-video rounded-2xl bg-gradient-to-br from-teal-500 to-indigo-600 overflow-hidden relative flex items-center justify-center shadow-inner">
                     {popcast.cover_image_url ? (
-                      <img src={popcast.cover_image_url} alt="" className="w-full h-full object-cover" />
+                      <img src={popcast.cover_image_url} alt={popcast.title || "Popcast Kapak Görseli"} className="w-full h-full object-cover" />
                     ) : (
                       <Headphones className="w-12 h-12 text-white/30" />
                     )}
@@ -155,6 +155,8 @@ export default function StudentPopcastsPage() {
 
                     {/* Play Button Overlay */}
                     <button
+                      type="button"
+                      aria-label={isPlayingThis ? `${popcast.title} popcastini duraklat` : `${popcast.title} popcastini oynat`}
                       onClick={() => handlePlayPause(popcast)}
                       className="absolute w-12 h-12 bg-teal-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 hover:bg-teal-600 transition-transform cursor-pointer"
                     >
@@ -174,7 +176,7 @@ export default function StudentPopcastsPage() {
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-slate-200 overflow-hidden">
                       {popcast.teacher?.avatar_url ? (
-                        <img src={popcast.teacher.avatar_url} alt="" className="w-full h-full object-cover" />
+                        <img src={popcast.teacher.avatar_url} alt={popcast.teacher?.full_name || "Eğitmen Avatarı"} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-teal-600 text-white flex items-center justify-center text-[10px] font-bold">
                           {popcast.teacher?.full_name?.charAt(0) || "E"}
@@ -186,6 +188,8 @@ export default function StudentPopcastsPage() {
 
                   <div className="flex items-center gap-2">
                     <button
+                      type="button"
+                      aria-label={`${popcast.title} ses dosyasını indir`}
                       onClick={(e) => handleDownload(e, popcast.audio_url, popcast.title)}
                       className="w-9 h-9 rounded-xl border border-gray-200 hover:border-gray-300 text-gray-400 hover:text-gray-600 flex items-center justify-center transition-colors cursor-pointer bg-white"
                       title="İndir"
@@ -193,6 +197,8 @@ export default function StudentPopcastsPage() {
                       <Download className="w-4 h-4" />
                     </button>
                     <button
+                      type="button"
+                      aria-label="Favorilerden Kaldır"
                       onClick={() => unfavoriteMutation.mutate(popcast.id)}
                       className="w-9 h-9 rounded-xl border border-rose-100 hover:border-rose-300 text-rose-500 hover:bg-rose-50 flex items-center justify-center transition-colors cursor-pointer bg-white"
                       title="Favorilerden Kaldır"
@@ -219,7 +225,7 @@ export default function StudentPopcastsPage() {
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-lg bg-teal-500/20 flex items-center justify-center flex-shrink-0 border border-teal-500/30 overflow-hidden">
                 {currentPlayingPopcast.cover_image_url ? (
-                  <img src={currentPlayingPopcast.cover_image_url} alt="" className="w-full h-full object-cover" />
+                  <img src={currentPlayingPopcast.cover_image_url} alt={currentPlayingPopcast.title || "Popcast Kapak Görseli"} className="w-full h-full object-cover" />
                 ) : (
                   <Headphones className="w-5 h-5 text-teal-400" />
                 )}
@@ -242,6 +248,8 @@ export default function StudentPopcastsPage() {
               </div>
 
               <button 
+                type="button"
+                aria-label={isPlaying ? "Oynatmayı duraklat" : "Oynatmayı başlat"}
                 onClick={() => handlePlayPause(currentPlayingPopcast)}
                 className="w-10 h-10 bg-teal-500 text-white rounded-full flex items-center justify-center hover:scale-105 hover:bg-teal-600 transition-transform flex-shrink-0 cursor-pointer"
               >

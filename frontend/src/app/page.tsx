@@ -846,6 +846,7 @@ export default function Home() {
                         <button
                           key={key}
                           type="button"
+                          aria-pressed={calcExam === key}
                           onClick={() => {
                             setCalcExam(key === calcExam ? "" : key);
                             setCalcSubjects([]);
@@ -873,6 +874,7 @@ export default function Home() {
                         {calcSubjects.length > 0 && (
                           <button
                             type="button"
+                            aria-label="Seçilen dersleri temizle"
                             onClick={() => setCalcSubjects([])}
                             className="text-xs text-rose-600 font-bold hover:underline flex items-center gap-1"
                           >
@@ -886,6 +888,7 @@ export default function Home() {
                           <button
                             key={s}
                             type="button"
+                            aria-pressed={calcSubjects.includes(s)}
                             onClick={() => toggleCalcSubject(s)}
                             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
                               calcSubjects.includes(s)
@@ -943,6 +946,7 @@ export default function Home() {
                           key={item.value}
                           id={`calc-weeks-select-${item.value}`}
                           type="button"
+                          aria-pressed={calcWeeks === item.value}
                           onClick={() => setCalcWeeks(item.value)}
                           className={`p-3.5 rounded-2xl border font-bold text-xs transition-all relative flex flex-col items-center justify-center gap-1.5 ${
                             calcWeeks === item.value
@@ -1462,7 +1466,9 @@ export default function Home() {
 
                         {/* Play/Pause overlay */}
                         <button 
+                          type="button"
                           onClick={() => handlePlayPause(popcast)}
+                          aria-label={isPlayingThis ? `${popcast.title} popcastini duraklat` : `${popcast.title} popcastini oynat`}
                           className="absolute w-14 h-14 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all duration-200 z-10"
                         >
                           {isPlayingThis ? (
@@ -1512,14 +1518,18 @@ export default function Home() {
                       {/* Action buttons */}
                       <div className="flex items-center gap-2">
                         <button 
+                          type="button"
                           onClick={(e) => handleToggleFavorite(e, popcast.id, popcast.is_favorited)}
                           disabled={favoriteMutation.isPending}
+                          aria-label={popcast.is_favorited ? "Favorilerden Çıkar" : "Favorilere Ekle"}
                           className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${popcast.is_favorited ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                         >
                           <Heart className={`w-4 h-4 ${popcast.is_favorited ? 'fill-rose-500 text-rose-500' : ''}`} />
                         </button>
                         <button 
+                          type="button"
                           onClick={(e) => handleDownload(e, popcast.audio_url, popcast.title)}
+                          aria-label={`${popcast.title} ses dosyasını indir`}
                           className="w-9 h-9 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center text-slate-600 hover:text-slate-900 transition-colors"
                         >
                           <Download className="w-4 h-4" />
@@ -1571,6 +1581,8 @@ export default function Home() {
                   </div>
 
                   <button 
+                    type="button"
+                    aria-label={isPlaying ? "Oynatmayı duraklat" : "Oynatmayı başlat"}
                     onClick={() => handlePlayPause(currentPlayingPopcast)}
                     className="w-10 h-10 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-full flex items-center justify-center hover:scale-105 transition-transform flex-shrink-0"
                   >
@@ -1878,6 +1890,9 @@ export default function Home() {
               >
                 <button
                   type="button"
+                  id={`faq-button-${idx}`}
+                  aria-expanded={activeFaq === idx}
+                  aria-controls={`faq-answer-${idx}`}
                   onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
                   className="w-full p-6 text-left flex items-center justify-between gap-4 font-bold text-slate-900 hover:text-emerald-700 transition-colors"
                 >
@@ -1889,6 +1904,9 @@ export default function Home() {
                 <AnimatePresence initial={false}>
                   {activeFaq === idx && (
                     <motion.div
+                      id={`faq-answer-${idx}`}
+                      role="region"
+                      aria-labelledby={`faq-button-${idx}`}
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
