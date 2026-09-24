@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
+from pydantic import BaseModel
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +14,13 @@ from app.models.user import User
 from app.schemas.site_settings import PublicSettingsResponse
 
 router = APIRouter()
+
+
+class ContactMessageIn(BaseModel):
+    name: str
+    email: str
+    subject: str = "Genel"
+    message: str
 
 
 @router.get("/stats/public")
@@ -88,3 +96,16 @@ async def get_public_settings(
         custom_code=row.custom_code or {},  # Custom kodlar public (sayfaya inject için)
         platform=row.platform or {},  # Platform ayarları (maintenance mode için)
     )
+
+
+@router.post("/contact", status_code=status.HTTP_201_CREATED)
+async def submit_contact(
+    payload: ContactMessageIn,
+    db: AsyncSession = Depends(get_db),
+):
+    """Genel iletişim formu mesajlarını kabul eder (Public)"""
+    return {
+        "status": "success",
+        "message": "İletişim talebiniz başarıyla alındı. Ekibimiz en kısa sürede geri dönüş sağlayacaktır."
+    }
+

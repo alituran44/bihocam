@@ -110,7 +110,7 @@ function RegisterForm() {
         </div>
 
         {role === "student" ? (
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form action="/api/v1/auth/register" method="POST" onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -80,7 +80,7 @@ export default function ForgotPasswordPage() {
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form action="/api/v1/auth/forgot-password" method="POST" onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label
                 htmlFor="forgot-email"

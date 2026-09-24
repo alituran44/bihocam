@@ -257,6 +257,46 @@ export default function Home() {
   // FAQ Accordion State
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
+  // Callback (Sizi Ücretsiz Arayalım) Form State & Fetch Handler
+  const [callbackName, setCallbackName] = useState("");
+  const [callbackPhone, setCallbackPhone] = useState("");
+  const [callbackStatus, setCallbackStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [callbackError, setCallbackError] = useState("");
+
+  const handleCallbackSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!callbackName.trim() || !callbackPhone.trim()) {
+      return;
+    }
+    setCallbackStatus("submitting");
+    setCallbackError("");
+    try {
+      const response = await fetch("/api/v1/call-requests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          name: callbackName.trim(),
+          phone: callbackPhone.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => null);
+        throw new Error(errJson?.detail || "Arama talebi oluşturulurken bir hata oluştu.");
+      }
+
+      setCallbackStatus("success");
+      setCallbackName("");
+      setCallbackPhone("");
+    } catch (err: any) {
+      setCallbackStatus("error");
+      setCallbackError(err.message || "Bağlantı hatası oluştu, lütfen daha sonra tekrar deneyiniz.");
+    }
+  };
+
   // Public settings for maintenance mode check
   const { data: publicSettings } = useQuery({
     queryKey: ["public-settings"],
@@ -1679,50 +1719,89 @@ export default function Home() {
                  <span className="font-mono font-bold text-emerald-700 text-base">+90 (850) 840 55 43</span>
                </p>
             </div>
-            <form 
-              onSubmit={(e) => { e.preventDefault(); alert("Arama talebiniz başarıyla alındı. En kısa sürede sizinle iletişime geçilecektir."); }}
-              className="w-full md:w-1/2 space-y-3"
-            >
-              <div>
-                <label htmlFor="callback-fullname" className="sr-only">
-                  Adınız ve Soyadınız
-                </label>
-                <input 
-                  id="callback-fullname"
-                  name="callbackFullname"
-                  type="text" 
-                  aria-label="Adınız ve Soyadınız"
-                  autoComplete="name"
-                  required
-                  placeholder="Adınız ve Soyadınız" 
-                  className="w-full px-4 py-3.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all font-medium" 
-                />
+            {callbackStatus === "success" ? (
+              <div className="w-full md:w-1/2 p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-3 animate-in fade-in zoom-in-95 duration-200">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <h4 className="text-lg font-black text-emerald-950 font-display">Talebiniz Başarıyla Alındı!</h4>
+                <p className="text-xs text-emerald-800 font-medium leading-relaxed">
+                  Eğitim uzmanlarımız en kısa sürede belirttiğiniz telefon numarasından sizinle iletişime geçecektir.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setCallbackStatus("idle")}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                >
+                  Yeni Talep İlet
+                </button>
               </div>
-
-              <div>
-                <label htmlFor="callback-phone" className="sr-only">
-                  Telefon Numaranız
-                </label>
-                <input 
-                  id="callback-phone"
-                  name="callbackPhone"
-                  type="tel" 
-                  aria-label="Telefon Numaranız"
-                  autoComplete="tel"
-                  required
-                  placeholder="Telefon (05xx xxx xx xx)" 
-                  className="w-full px-4 py-3.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all font-medium" 
-                />
-              </div>
-
-              <button 
-                type="submit"
-                aria-label="Ücretsiz arama talebi gönder"
-                className="w-full py-3.5 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+            ) : (
+              <form 
+                action="/api/v1/call-requests"
+                method="POST"
+                onSubmit={handleCallbackSubmit}
+                className="w-full md:w-1/2 space-y-3"
               >
-                Arama Talebi Gönder →
-              </button>
-            </form>
+                {callbackStatus === "error" && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center justify-between">
+                    <span>{callbackError}</span>
+                    <button type="button" onClick={() => setCallbackStatus("idle")} className="text-rose-900 font-bold ml-2">✕</button>
+                  </div>
+                )}
+                <div>
+                  <label htmlFor="callback-fullname" className="sr-only">
+                    Adınız ve Soyadınız
+                  </label>
+                  <input 
+                    id="callback-fullname"
+                    name="name"
+                    type="text" 
+                    value={callbackName}
+                    onChange={(e) => setCallbackName(e.target.value)}
+                    aria-label="Adınız ve Soyadınız"
+                    autoComplete="name"
+                    required
+                    placeholder="Adınız ve Soyadınız" 
+                    className="w-full px-4 py-3.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all font-medium" 
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="callback-phone" className="sr-only">
+                    Telefon Numaranız
+                  </label>
+                  <input 
+                    id="callback-phone"
+                    name="phone"
+                    type="tel" 
+                    value={callbackPhone}
+                    onChange={(e) => setCallbackPhone(e.target.value)}
+                    aria-label="Telefon Numaranız"
+                    autoComplete="tel"
+                    required
+                    placeholder="Telefon (05xx xxx xx xx)" 
+                    className="w-full px-4 py-3.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all font-medium" 
+                  />
+                </div>
+
+                <button 
+                  type="submit"
+                  disabled={callbackStatus === "submitting"}
+                  aria-label="Ücretsiz arama talebi gönder"
+                  className="w-full py-3.5 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {callbackStatus === "submitting" ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>İletiliyor...</span>
+                    </>
+                  ) : (
+                    <span>Arama Talebi Gönder →</span>
+                  )}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </motion.section>
