@@ -197,6 +197,7 @@ export default function ContactPage() {
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Mesajınız İletildi!</h3>
                   <p className="text-gray-500 mb-6">En kısa sürede size geri dönüş yapacağız.</p>
                   <button
+                    type="button"
                     onClick={() => { setSubmitted(false); setForm({ name: "", email: "", subject: "", message: "" }); }}
                     className="px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-teal-500/30 transition-all"
                   >
@@ -372,18 +373,21 @@ export default function ContactPage() {
               <h3 className="font-bold text-gray-900 mb-4">Sosyal Medya</h3>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { name: "Twitter / X", color: "bg-black text-white", icon: "𝕏" },
-                  { name: "Instagram", color: "bg-gradient-to-br from-purple-500 to-pink-500 text-white", icon: "📷" },
-                  { name: "LinkedIn", color: "bg-blue-700 text-white", icon: "in" },
-                  { name: "YouTube", color: "bg-red-600 text-white", icon: "▶" },
+                  { name: "Twitter / X", color: "bg-black text-white", icon: "𝕏", href: "https://twitter.com/bihocam" },
+                  { name: "Instagram", color: "bg-gradient-to-br from-purple-500 to-pink-500 text-white", icon: "📷", href: "https://www.instagram.com/bihocam" },
+                  { name: "LinkedIn", color: "bg-blue-700 text-white", icon: "in", href: "https://www.linkedin.com/company/bihocam" },
+                  { name: "YouTube", color: "bg-red-600 text-white", icon: "▶", href: "https://www.youtube.com/@bihocam" },
                 ].map((s) => (
-                  <button
+                  <a
                     key={s.name}
+                    href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={`${s.color} px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity`}
                   >
                     <span className="text-base">{s.icon}</span>
                     {s.name}
-                  </button>
+                  </a>
                 ))}
               </div>
             </div>
@@ -405,7 +409,9 @@ export default function ContactPage() {
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
               >
                 <button
+                  type="button"
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                  aria-expanded={openFaq === idx}
                   className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gray-50/50 transition-colors"
                 >
                   <span className="font-semibold text-gray-900">{item.q}</span>

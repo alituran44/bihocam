@@ -257,7 +257,7 @@ const DEFAULT_HTML = `<div style="max-width: 600px; margin: 0 auto; padding: 40p
       <h2 style="color: #111827; font-size: 20px; margin-top: 0;">Merhaba {{ full_name }},</h2>
       <p style="color: #4b5563;">Buraya mesajınızı yazın...</p>
       <p style="text-align: center;">
-        <a href="#" style="display: inline-block; background: #0f766e; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600;">Harekete Geç</a>
+        <a href="https://bihocam.com" style="display: inline-block; background: #0f766e; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600;">Harekete Geç</a>
       </p>
     </div>
     <div style="padding: 24px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
