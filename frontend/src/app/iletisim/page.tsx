@@ -80,12 +80,17 @@ export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [consent, setConsent] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!consent) {
+      setErrorMessage("Lütfen Kullanım Şartları ve KVKK Aydınlatma Metnini onaylayınız.");
+      return;
+    }
     setSubmitting(true);
     setErrorMessage("");
     try {
@@ -103,9 +108,11 @@ export default function ContactPage() {
       }
 
       setSubmitted(true);
+      setConsent(false);
     } catch (err: any) {
       // Form gönderimi graceful fallback ile tamamlanır
       setSubmitted(true);
+      setConsent(false);
     } finally {
       setSubmitting(false);
     }
@@ -260,10 +267,38 @@ export default function ContactPage() {
                     />
                   </div>
 
+                  <div className="flex items-start gap-2.5 pt-1">
+                    <input
+                      id="contact-consent"
+                      name="consent"
+                      type="checkbox"
+                      required
+                      checked={consent}
+                      onChange={(e) => setConsent(e.target.checked)}
+                      className="mt-0.5 w-4 h-4 rounded text-teal-600 border-gray-300 focus:ring-teal-500 cursor-pointer accent-teal-600"
+                    />
+                    <label htmlFor="contact-consent" className="text-xs text-gray-600 leading-snug cursor-pointer select-none">
+                      <Link href="/pages/uyelik-sozlesmesi" target="_blank" className="font-semibold text-teal-700 hover:text-teal-800 underline underline-offset-2">
+                        Kullanım Şartları
+                      </Link>{" "}
+                      ve{" "}
+                      <Link href="/pages/KVKK-aydinlatma-metni" target="_blank" className="font-semibold text-teal-700 hover:text-teal-800 underline underline-offset-2">
+                        KVKK Aydınlatma Metnini
+                      </Link>{" "}
+                      okudum, kabul ediyorum.
+                    </label>
+                  </div>
+
+                  {errorMessage && (
+                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                      {errorMessage}
+                    </div>
+                  )}
+
                   <button
                     id="contact-submit"
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || !consent}
                     className="w-full py-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-bold rounded-xl hover:shadow-xl hover:shadow-teal-500/30 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                   >
                     {submitting ? (

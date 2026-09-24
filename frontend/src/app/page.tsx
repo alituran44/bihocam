@@ -260,12 +260,17 @@ export default function Home() {
   // Callback (Sizi Ücretsiz Arayalım) Form State & Fetch Handler
   const [callbackName, setCallbackName] = useState("");
   const [callbackPhone, setCallbackPhone] = useState("");
+  const [callbackConsent, setCallbackConsent] = useState(false);
   const [callbackStatus, setCallbackStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [callbackError, setCallbackError] = useState("");
 
   const handleCallbackSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!callbackName.trim() || !callbackPhone.trim()) {
+      return;
+    }
+    if (!callbackConsent) {
+      setCallbackError("Lütfen Kullanım Şartları ve KVKK Aydınlatma Metnini onaylayınız.");
       return;
     }
     setCallbackStatus("submitting");
@@ -291,6 +296,7 @@ export default function Home() {
       setCallbackStatus("success");
       setCallbackName("");
       setCallbackPhone("");
+      setCallbackConsent(false);
     } catch (err: any) {
       setCallbackStatus("error");
       setCallbackError(err.message || "Bağlantı hatası oluştu, lütfen daha sonra tekrar deneyiniz.");
@@ -1785,9 +1791,31 @@ export default function Home() {
                   />
                 </div>
 
+                <div className="flex items-start gap-2.5 pt-1">
+                  <input
+                    id="callback-consent"
+                    name="consent"
+                    type="checkbox"
+                    required
+                    checked={callbackConsent}
+                    onChange={(e) => setCallbackConsent(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer accent-emerald-600"
+                  />
+                  <label htmlFor="callback-consent" className="text-xs text-slate-600 leading-snug cursor-pointer select-none">
+                    <Link href="/pages/uyelik-sozlesmesi" target="_blank" className="font-semibold text-emerald-700 hover:text-emerald-800 underline underline-offset-2">
+                      Kullanım Şartları
+                    </Link>{" "}
+                    ve{" "}
+                    <Link href="/pages/KVKK-aydinlatma-metni" target="_blank" className="font-semibold text-emerald-700 hover:text-emerald-800 underline underline-offset-2">
+                      KVKK Aydınlatma Metnini
+                    </Link>{" "}
+                    okudum, kabul ediyorum.
+                  </label>
+                </div>
+
                 <button 
                   type="submit"
-                  disabled={callbackStatus === "submitting"}
+                  disabled={callbackStatus === "submitting" || !callbackConsent}
                   aria-label="Ücretsiz arama talebi gönder"
                   className="w-full py-3.5 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
