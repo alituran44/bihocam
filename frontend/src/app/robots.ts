@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        allow: ["/", "/llms.txt", "/llms-full.txt"],
         disallow: [
           "/dashboard/",
           "/api/",
@@ -22,6 +22,8 @@ export default function robots(): MetadataRoute.Robots {
           "ClaudeBot",
           "Google-Extended",
           "CCBot",
+          "Applebot-Extended",
+          "cohere-ai",
         ],
         allow: ["/", "/courses", "/teachers", "/blog", "/tenders", "/llms.txt", "/llms-full.txt"],
       },

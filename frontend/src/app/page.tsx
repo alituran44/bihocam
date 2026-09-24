@@ -508,7 +508,15 @@ export default function Home() {
               <div className="flex justify-center mb-12">
                 {publicSettings?.logo_url ? (
                   <div className="relative">
-                    <img src={publicSettings.logo_url} alt="Logo" className="h-28 object-contain drop-shadow-lg" />
+                    <img 
+                      src={publicSettings.logo_url} 
+                      alt="BiHocam Logo" 
+                      width="120"
+                      height="112"
+                      loading="lazy"
+                      decoding="async"
+                      className="h-28 object-contain drop-shadow-lg" 
+                    />
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-full blur-2xl -z-10"></div>
                   </div>
                 ) : (
@@ -1405,6 +1413,10 @@ export default function Home() {
                           <img
                             src={course.thumbnail_path}
                             alt={course.title}
+                            width="400"
+                            height="225"
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
@@ -1498,6 +1510,10 @@ export default function Home() {
                           <img 
                             src={popcast.cover_image_url} 
                             alt={popcast.title} 
+                            width="400"
+                            height="225"
+                            loading="lazy"
+                            decoding="async"
                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
                           />
                         ) : (
@@ -1551,7 +1567,15 @@ export default function Home() {
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
                           {popcast.teacher?.avatar_url ? (
-                            <img src={popcast.teacher.avatar_url} alt={popcast.teacher.full_name} className="w-full h-full object-cover" />
+                            <img 
+                              src={popcast.teacher.avatar_url} 
+                              alt={popcast.teacher.full_name} 
+                              width="32"
+                              height="32"
+                              loading="lazy"
+                              decoding="async"
+                              className="w-full h-full object-cover" 
+                            />
                           ) : (
                             <div className="w-full h-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold font-mono">
                               {popcast.teacher?.full_name?.charAt(0) || "E"}
@@ -1603,6 +1627,10 @@ export default function Home() {
                       <img 
                         src={currentPlayingPopcast.cover_image_url} 
                         alt={currentPlayingPopcast.title || "Popcast Kapak Görseli"} 
+                        width="40"
+                        height="40"
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover" 
                       />
                     ) : (
@@ -1877,6 +1905,10 @@ export default function Home() {
                 <img
                   src="https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?auto=format&fit=crop&w=600&q=80"
                   alt="Bilgisayar Başında Ders Anlatan Öğretmen"
+                  width="600"
+                  height="400"
+                  loading="lazy"
+                  decoding="async"
                   onError={(e) => {
                     e.currentTarget.src = "https://images.unsplash.com/photo-1531497865144-0464ef8fb9a9?auto=format&fit=crop&w=600&q=80";
                   }}
@@ -1917,6 +1949,10 @@ export default function Home() {
                         <img
                           src={post.featured_image_url || getFallbackBlogImage(post.slug)}
                           alt={post.title}
+                          width="400"
+                          height="225"
+                          loading="lazy"
+                          decoding="async"
                           onError={(e) => {
                             e.currentTarget.src = getFallbackBlogImage(post.slug);
                           }}
@@ -1953,7 +1989,15 @@ export default function Home() {
                     <div className="p-6 border-t border-slate-100 flex items-center gap-3 bg-slate-50/40">
                       <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-800 font-bold text-xs border border-emerald-200 flex-shrink-0">
                         {post.author?.avatar_url ? (
-                          <img src={post.author.avatar_url} alt={post.author.full_name} className="w-full h-full rounded-full object-cover" />
+                          <img 
+                            src={post.author.avatar_url} 
+                            alt={post.author.full_name} 
+                            width="32"
+                            height="32"
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full rounded-full object-cover" 
+                          />
                         ) : (
                           <span>{post.author?.full_name ? post.author.full_name[0] : "B"}</span>
                         )}

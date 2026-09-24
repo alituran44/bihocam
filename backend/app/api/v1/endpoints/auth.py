@@ -22,12 +22,12 @@ _COOKIE_PATH = "/"
 
 
 def _cookie_secure() -> bool:
-    """Production'da Secure flag aktif."""
-    return not settings.DEBUG
+    """Production ve canlı ortamda Secure flag daima aktif."""
+    return True
 
 
 def _set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
-    """P1-02: JWT token'ları HttpOnly cookie olarak set eder."""
+    """P1-02: JWT token'ları HttpOnly ve Secure cookie olarak set eder."""
     response.set_cookie(
         key="access_token",
         value=access_token,
@@ -49,9 +49,21 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
 
 
 def _clear_auth_cookies(response: Response) -> None:
-    """Auth cookie'lerini temizler."""
-    response.delete_cookie(key="access_token", path=_COOKIE_PATH)
-    response.delete_cookie(key="refresh_token", path=_COOKIE_PATH)
+    """Auth cookie'lerini Secure ve HttpOnly bayraklarıyla temizler."""
+    response.delete_cookie(
+        key="access_token",
+        path=_COOKIE_PATH,
+        httponly=_COOKIE_HTTPONLY,
+        secure=_cookie_secure(),
+        samesite=_COOKIE_SAMESITE,
+    )
+    response.delete_cookie(
+        key="refresh_token",
+        path=_COOKIE_PATH,
+        httponly=_COOKIE_HTTPONLY,
+        secure=_cookie_secure(),
+        samesite=_COOKIE_SAMESITE,
+    )
 
 
 def _extract_token(request: Request, bearer_token: str | None) -> str | None:
