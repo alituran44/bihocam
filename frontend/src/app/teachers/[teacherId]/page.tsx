@@ -417,7 +417,7 @@ export default function TeacherProfilePage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
             {/* LEFT MAIN CONTENT AREA */}
-            <div className="lg:col-span-8 space-y-6">
+            <article className="lg:col-span-8 space-y-6">
               
               {/* Teacher Header Card */}
               <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 sm:p-8 relative overflow-hidden">
@@ -1490,10 +1490,10 @@ export default function TeacherProfilePage() {
                   )}
                 </div>
               )}
-            </div>
+            </article>
 
             {/* RIGHT STICKY SIDEBAR */}
-            <div className="lg:col-span-4 space-y-6 sticky top-24">
+            <aside className="lg:col-span-4 space-y-6 sticky top-24">
               
               {/* Promo Video Card */}
               <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-4 relative overflow-hidden">
@@ -1668,7 +1668,7 @@ export default function TeacherProfilePage() {
                 </div>
               </div>
 
-            </div>
+            </aside>
 
           </div>
         )}

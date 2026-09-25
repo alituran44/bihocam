@@ -339,7 +339,7 @@ export default function CourseDetailPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-6">
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Ana İçerik */}
-          <div className="lg:col-span-2 space-y-8">
+          <article className="lg:col-span-2 space-y-8">
 
             {/* Video Önizleme veya Kapak Görseli */}
             {(() => {
@@ -705,10 +705,10 @@ export default function CourseDetailPage() {
                 </div>
               )}
             </div>
-          </div>
+          </article>
 
           {/* Sidebar - Pricing Card */}
-          <div className="lg:col-span-1">
+          <aside className="lg:col-span-1">
             <div className="sticky top-24 space-y-4">
               {/* Sidebar Ad */}
               <div className="mb-4">
@@ -853,7 +853,7 @@ export default function CourseDetailPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </aside>
         </div>
 
         {/* Featured Courses (Ad Campaigns) */}

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+import { FaqJsonLd } from "@/components/seo/JsonLd";
 
 const contactInfo = [
   {
@@ -120,6 +121,7 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <FaqJsonLd faqs={faqItems} />
       <Header />
 
       {/* Hero Section */}
@@ -182,7 +184,7 @@ export default function ContactPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
           {/* Contact Form */}
-          <div className="lg:col-span-3">
+          <article className="lg:col-span-3">
             <div className="bg-white rounded-3xl shadow-2xl shadow-gray-100/80 border border-gray-100 p-8 md:p-10">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Mesaj Gönderin</h2>
               <p className="text-gray-500 mb-8">Formu doldurun, en kısa sürede size ulaşalım.</p>
@@ -319,10 +321,10 @@ export default function ContactPage() {
                 </form>
               )}
             </div>
-          </div>
+          </article>
 
           {/* Sidebar: Map + Social */}
-          <div className="lg:col-span-2 space-y-6">
+          <aside className="lg:col-span-2 space-y-6">
             {/* Map placeholder */}
             <div className="bg-gradient-to-br from-[#0b1329] to-[#0f1f4a] rounded-3xl overflow-hidden shadow-2xl h-72 relative flex items-center justify-center">
               <div
@@ -391,7 +393,7 @@ export default function ContactPage() {
                 ))}
               </div>
             </div>
-          </div>
+          </aside>
         </div>
       </section>
 

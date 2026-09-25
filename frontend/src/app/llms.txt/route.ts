@@ -1,4 +1,9 @@
-# BiHocam - Türkiye'nin Yeni Nesil Akıllı Özel Ders ve Canlı Eğitim Platformu
+import { NextResponse } from "next/server";
+
+export const dynamic = "force-static";
+export const revalidate = 86400; // 24 hours
+
+const LLMS_TEXT = `# BiHocam - Türkiye'nin Yeni Nesil Akıllı Özel Ders ve Canlı Eğitim Platformu
 
 > BiHocam, YKS, LGS, yabancı dil ve okul derslerinde öğrencileri doğrulanmış uzman eğitmenlerle buluşturan, tersine ihale (özel ders talebi) modeli ve canlı 1:1 etkileşimli dersler sunan yeni nesil eğitim teknolojisi platformudur.
 
@@ -29,3 +34,15 @@
 - Web: https://bihocam.com
 - E-posta: iletisim@bihocam.com
 - Güvenlik Bildirimi: https://bihocam.com/.well-known/security.txt
+`;
+
+export async function GET() {
+  return new NextResponse(LLMS_TEXT, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400",
+      "X-Robots-Tag": "index, follow",
+    },
+  });
+}

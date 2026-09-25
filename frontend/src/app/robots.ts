@@ -1,31 +1,74 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
+  const disallowedPrivateRoutes = [
+    "/dashboard/",
+    "/api/",
+    "/admin/",
+    "/checkout/",
+    "/cart/",
+    "/orders/",
+    "/payment/",
+    "/tenders/",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password/",
+    "/verify-certificate/",
+  ];
+
+  const allowedPublicPaths = [
+    "/",
+    "/courses",
+    "/courses/",
+    "/teachers",
+    "/teachers/",
+    "/egitim-programlari",
+    "/egitim-programlari/",
+    "/blog",
+    "/blog/",
+    "/pages",
+    "/pages/",
+    "/iletisim",
+    "/tanisma-dersi",
+    "/become-instructor",
+    "/llms.txt",
+    "/llms-full.txt",
+  ];
+
   return {
     rules: [
       {
         userAgent: "*",
         allow: ["/", "/llms.txt", "/llms-full.txt"],
-        disallow: [
-          "/dashboard/",
-          "/api/",
-          "/admin/",
-          "/checkout/",
-          "/reset-password/",
-        ],
+        disallow: disallowedPrivateRoutes,
+      },
+      {
+        userAgent: "GPTBot",
+        allow: allowedPublicPaths,
+        disallow: disallowedPrivateRoutes,
+      },
+      {
+        userAgent: "ClaudeBot",
+        allow: allowedPublicPaths,
+        disallow: disallowedPrivateRoutes,
+      },
+      {
+        userAgent: "PerplexityBot",
+        allow: allowedPublicPaths,
+        disallow: disallowedPrivateRoutes,
       },
       {
         userAgent: [
-          "GPTBot",
           "ChatGPT-User",
-          "PerplexityBot",
-          "ClaudeBot",
           "Google-Extended",
           "CCBot",
           "Applebot-Extended",
           "cohere-ai",
+          "Diffbot",
         ],
-        allow: ["/", "/courses", "/teachers", "/blog", "/tenders", "/llms.txt", "/llms-full.txt"],
+        allow: allowedPublicPaths,
+        disallow: disallowedPrivateRoutes,
       },
     ],
     sitemap: "https://bihocam.com/sitemap.xml",

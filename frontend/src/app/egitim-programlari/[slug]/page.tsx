@@ -289,7 +289,7 @@ export default function ProgramDetailPage() {
             </div>
 
             {/* Right: Title Card & Program Bilgileri Card */}
-            <div className="lg:col-span-1 space-y-6">
+            <aside className="lg:col-span-1 space-y-6">
               {/* Title Card */}
               <div className="bg-white rounded-3xl border border-gray-150 shadow-md p-6 space-y-3 hover:shadow-lg transition-all duration-300">
                 <h1 className="text-xl md:text-2xl font-black text-gray-900 leading-tight">
@@ -361,12 +361,12 @@ export default function ProgramDetailPage() {
                   </p>
                 </div>
               </div>
-            </div>
+            </aside>
           </div>
         </section>
 
         {/* Full Width Dynamic Sections */}
-        <section className="max-w-7xl mx-auto px-4 space-y-8">
+        <article className="max-w-7xl mx-auto px-4 space-y-8">
           {/* 1. Açıklama Card */}
           <div className="bg-white rounded-3xl border border-gray-150 shadow-md p-6 sm:p-8">
             <h2 className="text-lg font-black text-gray-900 border-b border-gray-100 pb-3 mb-4">Açıklama</h2>
@@ -643,7 +643,7 @@ export default function ProgramDetailPage() {
               </div>
             </div>
           )}
-        </section>
+        </article>
       </main>
 
       <Footer />

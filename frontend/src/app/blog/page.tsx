@@ -203,7 +203,7 @@ export default function BlogListPage() {
             <div className="space-y-6 mb-12">
               
               {/* Category selector pills - Very aesthetic & responsive */}
-              <div className="bg-white rounded-[2rem] border border-slate-100 p-5 shadow-sm space-y-4">
+              <aside aria-label="Blog Kategorileri" className="bg-white rounded-[2rem] border border-slate-100 p-5 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-50 pb-2">
                   <span className="text-xs font-black text-slate-800 tracking-wider uppercase flex items-center gap-1.5">
                     <span className="w-1.5 h-3.5 bg-blue-600 rounded-full inline-block"></span>
@@ -247,7 +247,7 @@ export default function BlogListPage() {
                     );
                   })}
                 </div>
-              </div>
+              </aside>
 
               {/* Search, Tag filter and Sort controls */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -327,7 +327,7 @@ export default function BlogListPage() {
                       {/* Left: Big Featured Post Card */}
                       <div className="lg:col-span-8">
                         {featuredPosts[0] && (
-                          <div
+                          <article
                             onClick={() => router.push(`/blog/${featuredPosts[0].slug}`)}
                             className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl hover:border-slate-200/80 transition-all cursor-pointer group flex flex-col justify-between min-h-[460px]"
                           >
@@ -379,14 +379,14 @@ export default function BlogListPage() {
                                 </span>
                               </div>
                             </div>
-                          </div>
+                          </article>
                         )}
                       </div>
 
                       {/* Right: Smaller Grid of Next 2 Featured Posts */}
                       <div className="lg:col-span-4 space-y-6">
                         {featuredPosts.slice(1, 3).map((post) => (
-                          <div
+                          <article
                             key={post.id}
                             onClick={() => router.push(`/blog/${post.slug}`)}
                             className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-md hover:border-slate-200/50 transition-all cursor-pointer group space-y-3"
@@ -411,7 +411,7 @@ export default function BlogListPage() {
                               <span>👤 {post.author.full_name}</span>
                               <span className="text-blue-600 flex items-center gap-0.5">Oku →</span>
                             </div>
-                          </div>
+                          </article>
                         ))}
                       </div>
                     </div>
@@ -443,7 +443,7 @@ export default function BlogListPage() {
                           {/* Row Cards (Max 3) */}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {data.list.slice(0, 3).map((post) => (
-                              <div
+                              <article
                                 key={post.id}
                                 onClick={() => router.push(`/blog/${post.slug}`)}
                                 className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-lg hover:border-slate-200/50 transition-all cursor-pointer group flex flex-col justify-between min-h-[360px]"
@@ -481,7 +481,7 @@ export default function BlogListPage() {
                                     Oku →
                                   </span>
                                 </div>
-                              </div>
+                              </article>
                             ))}
                           </div>
 
@@ -508,7 +508,7 @@ export default function BlogListPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {sortedPosts.map((post) => (
-                        <div
+                        <article
                           key={post.id}
                           onClick={() => router.push(`/blog/${post.slug}`)}
                           className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-lg hover:border-slate-200/50 transition-all cursor-pointer group flex flex-col justify-between min-h-[380px]"
@@ -550,7 +550,7 @@ export default function BlogListPage() {
                               Oku →
                             </span>
                           </div>
-                        </div>
+                        </article>
                       ))}
                     </div>
                   </div>
