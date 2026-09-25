@@ -45,7 +45,7 @@ export function BentoCard({
   };
 
   const CardContent = (
-    <div
+    <article
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -94,7 +94,7 @@ export function BentoCard({
           {children}
         </div>
       )}
-    </div>
+    </article>
   );
 
   return href ? (
