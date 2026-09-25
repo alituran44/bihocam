@@ -735,14 +735,15 @@ export default function Home() {
             </div>
 
             {/* ── RIGHT COLUMN (Asymmetric 5 Cols - Live Demand Ticker) ── */}
-            <motion.div
+            <motion.aside
+              aria-label="Canlı Özel Ders Talepleri"
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
               className="lg:col-span-5 w-full"
             >
               <LiveDemandTicker />
-            </motion.div>
+            </motion.aside>
           </div>
         </div>
       </section>
@@ -1942,7 +1943,7 @@ export default function Home() {
             <div className="grid md:grid-cols-3 gap-8">
               {blogPosts.slice(0, 3).map((post) => (
                 <Link key={post.slug} href={`/blog/${post.slug}`} className="group flex flex-col h-full">
-                  <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full">
+                  <article className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full">
                     <div>
                       {/* Featured Image */}
                       <div className="aspect-video bg-slate-100 relative overflow-hidden">
@@ -2007,7 +2008,7 @@ export default function Home() {
                         <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Eğitim Danışmanı</p>
                       </div>
                     </div>
-                  </div>
+                  </article>
                 </Link>
               ))}
             </div>
