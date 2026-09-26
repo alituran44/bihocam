@@ -26,6 +26,11 @@ import Hero3DCanvas from "@/components/3d/Hero3DCanvas";
 import TiltCard3D from "@/components/3d/TiltCard3D";
 import BentoGridSection from "@/components/ui/BentoGrid";
 import LiveDemandTicker from "@/components/home/LiveDemandTicker";
+import HeroSearchCapsule from "@/components/home/HeroSearchCapsule";
+import Hero3DFloatingVisual from "@/components/home/Hero3DFloatingVisual";
+import HeroWaveRibbon from "@/components/home/HeroWaveRibbon";
+import WhyBiHocamSection from "@/components/home/WhyBiHocamSection";
+import LessonHourFlowSection from "@/components/home/LessonHourFlowSection";
 import { FaqJsonLd } from "@/components/seo/JsonLd";
 
 export const HOME_FAQS = [
@@ -665,6 +670,16 @@ export default function Home() {
                 <span className="text-emerald-700 font-semibold">özel ders talebi açarak</span> öğretmenlerin size özel teklif vermesini sağlayın.
               </motion.p>
 
+              {/* ── Aniq-UI Inspired Fast Search Capsule ── */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.25 }}
+                className="w-full"
+              >
+                <HeroSearchCapsule />
+              </motion.div>
+
               {/* Dual Action CTA Buttons */}
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
@@ -734,51 +749,32 @@ export default function Home() {
               </motion.div>
             </div>
 
-            {/* ── RIGHT COLUMN (Asymmetric 5 Cols - Live Demand Ticker) ── */}
+            {/* ── RIGHT COLUMN (Asymmetric 5 Cols - 3D Floating Visual & Live Demand Ticker) ── */}
             <motion.aside
-              aria-label="Canlı Özel Ders Talepleri"
+              aria-label="3D Canlı Sınıf & Özel Ders Talepleri"
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="lg:col-span-5 w-full"
+              className="lg:col-span-5 w-full flex flex-col items-center justify-center space-y-6"
             >
-              <LiveDemandTicker />
+              <Hero3DFloatingVisual />
+              <div className="w-full">
+                <LiveDemandTicker />
+              </div>
             </motion.aside>
           </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════ */}
-      {/* LIGHT MARQUEE TICKER                                   */}
+      {/* HERO WAVE RIBBON - ORGANIC RUNNING STRIP (Aniq-UI)     */}
       {/* ══════════════════════════════════════════════════════ */}
-      <div className="relative bg-slate-100/90 border-y border-slate-200 py-3.5 overflow-hidden">
-        <motion.div
-          className="flex whitespace-nowrap"
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{ repeat: Infinity, duration: 28, ease: "linear" }}
-        >
-          {[...Array(2)].map((_, ri) => (
-            <div key={ri} className="flex items-center gap-10 px-6 text-xs sm:text-sm font-semibold text-slate-700 tracking-wide">
-              {[
-                { icon: <BookOpen className="w-4 h-4 text-emerald-600" />, text: '36+ Yayınlanmış Kurs ve İçerik' },
-                { icon: <GraduationCap className="w-4 h-4 text-teal-600" />, text: '33 Kapsamlı Eğitim Programı' },
-                { icon: <Clock className="w-4 h-4 text-indigo-600" />, text: 'Canlı Özel Ders Talepleri & Teklif Masası' },
-                { icon: <Star className="w-4 h-4 text-amber-500" />, text: '4.9/5 Ortalama Memnuniyet' },
-                { icon: <Award className="w-4 h-4 text-emerald-600" />, text: '%100 Onaylı Eğitmen Kadrosu' },
-                { icon: <ShieldCheck className="w-4 h-4 text-emerald-600" />, text: "GİB & VUK Uyumlu Güvenli Ödeme" },
-                { icon: <Smartphone className="w-4 h-4 text-teal-600" />, text: 'Kurulumsuz WebRTC Canlı Sınıf' },
-                { icon: <Sparkles className="w-4 h-4 text-purple-600" />, text: 'Yapay Zeka Destekli Gelişim Takibi' },
-              ].map((item, i) => (
-                <span key={i} className="flex items-center gap-2.5">
-                  {item.icon}
-                  <span>{item.text}</span>
-                  <span className="text-slate-300 text-base font-thin ml-6">|</span>
-                </span>
-              ))}
-            </div>
-          ))}
-        </motion.div>
-      </div>
+      <HeroWaveRibbon />
+
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* WHY BIHOCAM 3-CARD VALUE PROPOSITION (Aniq-UI Style)   */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <WhyBiHocamSection />
 
       {/* ══════════════════════════════════════════════════════ */}
       {/* 21ST.DEV BENTO GRID SECTION                            */}
@@ -856,6 +852,11 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* LESSON HOUR FLOW - 4 STEPS & ANIMATED CLOCK DIAL       */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <LessonHourFlowSection />
 
       {/* ══════════════════════════════════════════════════════ */}
       {/* PRICING CALCULATOR - MODERN LIGHT THEME                */}
