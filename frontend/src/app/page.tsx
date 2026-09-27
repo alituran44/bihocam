@@ -777,11 +777,6 @@ export default function Home() {
       <WhyBiHocamSection />
 
       {/* ══════════════════════════════════════════════════════ */}
-      {/* 21ST.DEV BENTO GRID SECTION                            */}
-      {/* ══════════════════════════════════════════════════════ */}
-      <BentoGridSection />
-
-      {/* ══════════════════════════════════════════════════════ */}
       {/* CATEGORY CARDS SECTION - MODERN LIGHT THEME            */}
       {/* ══════════════════════════════════════════════════════ */}
       <section className="py-24 bg-white relative overflow-hidden border-b border-slate-100">
@@ -854,9 +849,171 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════════════════ */}
+      {/* POPÜLER KURSLAR SECTION                                */}
+      {/* ══════════════════════════════════════════════════════ */}
+      {((featuredCourses && featuredCourses.length > 0) || (courses && courses.length > 0)) && (
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-slate-50/80 border-b border-slate-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-black text-slate-900 font-display tracking-tight">Popüler Kurslar</h2>
+                <p className="text-slate-600 font-normal text-sm">
+                  {featuredCourses && featuredCourses.length > 0
+                    ? "Öne çıkan seçili kurslarımız"
+                    : "En çok tercih edilen kurslarımız"}
+                </p>
+              </div>
+              <Link
+                href="/courses"
+                className="text-emerald-700 hover:text-emerald-800 font-bold text-sm inline-flex items-center gap-1 group"
+              >
+                Tümünü Keşfet <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {(featuredCourses && featuredCourses.length > 0 ? featuredCourses : courses || []).slice(0, 8).map((course) => (
+                <Link key={course.id} href={`/courses/${course.slug}`} className="group">
+                  <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full">
+                    <div>
+                      {/* Image / Thumbnail placeholder */}
+                      <div className="aspect-video bg-slate-100 relative overflow-hidden">
+                        {course.thumbnail_path ? (
+                          <img
+                            src={course.thumbnail_path}
+                            alt={course.title}
+                            width="400"
+                            height="225"
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-400">
+                            <BookOpen className="w-12 h-12" />
+                          </div>
+                        )}
+                        {course.discount_price && (
+                          <span className="absolute top-3 left-3 px-2 py-1 bg-rose-500 text-white text-[10px] font-black rounded-md shadow-md">
+                            %{Math.round((1 - course.discount_price / course.price) * 100)} İNDİRİM
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Card Content */}
+                      <div className="p-5 space-y-2">
+                        <h3 className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-2 leading-tight text-sm sm:text-base">
+                          {course.title}
+                        </h3>
+                        <p className="text-xs text-slate-500 font-medium">{course.teacher?.full_name || "Seçkin Eğitmen"}</p>
+                      </div>
+                    </div>
+
+                    <div className="p-5 border-t border-slate-100 flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-xs font-bold text-slate-700">
+                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                        <span>4.8</span>
+                        <span className="text-slate-400 font-normal">(84)</span>
+                      </div>
+                      <div className="font-mono font-bold text-sm sm:text-base">
+                        {course.discount_price ? (
+                          <div className="flex flex-col items-end">
+                            <span className="text-[10px] text-slate-400 line-through">₺{course.price}</span>
+                            <span className="text-emerald-700 font-black">₺{course.discount_price}</span>
+                          </div>
+                        ) : course.price === 0 ? (
+                          <span className="text-emerald-700 font-bold">Ücretsiz</span>
+                        ) : (
+                          <span className="text-slate-900 font-black">₺{course.price}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </motion.section>
+      )}
+
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* POPÜLER EĞİTİM PROGRAMLARI SECTION                     */}
+      {/* ══════════════════════════════════════════════════════ */}
+      {educationPrograms && educationPrograms.length > 0 && (
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-white border-b border-slate-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-black text-slate-900 font-display tracking-tight">Popüler Eğitim Programları</h2>
+                <p className="text-slate-600 font-normal text-sm">
+                  Geleceğinizi şekillendiren kapsamlı hazırlık paketlerimiz
+                </p>
+              </div>
+              <Link
+                href="/egitim-programlari"
+                className="text-emerald-700 hover:text-emerald-800 font-bold text-sm inline-flex items-center gap-1 group"
+              >
+                Tümünü Keşfet <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {educationPrograms.slice(0, 3).map((rp) => {
+                const cardGradient = getGradientBySlug(rp.slug);
+                return (
+                  <Link key={rp.slug} href={`/egitim-programlari/${rp.slug}`} className="group flex flex-col h-full">
+                    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full">
+                      <div>
+                        {/* Banner */}
+                        <div className={`h-40 bg-gradient-to-br ${cardGradient} flex items-center justify-center p-4 relative`}>
+                          {getBannerContent(rp.slug, rp.title)}
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="p-6">
+                          <h3 className="font-extrabold text-slate-900 text-lg mb-2 group-hover:text-emerald-700 transition-colors leading-tight line-clamp-1">
+                            {rp.title}
+                          </h3>
+                          <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-4 font-normal">
+                            {rp.short_description || "BiHocam uzman kadrosuyla hazırlanan LGS ve YKS programları; canlı ders, deneme ve rehberlik desteğiyle tek platformda kolaylaşıyor."}
+                          </p>
+                          
+                          <div className="flex items-center gap-1 text-sm font-bold text-slate-700 mb-2">
+                            <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                            <span>{rp.rating || 4.8}</span>
+                            <span className="text-slate-400 font-normal text-xs">({rp.review_count || 84})</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer Info */}
+                      <div className="px-6 pb-6 pt-4 flex items-center justify-between border-t border-slate-100 bg-slate-50/50">
+                        <div>
+                          <p className="text-emerald-800 font-black font-mono text-xl">{formatProgramPrice(rp.price)}</p>
+                          <p className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">+ KDV</p>
+                        </div>
+                        <span className="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors">
+                          İncele →
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </motion.section>
+      )}
+
+      {/* ══════════════════════════════════════════════════════ */}
       {/* LESSON HOUR FLOW - 4 STEPS & ANIMATED CLOCK DIAL       */}
       {/* ══════════════════════════════════════════════════════ */}
       <LessonHourFlowSection />
+
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* 21ST.DEV BENTO GRID SECTION                            */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <BentoGridSection />
 
       {/* ══════════════════════════════════════════════════════ */}
       {/* PRICING CALCULATOR - MODERN LIGHT THEME                */}
@@ -1329,145 +1486,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Popular Categories Grid */}
-      {/* Popular Categories Grid (Light Theme) */}
-      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-white border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-black text-slate-900 font-display tracking-tight">Branşlara Göre Keşfedin</h2>
-              <p className="text-slate-600 font-normal text-sm">Hangi alanda desteğe ihtiyacınız varsa uzman eğitmenimiz hazır.</p>
-            </div>
-            <Link
-              href="/courses"
-              className="text-emerald-700 hover:text-emerald-800 font-bold text-sm inline-flex items-center gap-1 group"
-            >
-              Tümünü Gör <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
-            {[
-              { icon: Target, name: "YKS", iconColor: "text-orange-600", desc: "Üniversite Hazırlık" },
-              { icon: BookOpen, name: "LGS", iconColor: "text-cyan-600", desc: "Lise Hazırlık" },
-              { icon: Zap, name: "Matematik", iconColor: "text-emerald-600", desc: "Analiz & Geometri" },
-              { icon: Sparkles, name: "Fizik", iconColor: "text-purple-600", desc: "Mekanik & Optik" },
-              { icon: Sprout, name: "Kimya", iconColor: "text-teal-600", desc: "Organik & Temel" },
-              { icon: Award, name: "Biyoloji", iconColor: "text-yellow-600", desc: "Genetik & Canlı" },
-            ].map((cat) => {
-              const IconComponent = cat.icon;
-              return (
-                <Link
-                  key={cat.name}
-                  href={`/courses?category=${cat.name.toLowerCase()}`}
-                  className="group relative p-6 bg-slate-50 rounded-2xl border border-slate-200/90 hover:bg-white hover:border-emerald-500/40 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between overflow-hidden"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:border-emerald-300 transition-all shadow-xs">
-                    <IconComponent className={`w-6 h-6 ${cat.iconColor}`} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-base mb-0.5 group-hover:text-emerald-700 transition-colors">{cat.name}</h3>
-                    <p className="text-xs text-slate-600 font-medium">{cat.desc}</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </motion.section>
-
-      {/* Featured Courses placements (Light Theme) */}
-      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-slate-50/50 border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FeaturedCourses limit={6} showTitle={true} />
-        </div>
-      </motion.section>
-
-      {/* Popular Courses list (Light Theme) */}
-      {((featuredCourses && featuredCourses.length > 0) || (courses && courses.length > 0)) && (
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-slate-50/80 border-t border-slate-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-black text-slate-900 font-display tracking-tight">Popüler Kurslar</h2>
-                <p className="text-slate-600 font-normal text-sm">
-                  {featuredCourses && featuredCourses.length > 0
-                    ? "Öne çıkan seçili kurslarımız"
-                    : "En çok tercih edilen kurslarımız"}
-                </p>
-              </div>
-              <Link
-                href="/courses"
-                className="text-emerald-700 hover:text-emerald-800 font-bold text-sm inline-flex items-center gap-1 group"
-              >
-                Tümünü Keşfet <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {(featuredCourses && featuredCourses.length > 0 ? featuredCourses : courses || []).slice(0, 8).map((course) => (
-                <Link key={course.id} href={`/courses/${course.slug}`} className="group">
-                  <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full">
-                    <div>
-                      {/* Image / Thumbnail placeholder */}
-                      <div className="aspect-video bg-slate-100 relative overflow-hidden">
-                        {course.thumbnail_path ? (
-                          <img
-                            src={course.thumbnail_path}
-                            alt={course.title}
-                            width="400"
-                            height="225"
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-400">
-                            <BookOpen className="w-12 h-12" />
-                          </div>
-                        )}
-                        {course.discount_price && (
-                          <span className="absolute top-3 left-3 px-2 py-1 bg-rose-500 text-white text-[10px] font-black rounded-md shadow-md">
-                            %{Math.round((1 - course.discount_price / course.price) * 100)} İNDİRİM
-                          </span>
-                        )}
-                      </div>
-                      
-                      {/* Card Content */}
-                      <div className="p-5 space-y-2">
-                        <h3 className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-2 leading-tight text-sm sm:text-base">
-                          {course.title}
-                        </h3>
-                        <p className="text-xs text-slate-500 font-medium">{course.teacher?.full_name || "Seçkin Eğitmen"}</p>
-                      </div>
-                    </div>
-
-                    <div className="p-5 border-t border-slate-100 flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-xs font-bold text-slate-700">
-                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                        <span>4.8</span>
-                        <span className="text-slate-400 font-normal">(84)</span>
-                      </div>
-                      <div className="font-mono font-bold text-sm sm:text-base">
-                        {course.discount_price ? (
-                          <div className="flex flex-col items-end">
-                            <span className="text-[10px] text-slate-400 line-through">₺{course.price}</span>
-                            <span className="text-emerald-700 font-black">₺{course.discount_price}</span>
-                          </div>
-                        ) : course.price === 0 ? (
-                          <span className="text-emerald-700 font-bold">Ücretsiz</span>
-                        ) : (
-                          <span className="text-slate-900 font-black">₺{course.price}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </motion.section>
-      )}
 
       {/* Popcast Section */}
       {popcasts && popcasts.length > 0 && (
@@ -1671,72 +1690,7 @@ export default function Home() {
         </motion.section>
       )}
 
-      {/* Popular Education Programs list (Light Theme) */}
-      {educationPrograms && educationPrograms.length > 0 && (
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-white border-t border-slate-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-black text-slate-900 font-display tracking-tight">Popüler Eğitim Programları</h2>
-                <p className="text-slate-600 font-normal text-sm">
-                  Geleceğinizi şekillendiren kapsamlı hazırlık paketlerimiz
-                </p>
-              </div>
-              <Link
-                href="/egitim-programlari"
-                className="text-emerald-700 hover:text-emerald-800 font-bold text-sm inline-flex items-center gap-1 group"
-              >
-                Tümünü Keşfet <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {educationPrograms.slice(0, 3).map((rp) => {
-                const cardGradient = getGradientBySlug(rp.slug);
-                return (
-                  <Link key={rp.slug} href={`/egitim-programlari/${rp.slug}`} className="group flex flex-col h-full">
-                    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full">
-                      <div>
-                        {/* Banner */}
-                        <div className={`h-40 bg-gradient-to-br ${cardGradient} flex items-center justify-center p-4 relative`}>
-                          {getBannerContent(rp.slug, rp.title)}
-                        </div>
-                        
-                        {/* Content */}
-                        <div className="p-6">
-                          <h3 className="font-extrabold text-slate-900 text-lg mb-2 group-hover:text-emerald-700 transition-colors leading-tight line-clamp-1">
-                            {rp.title}
-                          </h3>
-                          <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-4 font-normal">
-                            {rp.short_description || "BiHocam uzman kadrosuyla hazırlanan LGS ve YKS programları; canlı ders, deneme ve rehberlik desteğiyle tek platformda kolaylaşıyor."}
-                          </p>
-                          
-                          <div className="flex items-center gap-1 text-sm font-bold text-slate-700 mb-2">
-                            <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                            <span>{rp.rating || 4.8}</span>
-                            <span className="text-slate-400 font-normal text-xs">({rp.review_count || 84})</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Footer Info */}
-                      <div className="px-6 pb-6 pt-4 flex items-center justify-between border-t border-slate-100 bg-slate-50/50">
-                        <div>
-                          <p className="text-emerald-800 font-black font-mono text-xl">{formatProgramPrice(rp.price)}</p>
-                          <p className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">+ KDV</p>
-                        </div>
-                        <span className="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors">
-                          İncele →
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </motion.section>
-      )}
 
       {/* SİZİ ARAYABİLİRİZ (Light Theme) */}
       <motion.section 
