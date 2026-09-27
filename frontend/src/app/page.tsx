@@ -704,10 +704,15 @@ export default function Home() {
                 </Link>
 
                 <Link
-                  href="/tanisma-dersi"
-                  className="w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold text-xs sm:text-sm transition-all duration-200 text-center"
+                  href="/become-instructor"
+                  className="w-full sm:w-auto px-5 sm:px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/35 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden"
                 >
-                  15 Dk Ücretsiz Tanışma
+                  <GraduationCap className="w-4 h-4 text-white group-hover:rotate-12 transition-transform duration-300" />
+                  <span>Eğitmen Ol</span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white/20 text-[10px] font-black uppercase tracking-wider backdrop-blur-xs">
+                    Kadroya Katıl
+                  </span>
+                  <ArrowRight className="w-4 h-4 opacity-75 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                 </Link>
               </motion.div>
 
