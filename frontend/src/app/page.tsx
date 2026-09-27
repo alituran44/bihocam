@@ -19,7 +19,7 @@ import {
   Sparkles, ArrowRight, CheckCircle2, ShieldCheck, 
   Users, BookOpen, GraduationCap, Star, Award, 
   Laptop, Trophy, Smartphone, Sprout, Target, 
-  Globe, Compass, Lightbulb, Zap, Clock, ChevronRight, Check, X, HelpCircle, PlusCircle
+  Globe, Compass, Lightbulb, Zap, Clock, ChevronRight, Check, X, HelpCircle, PlusCircle, Bookmark
 } from "lucide-react";
 import PayTRTaksitWidget from "@/components/payment/PayTRTaksitWidget";
 import Hero3DCanvas from "@/components/3d/Hero3DCanvas";
@@ -31,6 +31,11 @@ import Hero3DFloatingVisual from "@/components/home/Hero3DFloatingVisual";
 import HeroWaveRibbon from "@/components/home/HeroWaveRibbon";
 import WhyBiHocamSection from "@/components/home/WhyBiHocamSection";
 import LessonHourFlowSection from "@/components/home/LessonHourFlowSection";
+import HowItWorksSection from "@/components/home/HowItWorksSection";
+import HowYouLearnSection from "@/components/home/HowYouLearnSection";
+import InstructorsShowcaseSection from "@/components/home/InstructorsShowcaseSection";
+import TestimonialsSection from "@/components/home/TestimonialsSection";
+import FinalCTASection from "@/components/home/FinalCTASection";
 import { FaqJsonLd } from "@/components/seo/JsonLd";
 
 export const HOME_FAQS = [
@@ -378,6 +383,31 @@ export default function Home() {
     enabled: !maintenanceMode || user?.role === "admin",
     staleTime: 5 * 60 * 1000,
   });
+
+  // Aniq-UI Inspired Course Categories and Filtering
+  const COURSE_CATEGORIES = [
+    { id: "all", label: "Tüm Branşlar" },
+    { id: "yks-lgs", label: "YKS & LGS" },
+    { id: "matematik", label: "Matematik" },
+    { id: "dil", label: "İngilizce & Dil" },
+    { id: "yazilim", label: "Yazılım & Kodlama" },
+    { id: "fen", label: "Fen Bilimleri" },
+  ];
+  const [selectedCourseCategory, setSelectedCourseCategory] = useState("all");
+
+  const filteredCourses = useMemo(() => {
+    const rawList = featuredCourses && featuredCourses.length > 0 ? featuredCourses : courses || [];
+    if (selectedCourseCategory === "all") return rawList;
+    return rawList.filter((c) => {
+      const targetText = `${c.title} ${c.slug} ${c.short_description || ""}`.toLowerCase();
+      if (selectedCourseCategory === "yks-lgs") return targetText.includes("yks") || targetText.includes("lgs") || targetText.includes("tyt") || targetText.includes("ayt");
+      if (selectedCourseCategory === "matematik") return targetText.includes("matematik") || targetText.includes("geometri");
+      if (selectedCourseCategory === "dil") return targetText.includes("ingilizce") || targetText.includes("ielts") || targetText.includes("toefl") || targetText.includes("dil");
+      if (selectedCourseCategory === "yazilim") return targetText.includes("yazılım") || targetText.includes("python") || targetText.includes("kod") || targetText.includes("algoritma");
+      if (selectedCourseCategory === "fen") return targetText.includes("fen") || targetText.includes("fizik") || targetText.includes("kimya") || targetText.includes("biyoloji");
+      return true;
+    });
+  }, [featuredCourses, courses, selectedCourseCategory]);
 
   // Popup announcement
   const { activePopup, dismissPopup } = usePopupAnnouncement();
@@ -780,233 +810,259 @@ export default function Home() {
       <WhyBiHocamSection />
 
       {/* ══════════════════════════════════════════════════════ */}
-      {/* CATEGORY CARDS SECTION - MODERN LIGHT THEME            */}
+      {/* LAUNCH YOUR GOAL: CATEGORY TABS & POPULAR COURSES       */}
       {/* ══════════════════════════════════════════════════════ */}
       <section className="py-24 bg-white relative overflow-hidden border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16 space-y-3"
-          >
+          
+          {/* Section Header */}
+          <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              <span>UZMANLIK ALANLARI</span>
+              <span>TÜM SEVİYELER İÇİN</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 font-display tracking-tight">
-              Eğitim Branşları & Programlar
-            </h2>
-            <p className="text-slate-600 font-normal max-w-2xl mx-auto text-base sm:text-lg">
-              Size en uygun eğitimi seçin, alanında uzman doğrulanmış öğretmenlerle hemen başlayın.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { id: 'ilkokul', title: 'İlkokul', desc: 'Okul takviye dersleri, bursluluk ve temel kazanım programları', icon: Sprout, iconColor: 'text-emerald-600', badge: 'Temel Eğitim' },
-              { id: 'ortaokul', title: 'Ortaokul & LGS', desc: 'LGS yeni nesil soru çözümleri, branş takviyeleri ve denemeler', icon: BookOpen, iconColor: 'text-teal-600', badge: 'LGS Hazırlık' },
-              { id: 'lise', title: 'Lise & YKS', desc: 'TYT & AYT kapsamlı konu anlatımları ve derece koçluğu', icon: Target, iconColor: 'text-indigo-600', badge: 'YKS Hazırlık' },
-              { id: 'yabanci-dil', title: 'Yabancı Dil', desc: 'İngilizce, Almanca, IELTS, TOEFL ve konuşma pratikleri', icon: Globe, iconColor: 'text-rose-600', badge: 'Dil Eğitimi' },
-              { id: 'kocluk', title: 'Eğitim Koçluğu', desc: 'Haftalık çalışma planlaması, deneme analizi ve motivasyon', icon: Compass, iconColor: 'text-purple-600', badge: 'Rehberlik' },
-              { id: 'beceri', title: 'Yazılım & Beceri', desc: 'Python, robotik kodlama, hızlı okuma ve zihin haritaları', icon: Lightbulb, iconColor: 'text-amber-600', badge: 'Geleceğin Becerileri' },
-            ].map((cat, i) => {
-              const IconComp = cat.icon;
-              return (
-                <motion.div
-                  key={cat.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.08 }}
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 font-display tracking-tight leading-[1.15]">
+              Hedefinize Uygun{" "}
+              <span className="relative inline-block text-emerald-700">
+                Ders & Kursları
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 250 20"
+                  className="absolute -bottom-2 left-0 w-full h-3 text-emerald-400/80 -z-10"
+                  preserveAspectRatio="none"
                 >
-                  <Link
-                    href={`/tanisma-dersi?category=${cat.id}`}
-                    className="group block rounded-3xl border border-slate-200/90 bg-slate-50/70 p-6 md:p-8 transition-all duration-300 hover:bg-white hover:border-emerald-500/40 hover:shadow-xl h-full relative overflow-hidden"
-                  >
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white border border-slate-200 group-hover:border-emerald-500/30 group-hover:bg-emerald-50 transition-all duration-300 shadow-xs">
-                        <IconComp className={`w-7 h-7 ${cat.iconColor} group-hover:scale-110 transition-transform`} />
-                      </div>
-                      <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 group-hover:border-emerald-200 group-hover:text-emerald-700 transition-colors">
-                        {cat.badge}
+                  <path
+                    d="M3 15 Q 125 0 247 12"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>{" "}
+              Keşfedin
+            </h2>
+            <p className="text-slate-600 font-normal text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+              YKS, LGS, yabancı dil ve tüm okul branşlarında alanında uzman doğrulanmış öğretmenlerle başarıya ulaşın.
+            </p>
+          </div>
+
+          {/* Aniq-UI Category Filter Pills */}
+          <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-6 pt-1 no-scrollbar mb-10">
+            {COURSE_CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCourseCategory(cat.id)}
+                className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border cursor-pointer ${
+                  selectedCourseCategory === cat.id
+                    ? "bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20 scale-105"
+                    : "bg-white text-slate-700 border-slate-200/90 hover:border-slate-300 hover:bg-slate-50"
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Aniq-UI Course Cards Grid (5:3 Aspect Anatomy) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredCourses.slice(0, 8).map((course) => (
+              <Link key={course.id} href={`/courses/${course.slug}`} className="group/card block h-full">
+                <div className="bg-white rounded-3xl overflow-hidden border border-slate-200/90 hover:border-emerald-500/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col justify-between p-3 shadow-xs">
+                  <div>
+                    {/* 5:3 Aspect Image Thumbnail */}
+                    <div className="relative w-full aspect-[5/3] overflow-hidden rounded-2xl bg-slate-100 border border-slate-100">
+                      {course.thumbnail_path ? (
+                        <img
+                          src={course.thumbnail_path}
+                          alt={course.title}
+                          loading="lazy"
+                          className="object-cover w-full h-full group-hover/card:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 bg-slate-50">
+                          <BookOpen className="w-10 h-10" />
+                        </div>
+                      )}
+
+                      {/* Top Left Badge */}
+                      <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-full bg-white/95 backdrop-blur-md px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-800 shadow-xs">
+                        <Star className="w-3 h-3 fill-emerald-600 text-emerald-600" />
+                        <span>{course.discount_price ? "İndirimli" : "Popüler"}</span>
                       </span>
+
+                      {/* Top Right Bookmark Button */}
+                      <div className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/95 text-slate-700 hover:text-emerald-700 flex items-center justify-center shadow-xs transition-colors">
+                        <Bookmark className="w-4 h-4" />
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-bold tracking-tight text-slate-900 group-hover:text-emerald-700 transition-colors flex items-center justify-between">
-                        <span>{cat.title}</span>
-                        <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all text-emerald-600" />
+                    {/* Instructor Info */}
+                    <div className="px-2 pt-3 pb-1">
+                      <div className="flex items-center gap-2.5 mb-2.5">
+                        <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                          {course.teacher?.avatar_url ? (
+                            <img
+                              src={course.teacher.avatar_url}
+                              alt={course.teacher.full_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-xs font-bold text-emerald-700 bg-emerald-50">
+                              {course.teacher?.full_name?.charAt(0) || "E"}
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-900 truncate">
+                            {course.teacher?.full_name || "Seçkin Eğitmen"}
+                          </p>
+                          <p className="text-[11px] text-slate-500 truncate">BiHocam Eğitmeni</p>
+                        </div>
+                      </div>
+
+                      {/* Title & Description */}
+                      <h3 className="text-base font-bold text-slate-900 mb-1.5 line-clamp-2 min-h-[3rem] group-hover/card:text-emerald-700 transition-colors leading-snug">
+                        {course.title}
                       </h3>
-                      <p className="text-sm leading-relaxed text-slate-600 font-normal">
-                        {cat.desc}
+                      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal">
+                        {course.short_description || "Birebir canlı anlatım, yeni nesil soru çözümleri ve interaktif dijital kaynaklarla hedefinize ulaşın."}
                       </p>
                     </div>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+                  </div>
 
-      {/* ══════════════════════════════════════════════════════ */}
-      {/* POPÜLER KURSLAR SECTION                                */}
-      {/* ══════════════════════════════════════════════════════ */}
-      {((featuredCourses && featuredCourses.length > 0) || (courses && courses.length > 0)) && (
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-slate-50/80 border-b border-slate-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-black text-slate-900 font-display tracking-tight">Popüler Kurslar</h2>
-                <p className="text-slate-600 font-normal text-sm">
-                  {featuredCourses && featuredCourses.length > 0
-                    ? "Öne çıkan seçili kurslarımız"
-                    : "En çok tercih edilen kurslarımız"}
-                </p>
-              </div>
-              <Link
-                href="/courses"
-                className="text-emerald-700 hover:text-emerald-800 font-bold text-sm inline-flex items-center gap-1 group"
-              >
-                Tümünü Keşfet <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {(featuredCourses && featuredCourses.length > 0 ? featuredCourses : courses || []).slice(0, 8).map((course) => (
-                <Link key={course.id} href={`/courses/${course.slug}`} className="group">
-                  <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full">
-                    <div>
-                      {/* Image / Thumbnail placeholder */}
-                      <div className="aspect-video bg-slate-100 relative overflow-hidden">
-                        {course.thumbnail_path ? (
-                          <img
-                            src={course.thumbnail_path}
-                            alt={course.title}
-                            width="400"
-                            height="225"
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-400">
-                            <BookOpen className="w-12 h-12" />
-                          </div>
-                        )}
-                        {course.discount_price && (
-                          <span className="absolute top-3 left-3 px-2 py-1 bg-rose-500 text-white text-[10px] font-black rounded-md shadow-md">
-                            %{Math.round((1 - course.discount_price / course.price) * 100)} İNDİRİM
-                          </span>
-                        )}
-                      </div>
-                      
-                      {/* Card Content */}
-                      <div className="p-5 space-y-2">
-                        <h3 className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-2 leading-tight text-sm sm:text-base">
-                          {course.title}
-                        </h3>
-                        <p className="text-xs text-slate-500 font-medium">{course.teacher?.full_name || "Seçkin Eğitmen"}</p>
-                      </div>
+                  {/* Card Price & Rating Footer */}
+                  <div className="px-2 pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      {course.discount_price ? (
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-base font-black text-slate-900 font-mono">₺{course.discount_price}</span>
+                          <span className="text-xs text-slate-400 line-through font-mono">₺{course.price}</span>
+                        </div>
+                      ) : course.price === 0 ? (
+                        <span className="text-sm font-bold text-emerald-700">Ücretsiz</span>
+                      ) : (
+                        <span className="text-base font-black text-slate-900 font-mono">₺{course.price}</span>
+                      )}
                     </div>
 
-                    <div className="p-5 border-t border-slate-100 flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-xs font-bold text-slate-700">
-                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                        <span>4.8</span>
-                        <span className="text-slate-400 font-normal">(84)</span>
-                      </div>
-                      <div className="font-mono font-bold text-sm sm:text-base">
-                        {course.discount_price ? (
-                          <div className="flex flex-col items-end">
-                            <span className="text-[10px] text-slate-400 line-through">₺{course.price}</span>
-                            <span className="text-emerald-700 font-black">₺{course.discount_price}</span>
-                          </div>
-                        ) : course.price === 0 ? (
-                          <span className="text-emerald-700 font-bold">Ücretsiz</span>
-                        ) : (
-                          <span className="text-slate-900 font-black">₺{course.price}</span>
-                        )}
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                      <span className="text-xs font-bold text-slate-800">4.9</span>
+                      <span className="text-[11px] text-slate-400">(48)</span>
                     </div>
                   </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </motion.section>
-      )}
-
-      {/* ══════════════════════════════════════════════════════ */}
-      {/* POPÜLER EĞİTİM PROGRAMLARI SECTION                     */}
-      {/* ══════════════════════════════════════════════════════ */}
-      {educationPrograms && educationPrograms.length > 0 && (
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-white border-b border-slate-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-black text-slate-900 font-display tracking-tight">Popüler Eğitim Programları</h2>
-                <p className="text-slate-600 font-normal text-sm">
-                  Geleceğinizi şekillendiren kapsamlı hazırlık paketlerimiz
-                </p>
-              </div>
-              <Link
-                href="/egitim-programlari"
-                className="text-emerald-700 hover:text-emerald-800 font-bold text-sm inline-flex items-center gap-1 group"
-              >
-                Tümünü Keşfet <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
               </Link>
-            </div>
+            ))}
+          </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {educationPrograms.slice(0, 3).map((rp) => {
-                const cardGradient = getGradientBySlug(rp.slug);
-                return (
-                  <Link key={rp.slug} href={`/egitim-programlari/${rp.slug}`} className="group flex flex-col h-full">
-                    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full">
-                      <div>
-                        {/* Banner */}
-                        <div className={`h-40 bg-gradient-to-br ${cardGradient} flex items-center justify-center p-4 relative`}>
-                          {getBannerContent(rp.slug, rp.title)}
-                        </div>
-                        
-                        {/* Content */}
-                        <div className="p-6">
-                          <h3 className="font-extrabold text-slate-900 text-lg mb-2 group-hover:text-emerald-700 transition-colors leading-tight line-clamp-1">
-                            {rp.title}
-                          </h3>
-                          <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-4 font-normal">
-                            {rp.short_description || "BiHocam uzman kadrosuyla hazırlanan LGS ve YKS programları; canlı ders, deneme ve rehberlik desteğiyle tek platformda kolaylaşıyor."}
-                          </p>
+          {/* Education Programs Section (Preparation Packages) */}
+          {educationPrograms && educationPrograms.length > 0 && (
+            <div className="mt-20 pt-16 border-t border-slate-100">
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+                <div className="space-y-2">
+                  <h3 className="text-2xl sm:text-3xl font-black text-slate-900 font-display tracking-tight">
+                    Kapsamlı Hazırlık Programları
+                  </h3>
+                  <p className="text-slate-600 font-normal text-sm">
+                    LGS ve YKS hedeflerinize özel hazırlanmış tüm dersler eğitim paketleri
+                  </p>
+                </div>
+                <Link
+                  href="/egitim-programlari"
+                  className="text-emerald-700 hover:text-emerald-800 font-bold text-sm inline-flex items-center gap-1 group"
+                >
+                  Tüm Programları Keşfet <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-8">
+                {educationPrograms.slice(0, 3).map((rp) => {
+                  const cardGradient = getGradientBySlug(rp.slug);
+                  return (
+                    <Link key={rp.slug} href={`/egitim-programlari/${rp.slug}`} className="group flex flex-col h-full">
+                      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full">
+                        <div>
+                          {/* Banner */}
+                          <div className={`h-40 bg-gradient-to-br ${cardGradient} flex items-center justify-center p-4 relative`}>
+                            {getBannerContent(rp.slug, rp.title)}
+                          </div>
                           
-                          <div className="flex items-center gap-1 text-sm font-bold text-slate-700 mb-2">
-                            <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                            <span>{rp.rating || 4.8}</span>
-                            <span className="text-slate-400 font-normal text-xs">({rp.review_count || 84})</span>
+                          {/* Content */}
+                          <div className="p-6">
+                            <h4 className="font-extrabold text-slate-900 text-lg mb-2 group-hover:text-emerald-700 transition-colors leading-tight line-clamp-1">
+                              {rp.title}
+                            </h4>
+                            <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-4 font-normal">
+                              {rp.short_description || "BiHocam uzman kadrosuyla hazırlanan LGS ve YKS programları; canlı ders, deneme ve rehberlik desteğiyle tek platformda kolaylaşıyor."}
+                            </p>
+                            
+                            <div className="flex items-center gap-1 text-sm font-bold text-slate-700 mb-2">
+                              <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                              <span>{rp.rating || 4.8}</span>
+                              <span className="text-slate-400 font-normal text-xs">({rp.review_count || 84})</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Footer Info */}
-                      <div className="px-6 pb-6 pt-4 flex items-center justify-between border-t border-slate-100 bg-slate-50/50">
-                        <div>
-                          <p className="text-emerald-800 font-black font-mono text-xl">{formatProgramPrice(rp.price)}</p>
-                          <p className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">+ KDV</p>
+                        {/* Footer Info */}
+                        <div className="px-6 pb-6 pt-4 flex items-center justify-between border-t border-slate-100 bg-slate-50/50">
+                          <div>
+                            <p className="text-emerald-800 font-black font-mono text-xl">{formatProgramPrice(rp.price)}</p>
+                            <p className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">+ KDV</p>
+                          </div>
+                          <span className="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors">
+                            İncele →
+                          </span>
                         </div>
-                        <span className="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors">
-                          İncele →
-                        </span>
                       </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Quick Branch Explore Cards */}
+          <div className="mt-20 pt-16 border-t border-slate-100">
+            <div className="text-center mb-10 space-y-2">
+              <h3 className="text-2xl font-black text-slate-900 font-display">Branşlara Göre Keşfedin</h3>
+              <p className="text-slate-500 text-sm font-normal">Dilediğiniz alanda hemen eğitmenleri ve programları listeleyin.</p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              {[
+                { id: 'ilkokul', title: 'İlkokul', icon: Sprout, iconColor: 'text-emerald-600', badge: 'Temel' },
+                { id: 'ortaokul', title: 'Ortaokul & LGS', icon: BookOpen, iconColor: 'text-teal-600', badge: 'LGS' },
+                { id: 'lise', title: 'Lise & YKS', icon: Target, iconColor: 'text-indigo-600', badge: 'YKS' },
+                { id: 'yabanci-dil', title: 'Yabancı Dil', icon: Globe, iconColor: 'text-rose-600', badge: 'Dil' },
+                { id: 'kocluk', title: 'Eğitim Koçluğu', icon: Compass, iconColor: 'text-purple-600', badge: 'Koçluk' },
+                { id: 'beceri', title: 'Yazılım & Beceri', icon: Lightbulb, iconColor: 'text-amber-600', badge: 'Kodlama' },
+              ].map((cat) => {
+                const IconComp = cat.icon;
+                return (
+                  <Link
+                    key={cat.id}
+                    href={`/tanisma-dersi?category=${cat.id}`}
+                    className="group rounded-2xl border border-slate-200/90 bg-slate-50/60 p-4 text-center hover:bg-white hover:border-emerald-500/40 hover:shadow-md transition-all flex flex-col items-center justify-between"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+                      <IconComp className={`w-5 h-5 ${cat.iconColor}`} />
                     </div>
+                    <p className="text-xs font-bold text-slate-900 group-hover:text-emerald-700 transition-colors leading-tight">
+                      {cat.title}
+                    </p>
+                    <span className="text-[10px] text-slate-500 mt-1 font-medium">{cat.badge}</span>
                   </Link>
                 );
               })}
             </div>
           </div>
-        </motion.section>
-      )}
+
+        </div>
+      </section>
 
       {/* ══════════════════════════════════════════════════════ */}
       {/* LESSON HOUR FLOW - 4 STEPS & ANIMATED CLOCK DIAL       */}
@@ -1014,7 +1070,27 @@ export default function Home() {
       <LessonHourFlowSection />
 
       {/* ══════════════════════════════════════════════════════ */}
-      {/* 21ST.DEV BENTO GRID SECTION                            */}
+      {/* HOW IT WORKS - 3 SIMPLE STEPS & TRUST BAR (Aniq-UI)    */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <HowItWorksSection />
+
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* HOW YOU LEARN - SLAB WORKSPACE & PROGRESS (Aniq-UI)    */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <HowYouLearnSection />
+
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* OUR INSTRUCTORS - PORTRAIT SHOWCASE (Aniq-UI Style)    */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <InstructorsShowcaseSection />
+
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* TESTIMONIALS - 3 STATS & QUOTE CARD (Aniq-UI Style)    */}
+      {/* ══════════════════════════════════════════════════════ */}
+      <TestimonialsSection />
+
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* PLATFORM ADVANTAGES BENTO GRID                         */}
       {/* ══════════════════════════════════════════════════════ */}
       <BentoGridSection />
 
@@ -1253,113 +1329,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 21ST.DEV "Seni Neler Bekliyor?" Section */}
-      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-24 bg-white relative overflow-hidden border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              <span>ÖĞRENME DENEYİMİ</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 font-display tracking-tight">
-              Seni Neler Bekliyor?
-            </h2>
-            <p className="text-slate-600 font-normal text-base sm:text-lg">
-              BiHocam ayrıcalıklarıyla çevrimiçi öğrenmede yeni nesil akıllı deneyim.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Card 1 - Kişiselleştirilmiş Öğretim Planı */}
-            <div className="bg-slate-50 rounded-3xl border border-slate-200/90 p-8 hover:bg-white hover:border-emerald-500/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
-              <div className="space-y-5">
-                <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
-                  <Compass className="w-6 h-6" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                    Kişiselleştirilmiş Plan
-                  </h3>
-                  <p className="text-slate-600 text-sm leading-relaxed font-normal">
-                    Seviye tespit testleriyle eksik kazanımlar belirlenir; hedefinize özel birebir çalışma yol haritası çizilir.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-6 pt-4 border-t border-slate-200/80">
-                <Link href="/courses" className="text-emerald-700 font-bold text-xs inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  Daha Fazla Öğren <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </div>
-
-            {/* Card 2 - Birebir Canlı Dersler */}
-            <div className="bg-slate-50 rounded-3xl border border-slate-200/90 p-8 hover:bg-white hover:border-emerald-500/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
-              <div className="space-y-5">
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
-                  <Users className="w-6 h-6" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                    Birebir Canlı Ders
-                  </h3>
-                  <p className="text-slate-600 text-sm leading-relaxed font-normal">
-                    Öğrencinin anlama hızına uygun, interaktif beyaz tahta ve anlık soru-cevapla desteklenen canlı seanslar.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-6 pt-4 border-t border-slate-200/80">
-                <Link href="/courses" className="text-emerald-700 font-bold text-xs inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  Daha Fazla Öğren <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </div>
-
-            {/* Card 3 - Her Derse Özel Kaynaklar */}
-            <div className="bg-slate-50 rounded-3xl border border-slate-200/90 p-8 hover:bg-white hover:border-emerald-500/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
-              <div className="space-y-5">
-                <div className="w-12 h-12 rounded-2xl bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-600 group-hover:scale-110 transition-transform">
-                  <BookOpen className="w-6 h-6" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                    Özel Dijital Kaynaklar
-                  </h3>
-                  <p className="text-slate-600 text-sm leading-relaxed font-normal">
-                    Ders PDF&apos;leri, yeni nesil soru bankaları ve konu özetleri bulut arşivinizde 7/24 erişiminize açıktır.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-6 pt-4 border-t border-slate-200/80">
-                <Link href="/courses" className="text-emerald-700 font-bold text-xs inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  Daha Fazla Öğren <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </div>
-
-            {/* Card 4 - Ders Sonu Öğrenme Raporları */}
-            <div className="bg-slate-50 rounded-3xl border border-slate-200/90 p-8 hover:bg-white hover:border-emerald-500/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
-              <div className="space-y-5">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
-                  <Award className="w-6 h-6" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                    Haftalık İlerleme Karnesi
-                  </h3>
-                  <p className="text-slate-600 text-sm leading-relaxed font-normal">
-                    İşlenen kazanımlar, öğretmen geri bildirimleri ve yapay zeka analizleriyle gelişim veli ve öğrenciye raporlanır.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-6 pt-4 border-t border-slate-200/80">
-                <Link href="/courses" className="text-emerald-700 font-bold text-xs inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  Daha Fazla Öğren <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.section>
 
       {/* ══════════════════════════════════════════════════════ */}
       {/* WHY BIHOCAM? - COMPARISON TABLE (LIGHT THEME)          */}
@@ -2034,37 +2003,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 21ST.DEV FINAL CTA BANNER */}
-      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} variants={fadeUpVariants} className="py-20 bg-gradient-to-r from-slate-950 via-emerald-950/50 to-slate-950 border-y border-emerald-500/20 text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-subtle opacity-40 pointer-events-none" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 relative z-10">
-          <div className="badge-21st border-emerald-500/30 bg-emerald-500/10 text-emerald-400 mx-auto">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>HEMEN BAŞLAYIN</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white font-display tracking-tight leading-tight">
-            Eğitim Hedeflerinize Bugün Adım Atın
-          </h2>
-          <p className="text-slate-300 font-normal text-base sm:text-lg max-w-xl mx-auto">
-            Binlerce öğrenci ve yüzlerce doğrulanmış eğitmen BiHocam&apos;da buluşuyor.
-          </p>
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/tenders/new"
-              className="btn-21st-primary px-8 py-4 text-sm sm:text-base font-bold flex items-center justify-center gap-2"
-            >
-              <span>Ders Talebi Aç</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/register"
-              className="btn-21st-secondary px-8 py-4 text-sm sm:text-base font-bold"
-            >
-              Ücretsiz Kayıt Ol
-            </Link>
-          </div>
-        </div>
-      </motion.section>
+      {/* ANIQ UI FINAL CTA BANNER */}
+      <FinalCTASection />
       </main>
 
       <Footer />
