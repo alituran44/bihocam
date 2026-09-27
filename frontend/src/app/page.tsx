@@ -681,15 +681,16 @@ export default function Home() {
               </motion.div>
 
               {/* Dual Action CTA Buttons */}
+              {/* Tri Action Hero CTA Buttons - All on one row */}
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.3 }}
-                className="flex flex-col sm:flex-row flex-wrap justify-center lg:justify-start items-center gap-3.5 pt-2"
+                className="flex flex-col sm:flex-row sm:flex-nowrap justify-center lg:justify-start items-center gap-2.5 sm:gap-3 pt-2 w-full max-w-2xl"
               >
                 <Link
                   href="/tenders/new"
-                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm sm:text-base shadow-lg shadow-emerald-600/20 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto shrink-0 px-4 sm:px-5 py-3 sm:py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                 >
                   <PlusCircle className="w-4 h-4" />
                   <span>Ders Talebi Aç</span>
@@ -698,21 +699,18 @@ export default function Home() {
 
                 <Link
                   href="/teachers"
-                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-sm sm:text-base shadow-sm transition-all flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto shrink-0 px-4 sm:px-5 py-3 sm:py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-sm shadow-sm hover:-translate-y-0.5 transition-all flex items-center justify-center gap-1.5 whitespace-nowrap"
                 >
                   <span>Eğitmenleri Keşfet</span>
                 </Link>
 
                 <Link
                   href="/become-instructor"
-                  className="w-full sm:w-auto px-5 sm:px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/35 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden"
+                  className="w-full sm:w-auto shrink-0 px-4 sm:px-5 py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-sm shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/35 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 group whitespace-nowrap"
                 >
                   <GraduationCap className="w-4 h-4 text-white group-hover:rotate-12 transition-transform duration-300" />
                   <span>Eğitmen Ol</span>
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white/20 text-[10px] font-black uppercase tracking-wider backdrop-blur-xs">
-                    Kadroya Katıl
-                  </span>
-                  <ArrowRight className="w-4 h-4 opacity-75 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                  <ArrowRight className="w-4 h-4 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                 </Link>
               </motion.div>
 
