@@ -10,12 +10,33 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import AdBanner from "@/components/ads/AdBanner";
-
+import {
+  BookOpen,
+  Star,
+  Bookmark,
+  ShoppingCart,
+  ArrowRight,
+  PlusCircle,
+  Users,
+  Search,
+  SlidersHorizontal,
+  ChevronRight,
+  RotateCcw,
+  Sparkles,
+  Tag,
+  Percent,
+  GraduationCap,
+  CheckCircle2,
+  Layers,
+  School,
+  Check
+} from "lucide-react";
 
 interface Course {
   id: string;
   title: string;
   slug: string;
+  short_description?: string | null;
   thumbnail_path: string | null;
   price: number;
   discount_price: number | null;
@@ -32,20 +53,23 @@ export default function CoursesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [expandedParents, setExpandedParents] = useState<string[]>([]);
   const [filter, setFilter] = useState({ free: false, discount: false });
+  const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState("");
+  const [savedCourses, setSavedCourses] = useState<Record<string, boolean>>({});
 
-  // Kategorileri API'den çek
+  // Fetch categories from API
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: () => categoriesApi.list({ is_active: true }),
   });
 
+  // Fetch courses from API
   const { data: courses, isLoading } = useQuery<Course[]>({
     queryKey: ["courses"],
     queryFn: () => coursesApi.list(),
   });
 
-  // URL'den kategori parametresini oku ve state ile sync et
+  // Sync category param from URL
   useEffect(() => {
     const categorySlug = searchParams.get("category");
     if (!categorySlug || !categoriesData) {
@@ -57,7 +81,7 @@ export default function CoursesPage() {
     setSelectedCategory(match ? match.id : null);
   }, [searchParams, categoriesData]);
 
-  // Kategoriler geldikten sonra: child'ı olan parent kategorileri varsayılan açık yap
+  // Expand parent categories by default
   useEffect(() => {
     if (!categoriesData) return;
     const parentsWithChildren = categoriesData
@@ -79,7 +103,6 @@ export default function CoursesPage() {
     const map = new Map(categoriesData.map((c) => [c.id, c]));
     const chain: Category[] = [];
     let node: Category | undefined | null = currentCategory;
-    // parent -> child hiyerarşisini yukarıdan aşağı kur
     while (node) {
       chain.unshift(node);
       node = node.parent_id ? map.get(node.parent_id) || null : null;
@@ -87,12 +110,10 @@ export default function CoursesPage() {
     return chain;
   }, [categoriesData, currentCategory]);
 
-  // Seçili kategori + alt kategoriler için ID set'i
   const selectedCategoryIds = useMemo(() => {
     if (!categoriesData || !selectedCategory) return null;
     const ids = new Set<string>([selectedCategory]);
 
-    // Basit: tek seviye child'ları ekle (YKS -> Matematik/Fizik/...)
     categoriesData.forEach((cat) => {
       if (cat.parent_id === selectedCategory) {
         ids.add(cat.id);
@@ -106,18 +127,28 @@ export default function CoursesPage() {
     if (!courses) return [];
     let result = [...courses];
 
-    // Kategori filtresi - kursun kategorileri içinde seçili kategori veya alt kategoriler var mı?
+    // Category filter
     if (selectedCategoryIds) {
       result = result.filter((c) =>
         c.categories?.some((cat) => selectedCategoryIds.has(cat.id))
       );
     }
 
-    // Diğer filtreler
+    // Search query filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter((c) =>
+        c.title.toLowerCase().includes(q) ||
+        (c.short_description && c.short_description.toLowerCase().includes(q)) ||
+        (c.teacher?.full_name && c.teacher.full_name.toLowerCase().includes(q))
+      );
+    }
+
+    // Toggle filters
     if (filter.free) result = result.filter((c) => c.price === 0);
     if (filter.discount) result = result.filter((c) => c.discount_price !== null);
 
-    // Sıralama
+    // Sorting
     if (sort === "price-low")
       result.sort(
         (a, b) => (a.discount_price ?? a.price) - (b.discount_price ?? b.price)
@@ -129,7 +160,7 @@ export default function CoursesPage() {
     if (sort === "az") result.sort((a, b) => a.title.localeCompare(b.title, "tr"));
 
     return result;
-  }, [courses, selectedCategoryIds, filter, sort]);
+  }, [courses, selectedCategoryIds, searchQuery, filter, sort]);
 
   const [cartError, setCartError] = useState<string | null>(null);
 
@@ -154,522 +185,711 @@ export default function CoursesPage() {
     addMutation.mutate(id);
   };
 
+  const toggleBookmark = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSavedCourses((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const resetAllFilters = () => {
+    setSelectedCategory(null);
+    setSearchQuery("");
+    setFilter({ free: false, discount: false });
+    setSort("");
+    router.push("/courses");
+  };
+
+  const hasActiveFilters = Boolean(
+    selectedCategory || searchQuery || filter.free || filter.discount || sort
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-emerald-500 selection:text-white font-sans flex flex-col justify-between">
+      <div>
+        <Header />
 
-      {/* Cart Error Toast */}
-      {cartError && (
-        <div className="fixed top-4 right-4 z-50 bg-amber-50 border border-amber-300 rounded-xl px-5 py-3 shadow-lg text-amber-800 font-medium text-sm animate-in fade-in">
-          {cartError}
-        </div>
-      )}
-
-      {/* Hero Header */}
-      <div className="relative bg-gradient-to-br from-teal-900 via-slate-900 to-teal-950 pt-32 pb-20 min-h-[420px] flex items-center overflow-hidden border-b border-teal-800/10">
-        {/* Background Image Overlay */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-35 mix-blend-overlay pointer-events-none"
-          style={{ backgroundImage: "url('/courses_banner_bg.png')" }}
-        />
-        {/* Glowing Gradient Highlights */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(20,184,166,0.12),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(13,148,136,0.18),transparent_60%)]" />
-        
-        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Breadcrumb */}
-          <div className="mb-4 flex items-center gap-2 text-sm text-teal-300/80 font-semibold">
-            <Link href="/" className="hover:text-white transition-colors">
-              Ana Sayfa
-            </Link>
-            <svg className="w-4 h-4 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-            <Link href="/courses" className="hover:text-white transition-colors">
-              Kurslar
-            </Link>
-            {categoryBreadcrumb.map((cat) => (
-              <span key={cat.id} className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-                <Link
-                  href={`/courses?category=${cat.slug}`}
-                  className="hover:text-white transition-colors"
-                >
-                  {cat.name}
-                </Link>
-              </span>
-            ))}
-          </div>
-
-          <h1 className="text-4xl md:text-5xl font-black text-white mb-3 tracking-tight">
-            {currentCategory ? currentCategory.name : "Tüm Kurslar"}
-          </h1>
-          <p className="text-teal-100/80 text-base md:text-lg font-medium max-w-2xl mb-4 leading-relaxed">
-            {currentCategory
-              ? `${currentCategory.name} alanında uzman eğitmenlerden birebir ve grup dersleri. Kendi hızında öğren, hedefine ulaş.`
-              : "Türkiye'nin en seçkin eğitmenlerinden YKS, LGS, lise ve üniversite derslerinde birebir canlı dersler al. Seviyene ve hedefine uygun kursu hemen bul."}
-          </p>
-          <p className="text-teal-300/90 text-sm font-semibold">
-            {isLoading ? "Yükleniyor..." : `${filtered.length} kurs mevcut`}
-          </p>
-        </div>
-      </div>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8">
-        {/* Category Banner Ad */}
-        {currentCategory && (
-          <div className="mb-8">
-            <AdBanner placementCode="category_banner" categoryId={currentCategory.id} />
+        {/* Cart Error Toast */}
+        {cartError && (
+          <div className="fixed top-5 right-5 z-50 bg-red-50 border border-red-200 rounded-2xl px-5 py-3.5 shadow-xl text-red-800 font-semibold text-sm animate-in fade-in flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-red-500" />
+            <span>{cartError}</span>
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-4 items-start gap-8">
-          {/* Sol kategori sidebar'ı */}
-          <aside className="mb-8 lg:mb-0 md:col-span-1">
-            {/* Sidebar Ad */}
-            <div className="mb-6">
-              <AdBanner placementCode="sidebar_courses" categoryId={currentCategory?.id} />
-            </div>
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 sticky top-24 max-h-[70vh] overflow-y-auto">
-              <h2 className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">
-                Kategoriler
-              </h2>
-              {categoriesLoading ? (
-                <div className="space-y-2">
-                  {[...Array(8)].map((_, i) => (
-                    <div key={i} className="h-8 w-full bg-gray-200 rounded-lg animate-pulse" />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-1">
-                  <button
-                    onClick={() => {
-                      setSelectedCategory(null);
-                      router.push("/courses");
-                    }}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all text-left ${
-                      selectedCategory === null
-                        ? "bg-teal-50 text-teal-700 border border-teal-200"
-                        : "text-gray-700 hover:bg-gray-50 border border-transparent"
-                    }`}
+        {/* ══════════════════════════════════════════════════════ */}
+        {/* HERO HEADER - ANIQ UI MODERN DARK SLAB BANNER          */}
+        {/* ══════════════════════════════════════════════════════ */}
+        <section className="relative pt-32 pb-16 md:pt-36 md:pb-20 bg-gradient-to-br from-slate-950 via-emerald-950/80 to-slate-950 text-white overflow-hidden border-b border-emerald-500/20">
+          <div className="absolute inset-0 bg-grid-subtle opacity-30 pointer-events-none" />
+          <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-teal-500/10 blur-3xl" />
+
+          <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Breadcrumb */}
+            <nav className="mb-4 flex items-center gap-2 text-xs font-semibold text-emerald-300/80">
+              <Link href="/" className="hover:text-white transition-colors">
+                Ana Sayfa
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 text-emerald-500" />
+              <Link href="/courses" className="hover:text-white transition-colors">
+                Kurslar
+              </Link>
+              {categoryBreadcrumb.map((cat) => (
+                <span key={cat.id} className="flex items-center gap-2">
+                  <ChevronRight className="w-3.5 h-3.5 text-emerald-500" />
+                  <Link
+                    href={`/courses?category=${cat.slug}`}
+                    className="hover:text-white transition-colors text-white font-bold"
                   >
+                    {cat.name}
+                  </Link>
+                </span>
+              ))}
+            </nav>
+
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div className="space-y-3 max-w-2xl">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 text-emerald-300 text-xs font-bold uppercase tracking-wider">
+                  <School className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>BiHocam Video ve Canlı Kurs Kataloğu</span>
+                </span>
+
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white font-display tracking-tight leading-tight">
+                  {currentCategory ? (
                     <span>
-                      <span className="mr-2">📚</span>
-                      Tümü
+                      {currentCategory.name}{" "}
+                      <span className="text-emerald-400">Kursları</span>
                     </span>
-                  </button>
+                  ) : (
+                    <span>
+                      Tüm <span className="text-emerald-400">Kurslar</span> & İçerikler
+                    </span>
+                  )}
+                </h1>
 
-                  {/* Parent kategoriler + altları */}
-                  {categoriesData
-                    ?.filter((c) => !c.parent_id)
-                    .map((parent) => {
-                      const children = categoriesData.filter(
-                        (c) => c.parent_id === parent.id
-                      );
-                      const isExpanded = expandedParents.includes(parent.id);
+                <p className="text-slate-300 text-sm sm:text-base font-normal leading-relaxed">
+                  {currentCategory
+                    ? `${currentCategory.name} alanında uzman eğitmenlerden birebir ve grup dersleri. Kendi hızınızda öğrenin, hedefinize ulaşın.`
+                    : "Türkiye'nin en seçkin eğitmenlerinden YKS, LGS, lise ve üniversite derslerinde birebir canlı dersler ve video eğitim paketleri."}
+                </p>
+              </div>
 
-                      return (
-                        <div key={parent.id}>
-                          <button
-                            onClick={() => {
-                              // Parent satırında tıklama: hem seç, hem expand toggle
-                              setSelectedCategory(parent.id);
-                              router.push(`/courses?category=${parent.slug}`);
+              {/* Quick Counter Capsule */}
+              <div className="flex-shrink-0 inline-flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-sm font-semibold text-emerald-200">
+                <BookOpen className="w-4 h-4 text-emerald-400" />
+                <span>
+                  {isLoading ? "Yükleniyor..." : `${filtered.length} Kurs Listeleniyor`}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
 
-                              setExpandedParents((prev) =>
-                                prev.includes(parent.id)
-                                  ? prev.filter((id) => id !== parent.id)
-                                  : [...prev, parent.id]
-                              );
-                            }}
-                            className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all text-left w-full ${
-                              selectedCategory === parent.id
-                                ? "bg-teal-50 text-teal-700 border border-teal-200"
-                                : "text-gray-700 hover:bg-gray-50 border border-transparent"
-                            }`}
-                          >
-                            <span className="flex items-center gap-2">
-                              <span>{parent.icon || "📦"}</span>
-                              {parent.name}
-                            </span>
-                            <span className="flex items-center gap-2">
-                              {parent.course_count !== undefined &&
-                                parent.course_count > 0 && (
-                                  <span className="text-xs text-gray-500">
+        {/* ══════════════════════════════════════════════════════ */}
+        {/* MAIN BODY: SIDEBAR + GRID                            */}
+        {/* ══════════════════════════════════════════════════════ */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          {/* Category Banner Ad */}
+          {currentCategory && (
+            <div className="mb-8">
+              <AdBanner placementCode="category_banner" categoryId={currentCategory.id} />
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-4 items-start gap-8">
+            {/* ── Left Category Sidebar (1 Col) ── */}
+            <aside className="lg:col-span-1">
+              <div className="bg-white rounded-3xl p-5 shadow-xs border border-slate-200/90 sticky top-24 max-h-[80vh] overflow-y-auto space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
+                    <Layers className="w-4 h-4 text-emerald-600" />
+                    <span>Kategoriler</span>
+                  </div>
+                  {selectedCategory && (
+                    <button
+                      onClick={() => {
+                        setSelectedCategory(null);
+                        router.push("/courses");
+                      }}
+                      className="text-xs text-emerald-700 hover:text-emerald-800 font-semibold"
+                    >
+                      Sıfırla
+                    </button>
+                  )}
+                </div>
+
+                {categoriesLoading ? (
+                  <div className="space-y-2">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="h-9 w-full bg-slate-100 rounded-xl animate-pulse" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    <button
+                      onClick={() => {
+                        setSelectedCategory(null);
+                        router.push("/courses");
+                      }}
+                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all text-left ${
+                        selectedCategory === null
+                          ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/30"
+                          : "text-slate-700 hover:bg-slate-100/80"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <BookOpen className="w-3.5 h-3.5" />
+                        <span>Tüm Branşlar</span>
+                      </span>
+                      {courses && (
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
+                          selectedCategory === null ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                        }`}>
+                          {courses.length}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Parent Categories */}
+                    {categoriesData
+                      ?.filter((c) => !c.parent_id)
+                      .map((parent) => {
+                        const children = categoriesData.filter(
+                          (c) => c.parent_id === parent.id
+                        );
+                        const isExpanded = expandedParents.includes(parent.id);
+                        const isSelected = selectedCategory === parent.id;
+
+                        return (
+                          <div key={parent.id} className="space-y-1">
+                            <button
+                              onClick={() => {
+                                setSelectedCategory(parent.id);
+                                router.push(`/courses?category=${parent.slug}`);
+
+                                setExpandedParents((prev) =>
+                                  prev.includes(parent.id)
+                                    ? prev.filter((id) => id !== parent.id)
+                                    : [...prev, parent.id]
+                                );
+                              }}
+                              className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all text-left w-full ${
+                                isSelected
+                                  ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/30"
+                                  : "text-slate-700 hover:bg-slate-100/80"
+                              }`}
+                            >
+                              <span className="flex items-center gap-2 truncate">
+                                <GraduationCap className="w-3.5 h-3.5 shrink-0 opacity-80" />
+                                <span className="truncate">{parent.name}</span>
+                              </span>
+                              <span className="flex items-center gap-1.5 shrink-0">
+                                {parent.course_count !== undefined && parent.course_count > 0 && (
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
+                                    isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                                  }`}>
                                     {parent.course_count}
                                   </span>
                                 )}
-                              {/* açılır/kapanır ok ikonu */}
-                              {children.length > 0 && (
-                                <svg
-                                  className={`w-3 h-3 text-gray-400 transition-transform ${
-                                    isExpanded ? "rotate-90" : ""
-                                  }`}
-                                  viewBox="0 0 20 20"
-                                  fill="currentColor"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M7.21 4.21a.75.75 0 011.06 0l4.5 4.5a.75.75 0 010 1.06l-4.5 4.5a.75.75 0 11-1.06-1.06L10.44 10 7.21 6.27a.75.75 0 010-1.06z"
-                                    clipRule="evenodd"
+                                {children.length > 0 && (
+                                  <ChevronRight
+                                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                                      isExpanded ? "rotate-90" : ""
+                                    } ${isSelected ? "text-white" : "text-slate-400"}`}
                                   />
-                                </svg>
-                              )}
-                            </span>
-                          </button>
+                                )}
+                              </span>
+                            </button>
 
-                          {/* Alt kategoriler */}
-                          {isExpanded &&
-                            children.map((child) => (
-                              <button
-                                key={child.id}
-                                onClick={() => {
-                                  setSelectedCategory(child.id);
-                                  router.push(`/courses?category=${child.slug}`);
-                                }}
-                                className={`flex items-center justify-between pl-7 pr-3 py-1.5 rounded-lg text-xs font-medium transition-all text-left w-full ${
-                                  selectedCategory === child.id
-                                    ? "bg-teal-50 text-teal-700 border border-teal-200"
-                                    : "text-gray-600 hover:bg-gray-50 border border-transparent"
-                                }`}
-                              >
-                                <span className="flex items-center gap-2">
-                                  <span>{child.icon || "📦"}</span>
-                                  {child.name}
-                                </span>
-                                {child.course_count !== undefined &&
-                                  child.course_count > 0 && (
-                                    <span className="text-[0.7rem] text-gray-400">
-                                      {child.course_count}
-                                    </span>
-                                  )}
-                              </button>
-                            ))}
-                        </div>
-                      );
-                    })}
-                </div>
-              )}
-            </div>
-          </aside>
-
-          {/* Sağ taraf: hızlı filtreler + grid */}
-          <section className="md:col-span-3">
-            {/* Hızlı filtreler */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-8">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setFilter((f) => ({ ...f, free: !f.free }))}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                      filter.free
-                        ? "bg-teal-100 text-teal-700 border-2 border-teal-200"
-                        : "bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200"
-                    }`}
-                  >
-                    <span className="mr-1">🆓</span> Ücretsiz
-                  </button>
-                  <button
-                    onClick={() => setFilter((f) => ({ ...f, discount: !f.discount }))}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                      filter.discount
-                        ? "bg-orange-100 text-orange-700 border-2 border-orange-200"
-                        : "bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200"
-                    }`}
-                  >
-                    <span className="mr-1">🏷️</span> İndirimli
-                  </button>
-                </div>
-                <select
-                  id="course-sort-select"
-                  name="courseSort"
-                  aria-label="Kursları sıralama kriteri"
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value)}
-                  className="px-4 py-2.5 bg-gray-100 border-2 border-transparent rounded-xl text-sm text-gray-700 focus:outline-none focus:border-teal-300 cursor-pointer"
-                >
-                  <option value="">Sırala</option>
-                  <option value="az">İsim (A-Z)</option>
-                  <option value="price-low">Fiyat (Artan)</option>
-                  <option value="price-high">Fiyat (Azalan)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Grid */}
-            {isLoading ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {[...Array(8)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm animate-pulse">
-                    <div className="aspect-video bg-gray-200" />
-                    <div className="p-5 space-y-3">
-                      <div className="h-5 bg-gray-200 rounded w-3/4" />
-                      <div className="h-4 bg-gray-200 rounded w-1/2" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : filtered.length > 0 ? (
-              <>
-                {/* İlk 4 kurs */}
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filtered.slice(0, 4).map((course) => (
-                    <div key={course.id} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg hover:border-teal-200 transition-all">
-                    <Link href={`/courses/${course.slug}`}>
-                      <div className="aspect-video bg-gradient-to-br from-teal-100 to-teal-200 relative overflow-hidden">
-                        {course.thumbnail_path ? (
-                          <img src={course.thumbnail_path} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <svg className="w-12 h-12 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253" />
-                            </svg>
+                            {/* Sub Categories */}
+                            {isExpanded &&
+                              children.map((child) => {
+                                const isChildSelected = selectedCategory === child.id;
+                                return (
+                                  <button
+                                    key={child.id}
+                                    onClick={() => {
+                                      setSelectedCategory(child.id);
+                                      router.push(`/courses?category=${child.slug}`);
+                                    }}
+                                    className={`flex items-center justify-between pl-8 pr-3 py-2 rounded-xl text-xs font-medium transition-all text-left w-full ${
+                                      isChildSelected
+                                        ? "bg-emerald-50 text-emerald-800 font-bold border border-emerald-200"
+                                        : "text-slate-600 hover:bg-slate-50"
+                                    }`}
+                                  >
+                                    <span className="truncate">{child.name}</span>
+                                    {child.course_count !== undefined && child.course_count > 0 && (
+                                      <span className="text-[10px] text-slate-400 font-mono">
+                                        {child.course_count}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
                           </div>
-                        )}
-                        {course.discount_price && (
-                          <span className="absolute top-3 left-3 px-2.5 py-1 bg-orange-500 text-white text-xs font-bold rounded-lg shadow-lg">
-                            %{Math.round((1 - course.discount_price / course.price) * 100)} İndirim
-                          </span>
-                        )}
-                      </div>
-                    </Link>
-                    <div className="p-5">
-                      {/* Kurs kategorileri */}
-                      {course.categories && course.categories.length > 0 && (
-                        <div className="mb-3 flex flex-wrap gap-2">
-                          <CategoryBadge
-                            category={course.categories[0]}
-                            size="sm"
-                            asLink
-                          />
-                          {course.categories.length > 1 && (
-                            <span className="text-[0.65rem] text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full">
-                              +{course.categories.length - 1} kategori daha
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      <Link href={`/courses/${course.slug}`}>
-                        <h3 className="font-bold text-gray-900 group-hover:text-teal-600 transition-colors line-clamp-2 mb-2 min-h-[48px]">
-                          {course.title}
-                        </h3>
-                      </Link>
-                      <p className="text-sm text-gray-500 mb-4 flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        {course.teacher?.full_name || "Eğitmen"}
-                      </p>
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                        <div className="font-bold text-gray-900">
-                          {course.discount_price ? (
-                            <span>
-                              ₺{course.discount_price}{" "}
-                              <span className="text-sm text-gray-400 line-through font-normal">₺{course.price}</span>
-                            </span>
-                          ) : course.price === 0 ? (
-                            <span className="text-teal-600">Ücretsiz</span>
-                          ) : (
-                            <span>₺{course.price}</span>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleAdd(course.id)}
-                          disabled={addingId === course.id}
-                          className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white border border-teal-100 text-teal-600 hover:bg-teal-50 hover:border-teal-300 hover:shadow-md hover:shadow-teal-500/20 disabled:opacity-50 transition-all"
-                          aria-label="Sepete ekle"
-                        >
-                          {addingId === course.id ? (
-                            <svg
-                              className="w-4 h-4 animate-spin text-teal-500"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              />
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                              />
-                            </svg>
-                          ) : (
-                            <svg
-                              className="w-4 h-4"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M3 4h2l1 2m0 0h13l-1.5 9h-11L6 6zm3 13a1 1 0 11-2 0 1 1 0 012 0zm10 0a1 1 0 11-2 0 1 1 0 012 0z"
-                                stroke="currentColor"
-                                strokeWidth="1.8"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                </div>
-
-                {/* Inline Ad - İlk 4 kurstan sonra */}
-                {filtered.length > 4 && (
-                  <div className="mb-6">
-                    <AdBanner placementCode="inline_courses" categoryId={currentCategory?.id} />
+                        );
+                      })}
                   </div>
                 )}
+              </div>
 
-                {/* Kalan kurslar */}
-                {filtered.length > 4 && (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {filtered.slice(4).map((course) => (
-                      <div key={course.id} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg hover:border-teal-200 transition-all">
-                        <Link href={`/courses/${course.slug}`}>
-                          <div className="aspect-video bg-gradient-to-br from-teal-100 to-teal-200 relative overflow-hidden">
-                            {course.thumbnail_path ? (
-                              <img src={course.thumbnail_path} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <svg className="w-12 h-12 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253" />
-                                </svg>
-                              </div>
-                            )}
-                            {course.discount_price && (
-                              <span className="absolute top-3 left-3 px-2.5 py-1 bg-orange-500 text-white text-xs font-bold rounded-lg shadow-lg">
-                                %{Math.round((1 - course.discount_price / course.price) * 100)} İndirim
+              {/* Sidebar Ad */}
+              <div className="mt-6">
+                <AdBanner placementCode="sidebar_courses" categoryId={currentCategory?.id} />
+              </div>
+            </aside>
+
+            {/* ── Right Content Area (3 Cols) ── */}
+            <section className="lg:col-span-3 space-y-6">
+              
+              {/* Filter Toolbar (Search + Fast Toggles + Sorting) */}
+              <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-xs border border-slate-200/90 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+                
+                {/* Search Input */}
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Kurs, konu veya eğitmen ara..."
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:border-emerald-500 focus:bg-white transition-all font-medium"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600"
+                    >
+                      Temizle
+                    </button>
+                  )}
+                </div>
+
+                {/* Filter Badges & Sort Select */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <button
+                    onClick={() => setFilter((f) => ({ ...f, discount: !f.discount }))}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+                      filter.discount
+                        ? "bg-emerald-600 text-white shadow-xs"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200/80 border border-transparent"
+                    }`}
+                  >
+                    <Percent className="w-3.5 h-3.5" />
+                    <span>İndirimli</span>
+                  </button>
+
+                  <button
+                    onClick={() => setFilter((f) => ({ ...f, free: !f.free }))}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+                      filter.free
+                        ? "bg-emerald-600 text-white shadow-xs"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200/80 border border-transparent"
+                    }`}
+                  >
+                    <Tag className="w-3.5 h-3.5" />
+                    <span>Ücretsiz</span>
+                  </button>
+
+                  <div className="relative">
+                    <select
+                      id="course-sort-select"
+                      name="courseSort"
+                      aria-label="Kursları sıralama kriteri"
+                      value={sort}
+                      onChange={(e) => setSort(e.target.value)}
+                      className="px-3.5 py-2.5 bg-slate-100 border border-slate-200/80 rounded-2xl text-xs font-bold text-slate-700 focus:outline-hidden focus:border-emerald-500 cursor-pointer transition-all"
+                    >
+                      <option value="">Sıralama: Önerilen</option>
+                      <option value="az">İsim (A-Z)</option>
+                      <option value="price-low">Fiyat: Artan</option>
+                      <option value="price-high">Fiyat: Azalan</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Courses Grid or Empty State ── */}
+              {isLoading ? (
+                /* Skeleton Loader */
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[...Array(6)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="bg-white rounded-3xl p-3 border border-slate-200/80 shadow-xs animate-pulse space-y-3"
+                    >
+                      <div className="aspect-[5/3] bg-slate-200 rounded-2xl w-full" />
+                      <div className="px-2 space-y-2">
+                        <div className="h-4 bg-slate-200 rounded-md w-3/4" />
+                        <div className="h-3 bg-slate-200 rounded-md w-1/2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : filtered.length > 0 ? (
+                /* ── Aniq UI Course Cards Grid (5:3 Aspect) ── */
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filtered.slice(0, 6).map((course) => (
+                      <Link
+                        key={course.id}
+                        href={`/courses/${course.slug}`}
+                        className="group/card block h-full"
+                      >
+                        <div className="bg-white rounded-3xl overflow-hidden border border-slate-200/90 hover:border-emerald-500/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col justify-between p-3.5 shadow-xs">
+                          <div>
+                            {/* 5:3 Aspect Image Thumbnail */}
+                            <div className="relative w-full aspect-[5/3] overflow-hidden rounded-2xl bg-slate-100 border border-slate-100">
+                              {course.thumbnail_path ? (
+                                <img
+                                  src={course.thumbnail_path}
+                                  alt={course.title}
+                                  loading="lazy"
+                                  className="object-cover w-full h-full group-hover/card:scale-105 transition-transform duration-500"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-400 bg-gradient-to-br from-emerald-50/50 to-teal-50/50">
+                                  <BookOpen className="w-10 h-10 text-emerald-600/40" />
+                                </div>
+                              )}
+
+                              {/* Top Left Badge */}
+                              <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-full bg-white/95 backdrop-blur-md px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-800 shadow-xs">
+                                <Star className="w-3 h-3 fill-emerald-600 text-emerald-600" />
+                                <span>{course.discount_price ? "İndirimli" : "Popüler"}</span>
                               </span>
-                            )}
+
+                              {/* Top Right Bookmark Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => toggleBookmark(course.id, e)}
+                                aria-label="Favorilere ekle"
+                                className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/95 text-slate-700 hover:text-emerald-700 flex items-center justify-center shadow-xs transition-colors"
+                              >
+                                <Bookmark
+                                  className={`w-4 h-4 ${
+                                    savedCourses[course.id] ? "fill-emerald-600 text-emerald-600" : ""
+                                  }`}
+                                />
+                              </button>
+                            </div>
+
+                            {/* Instructor Info */}
+                            <div className="px-2 pt-3.5 pb-1">
+                              <div className="flex items-center gap-2.5 mb-2.5">
+                                <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                                  {course.teacher?.avatar_url ? (
+                                    <img
+                                      src={course.teacher.avatar_url}
+                                      alt={course.teacher.full_name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-xs font-bold text-emerald-700 bg-emerald-50">
+                                      {course.teacher?.full_name?.charAt(0) || "E"}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-bold text-slate-900 truncate">
+                                    {course.teacher?.full_name || "Seçkin Eğitmen"}
+                                  </p>
+                                  <p className="text-[11px] text-slate-500 truncate">BiHocam Eğitmeni</p>
+                                </div>
+                              </div>
+
+                              {/* Title & Description */}
+                              <h3 className="text-base font-bold text-slate-900 mb-1.5 line-clamp-2 min-h-[3rem] group-hover/card:text-emerald-700 transition-colors leading-snug font-display">
+                                {course.title}
+                              </h3>
+                              <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal">
+                                {course.short_description || "Birebir canlı anlatım, yeni nesil soru çözümleri ve interaktif dijital kaynaklarla hedefinize ulaşın."}
+                              </p>
+                            </div>
                           </div>
-                        </Link>
-                        <div className="p-5">
-                          {/* Kurs kategorileri */}
-                          {course.categories && course.categories.length > 0 && (
-                            <div className="mb-3 flex flex-wrap gap-2">
-                              <CategoryBadge
-                                category={course.categories[0]}
-                                size="sm"
-                                asLink
-                              />
-                              {course.categories.length > 1 && (
-                                <span className="text-[0.65rem] text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full">
-                                  +{course.categories.length - 1} kategori daha
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          <Link href={`/courses/${course.slug}`}>
-                            <h3 className="font-bold text-gray-900 group-hover:text-teal-600 transition-colors line-clamp-2 mb-2 min-h-[48px]">
-                              {course.title}
-                            </h3>
-                          </Link>
-                          <p className="text-sm text-gray-500 mb-4 flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            {course.teacher?.full_name || "Eğitmen"}
-                          </p>
-                          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                            <div className="font-bold text-gray-900">
+
+                          {/* Card Price & Cart Action Footer */}
+                          <div className="px-2 pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
+                            <div>
                               {course.discount_price ? (
-                                <span>
-                                  ₺{course.discount_price}{" "}
-                                  <span className="text-sm text-gray-400 line-through font-normal">₺{course.price}</span>
-                                </span>
+                                <div className="flex items-baseline gap-1.5">
+                                  <span className="text-base font-black text-slate-900 font-mono">
+                                    ₺{course.discount_price}
+                                  </span>
+                                  <span className="text-xs text-slate-400 line-through font-mono">
+                                    ₺{course.price}
+                                  </span>
+                                </div>
                               ) : course.price === 0 ? (
-                                <span className="text-teal-600">Ücretsiz</span>
+                                <span className="text-sm font-bold text-emerald-700">Ücretsiz</span>
                               ) : (
-                                <span>₺{course.price}</span>
+                                <span className="text-base font-black text-slate-900 font-mono">
+                                  ₺{course.price}
+                                </span>
                               )}
                             </div>
+
                             <button
-                              onClick={() => handleAdd(course.id)}
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleAdd(course.id);
+                              }}
                               disabled={addingId === course.id}
-                              className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white border border-teal-100 text-teal-600 hover:bg-teal-50 hover:border-teal-300 hover:shadow-md hover:shadow-teal-500/20 disabled:opacity-50 transition-all"
                               aria-label="Sepete ekle"
+                              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 font-bold text-xs transition-all shadow-xs"
                             >
-                              {addingId === course.id ? (
-                                <svg
-                                  className="w-4 h-4 animate-spin text-teal-500"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                  />
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                  />
-                                </svg>
-                              ) : (
-                                <svg
-                                  className="w-4 h-4"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    d="M3 4h2l1 2m0 0h13l-1.5 9h-11L6 6zm3 13a1 1 0 11-2 0 1 1 0 012 0zm10 0a1 1 0 11-2 0 1 1 0 012 0z"
-                                    stroke="currentColor"
-                                    strokeWidth="1.8"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                </svg>
-                              )}
+                              <ShoppingCart className="w-3.5 h-3.5" />
+                              <span>{addingId === course.id ? "Ekleniyor..." : "Sepete Ekle"}</span>
                             </button>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
-                )}
-              </>
-            ) : (
-              <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+
+                  {/* Inline Ad */}
+                  {filtered.length > 6 && (
+                    <div className="my-8">
+                      <AdBanner placementCode="inline_courses" categoryId={currentCategory?.id} />
+                    </div>
+                  )}
+
+                  {/* Remaining Courses if more than 6 */}
+                  {filtered.length > 6 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {filtered.slice(6).map((course) => (
+                        <Link
+                          key={course.id}
+                          href={`/courses/${course.slug}`}
+                          className="group/card block h-full"
+                        >
+                          <div className="bg-white rounded-3xl overflow-hidden border border-slate-200/90 hover:border-emerald-500/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col justify-between p-3.5 shadow-xs">
+                            <div>
+                              <div className="relative w-full aspect-[5/3] overflow-hidden rounded-2xl bg-slate-100 border border-slate-100">
+                                {course.thumbnail_path ? (
+                                  <img
+                                    src={course.thumbnail_path}
+                                    alt={course.title}
+                                    loading="lazy"
+                                    className="object-cover w-full h-full group-hover/card:scale-105 transition-transform duration-500"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-slate-400 bg-gradient-to-br from-emerald-50/50 to-teal-50/50">
+                                    <BookOpen className="w-10 h-10 text-emerald-600/40" />
+                                  </div>
+                                )}
+
+                                <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-full bg-white/95 backdrop-blur-md px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-800 shadow-xs">
+                                  <Star className="w-3 h-3 fill-emerald-600 text-emerald-600" />
+                                  <span>{course.discount_price ? "İndirimli" : "Popüler"}</span>
+                                </span>
+
+                                <button
+                                  type="button"
+                                  onClick={(e) => toggleBookmark(course.id, e)}
+                                  aria-label="Favorilere ekle"
+                                  className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/95 text-slate-700 hover:text-emerald-700 flex items-center justify-center shadow-xs transition-colors"
+                                >
+                                  <Bookmark
+                                    className={`w-4 h-4 ${
+                                      savedCourses[course.id] ? "fill-emerald-600 text-emerald-600" : ""
+                                    }`}
+                                  />
+                                </button>
+                              </div>
+
+                              <div className="px-2 pt-3.5 pb-1">
+                                <div className="flex items-center gap-2.5 mb-2.5">
+                                  <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                                    {course.teacher?.avatar_url ? (
+                                      <img
+                                        src={course.teacher.avatar_url}
+                                        alt={course.teacher.full_name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center text-xs font-bold text-emerald-700 bg-emerald-50">
+                                        {course.teacher?.full_name?.charAt(0) || "E"}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold text-slate-900 truncate">
+                                      {course.teacher?.full_name || "Seçkin Eğitmen"}
+                                    </p>
+                                    <p className="text-[11px] text-slate-500 truncate">BiHocam Eğitmeni</p>
+                                  </div>
+                                </div>
+
+                                <h3 className="text-base font-bold text-slate-900 mb-1.5 line-clamp-2 min-h-[3rem] group-hover/card:text-emerald-700 transition-colors leading-snug font-display">
+                                  {course.title}
+                                </h3>
+                                <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal">
+                                  {course.short_description || "Birebir canlı anlatım, yeni nesil soru çözümleri ve interaktif dijital kaynaklarla hedefinize ulaşın."}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="px-2 pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
+                              <div>
+                                {course.discount_price ? (
+                                  <div className="flex items-baseline gap-1.5">
+                                    <span className="text-base font-black text-slate-900 font-mono">
+                                      ₺{course.discount_price}
+                                    </span>
+                                    <span className="text-xs text-slate-400 line-through font-mono">
+                                      ₺{course.price}
+                                    </span>
+                                  </div>
+                                ) : course.price === 0 ? (
+                                  <span className="text-sm font-bold text-emerald-700">Ücretsiz</span>
+                                ) : (
+                                  <span className="text-base font-black text-slate-900 font-mono">
+                                    ₺{course.price}
+                                  </span>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleAdd(course.id);
+                                }}
+                                disabled={addingId === course.id}
+                                aria-label="Sepete ekle"
+                                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 font-bold text-xs transition-all shadow-xs"
+                              >
+                                <ShoppingCart className="w-3.5 h-3.5" />
+                                <span>{addingId === course.id ? "Ekleniyor..." : "Sepete Ekle"}</span>
+                              </button>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : hasActiveFilters ? (
+                /* ── Filtered Empty State ── */
+                <div className="bg-white rounded-3xl p-10 sm:p-14 text-center border border-slate-200/90 shadow-xs space-y-4">
+                  <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-3xl flex items-center justify-center mx-auto border border-slate-200">
+                    <Search className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-bold text-slate-900 font-display">Aramanıza Uygun Kurs Bulunamadı</h3>
+                    <p className="text-sm text-slate-500 font-normal max-w-md mx-auto">
+                      Seçili kriterlerle eşleşen kurs bulunamadı. Filtreleri temizleyerek tüm içeriklere göz atabilirsiniz.
+                    </p>
+                  </div>
+                  <button
+                    onClick={resetAllFilters}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-2xl shadow-md shadow-emerald-600/20 hover:-translate-y-0.5 transition-all"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>Filtreleri Sıfırla</span>
+                  </button>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Kurs bulunamadı</h3>
-                <p className="text-gray-600 mb-6">Filtreleri değiştirmeyi deneyin.</p>
-                <button
-                  onClick={() => {
-                    setSelectedCategory(null);
-                    setFilter({ free: false, discount: false });
-                    router.push("/courses");
-                  }}
-                  className="px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-teal-500/30 transition-all"
-                >
-                  Filtreleri Temizle
-                </button>
-              </div>
-            )}
-          </section>
-        </div>
-      </main>
+              ) : (
+                /* ── ANIQ UI ZERO STATE CARD (Clean Database State) ── */
+                <div className="relative overflow-hidden rounded-3xl sm:rounded-[2.5rem] bg-gradient-to-br from-emerald-50/80 via-teal-50/40 to-slate-50 p-8 sm:p-12 border border-emerald-200/80 shadow-md text-center space-y-8">
+                  {/* Subtle Glows */}
+                  <div className="pointer-events-none absolute -top-20 -left-20 h-64 w-64 rounded-full bg-emerald-200/40 blur-3xl" />
+                  <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-teal-200/40 blur-3xl" />
+
+                  <div className="relative z-10 max-w-2xl mx-auto space-y-4">
+                    <div className="w-16 h-16 rounded-3xl bg-white text-emerald-700 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
+                      <Sparkles className="w-8 h-8 text-emerald-600" />
+                    </div>
+
+                    <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/80 bg-white px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-emerald-800">
+                      <span>Yeni İçerikler Hazırlanıyor</span>
+                    </div>
+
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 font-display tracking-tight leading-tight">
+                      BiHocam Kurs Kataloğu Yenileniyor
+                    </h2>
+
+                    <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed">
+                      Uzman eğitim kadromuz en güncel müfredata uygun yeni video kursları ve dijital kaynakları hazırlıyor. Bu süreçte dilediğiniz branşta ücretsiz özel ders talebi açarak hocalardan anında teklif alabilir veya onaylı öğretmenlerimizi keşfedebilirsiniz.
+                    </p>
+                  </div>
+
+                  {/* 3 Value Actions */}
+                  <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto pt-2">
+                    <Link
+                      href="/tenders/new"
+                      className="group p-5 bg-white rounded-2xl border border-emerald-200/80 shadow-xs hover:border-emerald-500 hover:shadow-md transition-all text-left flex flex-col justify-between"
+                    >
+                      <div className="space-y-2">
+                        <span className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                          <PlusCircle className="w-5 h-5" />
+                        </span>
+                        <h4 className="font-bold text-slate-900 text-sm group-hover:text-emerald-700 transition-colors">
+                          Ders Talebi Aç
+                        </h4>
+                        <p className="text-xs text-slate-500 font-normal leading-snug">
+                          İhtiyacınızı ve bütçenizi yazın, onaylı öğretmenler size özel teklif versin.
+                        </p>
+                      </div>
+                      <div className="mt-4 flex items-center gap-1 text-xs font-bold text-emerald-700">
+                        <span>Hemen Başla</span>
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </Link>
+
+                    <Link
+                      href="/teachers"
+                      className="group p-5 bg-white rounded-2xl border border-slate-200/90 shadow-xs hover:border-emerald-500 hover:shadow-md transition-all text-left flex flex-col justify-between"
+                    >
+                      <div className="space-y-2">
+                        <span className="w-9 h-9 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
+                          <Users className="w-5 h-5" />
+                        </span>
+                        <h4 className="font-bold text-slate-900 text-sm group-hover:text-emerald-700 transition-colors">
+                          Eğitmenleri Keşfet
+                        </h4>
+                        <p className="text-xs text-slate-500 font-normal leading-snug">
+                          Yüzlerce doğrulanmış öğretmeni branş, puan ve saatlik ücretine göre filtreleyin.
+                        </p>
+                      </div>
+                      <div className="mt-4 flex items-center gap-1 text-xs font-bold text-slate-700 group-hover:text-emerald-700">
+                        <span>İncele</span>
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </Link>
+
+                    <Link
+                      href="/egitim-programlari"
+                      className="group p-5 bg-white rounded-2xl border border-slate-200/90 shadow-xs hover:border-emerald-500 hover:shadow-md transition-all text-left flex flex-col justify-between"
+                    >
+                      <div className="space-y-2">
+                        <span className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                          <GraduationCap className="w-5 h-5" />
+                        </span>
+                        <h4 className="font-bold text-slate-900 text-sm group-hover:text-emerald-700 transition-colors">
+                          Eğitim Programları
+                        </h4>
+                        <p className="text-xs text-slate-500 font-normal leading-snug">
+                          LGS ve YKS hazırlık paketleri, deneme kulüpleri ve mentorluk programları.
+                        </p>
+                      </div>
+                      <div className="mt-4 flex items-center gap-1 text-xs font-bold text-slate-700 group-hover:text-emerald-700">
+                        <span>Paketler</span>
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </section>
+          </div>
+        </main>
+      </div>
 
       <Footer />
     </div>

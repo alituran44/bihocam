@@ -1,18 +1,84 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BookOpen, GraduationCap, ShieldCheck, Smartphone, Sparkles, Star, Users, Zap } from "lucide-react";
+import {
+  BookOpen,
+  GraduationCap,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
+  Star,
+  Users,
+  Zap,
+  Award,
+  Clock,
+  Heart
+} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { publicApi } from "@/lib/api";
 
-export default function HeroWaveRibbon() {
-  const items = [
-    { icon: <BookOpen className="w-4 h-4 text-emerald-600" />, text: "36+ Yayınlanmış Kurs & Program" },
-    { icon: <GraduationCap className="w-4 h-4 text-amber-500" />, text: "850+ Doğrulanmış Akademisyen Hoca" },
-    { icon: <Smartphone className="w-4 h-4 text-teal-600" />, text: "Kurulumsuz WebRTC 1:1 Canlı Sınıf" },
-    { icon: <ShieldCheck className="w-4 h-4 text-emerald-600" />, text: "Emanet Havuz Korumalı Güvenli Ödeme" },
-    { icon: <Star className="w-4 h-4 text-amber-400 fill-amber-400" />, text: "4.98 / 5 Öğrenci Memnuniyeti" },
-    { icon: <Zap className="w-4 h-4 text-indigo-600" />, text: "30 Saniyede Ücretsiz İhale Talebi" },
-    { icon: <Sparkles className="w-4 h-4 text-purple-600" />, text: "İlk 15 Dk Ücretsiz Tanışma Dersi" },
-  ];
+export interface MarqueeItem {
+  icon?: string;
+  text: string;
+}
+
+export const DEFAULT_MARQUEE_ITEMS: MarqueeItem[] = [
+  { icon: "shield", text: "Emanet Havuz Korumalı Güvenli Ödeme" },
+  { icon: "graduation", text: "850+ Doğrulanmış Akademisyen Hoca" },
+  { icon: "star", text: "4.98 / 5 Öğrenci Memnuniyeti" },
+  { icon: "zap", text: "30 Saniyede Ücretsiz İhale Talebi" },
+  { icon: "smartphone", text: "Kurulumsuz WebRTC 1:1 Canlı Sınıf" },
+  { icon: "sparkles", text: "Alanında Uzman Onaylı Eğitmenler" },
+  { icon: "book", text: "Kişiye Özel Birebir Eğitim Planı" },
+];
+
+export function renderMarqueeIcon(iconName?: string) {
+  switch (iconName) {
+    case "graduation":
+      return <GraduationCap className="w-4 h-4 text-amber-500" />;
+    case "smartphone":
+      return <Smartphone className="w-4 h-4 text-teal-600" />;
+    case "shield":
+      return <ShieldCheck className="w-4 h-4 text-emerald-600" />;
+    case "star":
+      return <Star className="w-4 h-4 text-amber-400 fill-amber-400" />;
+    case "zap":
+      return <Zap className="w-4 h-4 text-indigo-600" />;
+    case "sparkles":
+      return <Sparkles className="w-4 h-4 text-purple-600" />;
+    case "book":
+      return <BookOpen className="w-4 h-4 text-emerald-600" />;
+    case "users":
+      return <Users className="w-4 h-4 text-blue-600" />;
+    case "award":
+      return <Award className="w-4 h-4 text-amber-500" />;
+    case "clock":
+      return <Clock className="w-4 h-4 text-slate-600" />;
+    case "heart":
+      return <Heart className="w-4 h-4 text-rose-500" />;
+    default:
+      return <Sparkles className="w-4 h-4 text-emerald-600" />;
+  }
+}
+
+interface HeroWaveRibbonProps {
+  customItems?: MarqueeItem[];
+}
+
+export default function HeroWaveRibbon({ customItems }: HeroWaveRibbonProps) {
+  const { data: publicSettings } = useQuery({
+    queryKey: ["public-settings"],
+    queryFn: () => publicApi.getPublicSettings(),
+    staleTime: 60 * 1000,
+  });
+
+  const rawItems =
+    customItems && customItems.length > 0
+      ? customItems
+      : (publicSettings?.platform as Record<string, any>)?.marquee_items;
+
+  const items: MarqueeItem[] =
+    Array.isArray(rawItems) && rawItems.length > 0 ? rawItems : DEFAULT_MARQUEE_ITEMS;
 
   return (
     <div className="relative w-full overflow-hidden bg-gradient-to-b from-white via-slate-50 to-white py-4 sm:py-6 border-y border-slate-200/70 shadow-xs">
@@ -43,7 +109,7 @@ export default function HeroWaveRibbon() {
       <motion.div
         className="flex whitespace-nowrap relative z-10"
         animate={{ x: ["0%", "-50%"] }}
-        transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
+        transition={{ repeat: Infinity, duration: 32, ease: "linear" }}
       >
         {[...Array(2)].map((_, ri) => (
           <div key={ri} className="flex items-center gap-8 sm:gap-12 px-6">
@@ -52,8 +118,8 @@ export default function HeroWaveRibbon() {
                 key={i}
                 className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-slate-700 hover:text-emerald-700 transition-colors"
               >
-                <div className="p-1 rounded-lg bg-slate-100/80 border border-slate-200/60 shadow-xs">
-                  {item.icon}
+                <div className="p-1 rounded-lg bg-slate-100/80 border border-slate-200/60 shadow-xs flex items-center justify-center">
+                  {renderMarqueeIcon(item.icon)}
                 </div>
                 <span>{item.text}</span>
                 <span className="text-slate-300 ml-6 select-none font-thin">•</span>

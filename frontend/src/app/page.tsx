@@ -802,7 +802,7 @@ export default function Home() {
       {/* ══════════════════════════════════════════════════════ */}
       {/* HERO WAVE RIBBON - ORGANIC RUNNING STRIP (Aniq-UI)     */}
       {/* ══════════════════════════════════════════════════════ */}
-      <HeroWaveRibbon />
+      <HeroWaveRibbon customItems={(publicSettings?.platform as Record<string, any>)?.marquee_items} />
 
       {/* ══════════════════════════════════════════════════════ */}
       {/* WHY BIHOCAM 3-CARD VALUE PROPOSITION (Aniq-UI Style)   */}

@@ -3,11 +3,14 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { siteSettingsApi, type SiteSettingsData } from "@/lib/api";
+import { DEFAULT_MARQUEE_ITEMS, renderMarqueeIcon, type MarqueeItem } from "@/components/home/HeroWaveRibbon";
+import { Sparkles, Plus, Trash2, ArrowUp, ArrowDown, RotateCcw } from "lucide-react";
 
 export default function AdminSettingsGeneralPage() {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [platformData, setPlatformData] = useState<Record<string, any>>({});
+  const [marqueeItems, setMarqueeItems] = useState<MarqueeItem[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
   const { data: settings, isLoading } = useQuery({
@@ -20,7 +23,15 @@ export default function AdminSettingsGeneralPage() {
       setFormData(settings.general as Record<string, string>);
     }
     if (settings?.platform) {
-      setPlatformData(settings.platform as Record<string, any>);
+      const p = settings.platform as Record<string, any>;
+      setPlatformData(p);
+      if (Array.isArray(p.marquee_items) && p.marquee_items.length > 0) {
+        setMarqueeItems(p.marquee_items);
+      } else {
+        setMarqueeItems(DEFAULT_MARQUEE_ITEMS);
+      }
+    } else {
+      setMarqueeItems(DEFAULT_MARQUEE_ITEMS);
     }
   }, [settings]);
 
@@ -28,14 +39,55 @@ export default function AdminSettingsGeneralPage() {
     mutationFn: (payload: Partial<SiteSettingsData>) => siteSettingsApi.update(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["site-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["public-settings"] });
       setMessage("Ayarlar başarıyla güncellendi!");
       setTimeout(() => setMessage(null), 3000);
     },
   });
 
+  const handleAddMarqueeItem = () => {
+    setMarqueeItems((prev) => [
+      ...prev,
+      { icon: "sparkles", text: "Yeni Kayan Duyuru Metni" },
+    ]);
+  };
+
+  const handleUpdateMarqueeItem = (index: number, field: "icon" | "text", value: string) => {
+    setMarqueeItems((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  const handleDeleteMarqueeItem = (index: number) => {
+    setMarqueeItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleMoveMarqueeItem = (index: number, direction: "up" | "down") => {
+    setMarqueeItems((prev) => {
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+      const updated = [...prev];
+      const [moved] = updated.splice(index, 1);
+      updated.splice(targetIndex, 0, moved);
+      return updated;
+    });
+  };
+
+  const handleResetMarqueeDefaults = () => {
+    setMarqueeItems(DEFAULT_MARQUEE_ITEMS);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateMutation.mutate({ general: formData, platform: platformData });
+    updateMutation.mutate({
+      general: formData,
+      platform: {
+        ...platformData,
+        marquee_items: marqueeItems,
+      },
+    });
   };
 
   if (isLoading) {
@@ -362,6 +414,134 @@ export default function AdminSettingsGeneralPage() {
                 Video çalışmıyorsa geçerli bir YouTube Video ID'si (11 haneli kod) veya doğrudan YouTube embed URL'si girin.
               </p>
             </div>
+          </div>
+
+          {/* Marquee Ticker Settings */}
+          <div className="bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-500 px-8 py-6 rounded-t-2xl -mx-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Kayan Yazı Bandı (Marquee Ticker)</h2>
+                  <p className="text-teal-100 text-sm mt-0.5">Ana sayfa hero altındaki kayan rozet ve duyuru yazılarını yönetin</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleResetMarqueeDefaults}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-sm border border-white/20 transition-all"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Varsayılanları Yükle</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddMarqueeItem}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white text-emerald-800 hover:bg-emerald-50 text-xs font-bold shadow-sm transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Yeni Yazı Ekle</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3 pb-6">
+            {marqueeItems.length === 0 ? (
+              <div className="p-8 text-center bg-slate-50 border border-slate-200 rounded-2xl">
+                <p className="text-slate-500 text-sm font-medium mb-3">Henüz kayan yazı maddesi eklenmemiş.</p>
+                <button
+                  type="button"
+                  onClick={handleResetMarqueeDefaults}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-500 transition-colors"
+                >
+                  Varsayılan Listeyi Yükle
+                </button>
+              </div>
+            ) : (
+              marqueeItems.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-2xl transition-all"
+                >
+                  {/* Sequence badge & Icon preview */}
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-700 text-xs font-mono font-bold flex items-center justify-center">
+                      {index + 1}
+                    </span>
+                    <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-center">
+                      {renderMarqueeIcon(item.icon)}
+                    </div>
+                  </div>
+
+                  {/* Icon Selector */}
+                  <div className="shrink-0 sm:w-48">
+                    <select
+                      value={item.icon || "sparkles"}
+                      onChange={(e) => handleUpdateMarqueeItem(index, "icon", e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 cursor-pointer"
+                    >
+                      <option value="shield">🛡️ Kalkan (Güvenlik)</option>
+                      <option value="graduation">🎓 Kep (Akademisyen/Hoca)</option>
+                      <option value="star">⭐ Yıldız (Memnuniyet/Puan)</option>
+                      <option value="zap">⚡ Şimşek (Hızlı İhale)</option>
+                      <option value="smartphone">📱 Telefon (Canlı Sınıf)</option>
+                      <option value="sparkles">✨ Parıltı (Fırsat/Öne Çıkan)</option>
+                      <option value="book">📖 Kitap (Eğitim/Ders)</option>
+                      <option value="users">👥 Kullanıcılar (Topluluk)</option>
+                      <option value="award">🏆 Kupa (Başarı/Sertifika)</option>
+                      <option value="clock">⏱️ Saat (Esneklik)</option>
+                      <option value="heart">❤️ Kalp (Memnuniyet)</option>
+                    </select>
+                  </div>
+
+                  {/* Text Input */}
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={item.text}
+                      onChange={(e) => handleUpdateMarqueeItem(index, "text", e.target.value)}
+                      placeholder="Rozet veya duyuru metni..."
+                      className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      required
+                    />
+                  </div>
+
+                  {/* Reorder and Delete Actions */}
+                  <div className="flex items-center gap-1 shrink-0 self-end sm:self-center">
+                    <button
+                      type="button"
+                      disabled={index === 0}
+                      onClick={() => handleMoveMarqueeItem(index, "up")}
+                      className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      title="Yukarı Taşı"
+                    >
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={index === marqueeItems.length - 1}
+                      onClick={() => handleMoveMarqueeItem(index, "down")}
+                      className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      title="Aşağı Taşı"
+                    >
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteMarqueeItem(index)}
+                      className="p-2 rounded-xl bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 transition-all ml-1"
+                      title="Sil"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           {/* Submit Button */}
