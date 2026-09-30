@@ -1126,7 +1126,14 @@ export const teachersApi = {
     const { data } = await api.get(`/teachers/${teacherId}/availability`);
     return data;
   },
-  bookLiveClass: async (teacherId: string, payload: { availability_id: string; lesson_type?: "online" | "face_to_face"; student_notes?: string }) => {
+  bookLiveClass: async (teacherId: string, payload: {
+    availability_id: string;
+    lesson_type?: "online" | "face_to_face";
+    lesson_mode?: "individual" | "group";
+    group_size?: number;
+    group_tier_id?: string;
+    student_notes?: string;
+  }) => {
     const { data } = await api.post(`/teachers/${teacherId}/book-live-class`, payload);
     return data;
   },
@@ -2087,6 +2094,16 @@ export const quizzesApi = {
 };
 
 // EPIC-5: Teacher Profile & Financial APIs
+export interface GroupLessonTier {
+  tier_id: string;
+  title: string;
+  min_students: number;
+  max_students: number;
+  price_per_student: number;
+  discount_price?: number | null;
+  is_active: boolean;
+}
+
 export interface TeacherProfile {
   id: string;
   full_name: string;
@@ -2101,6 +2118,11 @@ export interface TeacherProfile {
     website?: string | null;
   } | null;
   avatar_url?: string | null;
+  live_class_price?: number | null;
+  live_class_discount_price?: number | null;
+  face_to_face_price?: number | null;
+  group_lesson_prices?: GroupLessonTier[] | null;
+  live_class_link?: string | null;
   promo_images?: string[] | null;
   promo_video?: string | null;
   is_active: boolean;
@@ -2137,6 +2159,7 @@ export interface TeacherProfileUpdate {
   live_class_price?: number | null;
   live_class_discount_price?: number | null;
   face_to_face_price?: number | null;
+  group_lesson_prices?: GroupLessonTier[] | null;
   live_class_link?: string | null;
   tax_info?: {
     iban?: string;

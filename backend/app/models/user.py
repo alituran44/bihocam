@@ -49,6 +49,7 @@ class User(Base):
     live_class_discount_price: Mapped[float | None] = mapped_column(Float, nullable=True)
     face_to_face_price: Mapped[float | None] = mapped_column(Float, nullable=True)
     live_class_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    group_lesson_prices: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)  # [{tier_id, title, min_students, max_students, price_per_student, discount_price, is_active}]
 
     # Tax & Legal Information (GİB BTRANS VUK 538 / 595 Uyumlu)
     tax_info: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # {tc_kimlik, company_type, company_title, tax_office, address, city, district, ...}

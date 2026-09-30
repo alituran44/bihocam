@@ -27,6 +27,15 @@ type TeacherInfo = {
   live_class_price?: number | null;
   live_class_discount_price?: number | null;
   face_to_face_price?: number | null;
+  group_lesson_prices?: Array<{
+    tier_id: string;
+    title: string;
+    min_students: number;
+    max_students: number;
+    price_per_student: number;
+    discount_price?: number | null;
+    is_active: boolean;
+  }> | null;
   live_class_link?: string | null;
   created_at: string;
   phone?: string | null;
@@ -117,6 +126,8 @@ export default function TeacherProfilePage() {
   const [currentMonth, setCurrentMonth] = useState<number>(7);
   const [selectedSlotId, setSelectedSlotId] = useState<string>("");
   const [lessonFormat, setLessonFormat] = useState<"online" | "face_to_face">("online");
+  const [lessonMode, setLessonMode] = useState<"individual" | "group">("individual");
+  const [selectedGroupTierId, setSelectedGroupTierId] = useState<string>("");
   const [studentNotes, setStudentNotes] = useState<string>("");
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState("");
@@ -215,6 +226,16 @@ export default function TeacherProfilePage() {
     }
   }, [data, selectedCourseId]);
 
+  // Automatically select first active group tier when loaded
+  useEffect(() => {
+    if (data?.teacher?.group_lesson_prices && data.teacher.group_lesson_prices.length > 0 && !selectedGroupTierId) {
+      const active = data.teacher.group_lesson_prices.filter((t) => t.is_active);
+      if (active.length > 0) {
+        setSelectedGroupTierId(active[0].tier_id);
+      }
+    }
+  }, [data, selectedGroupTierId]);
+
   // Get teacher availability slots
   const { data: slots, isLoading: slotsLoading } = useQuery<AvailabilitySlot[]>({
     queryKey: ["teacher-availability", teacherId],
@@ -261,7 +282,14 @@ export default function TeacherProfilePage() {
 
   // Booking mutation
   const bookMutation = useMutation({
-    mutationFn: (payload: { availability_id: string; lesson_type?: "online" | "face_to_face"; student_notes?: string }) =>
+    mutationFn: (payload: {
+      availability_id: string;
+      lesson_type?: "online" | "face_to_face";
+      lesson_mode?: "individual" | "group";
+      group_size?: number;
+      group_tier_id?: string;
+      student_notes?: string;
+    }) =>
       teachersApi.bookLiveClass(teacherId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher-availability", teacherId] });
@@ -314,11 +342,30 @@ export default function TeacherProfilePage() {
       setBookingError("Lütfen listeden uygun bir saat dilimi seçiniz.");
       return;
     }
-    bookMutation.mutate({
-      availability_id: selectedSlotId,
-      lesson_type: lessonFormat,
-      student_notes: studentNotes,
-    });
+
+    if (lessonMode === "group") {
+      const activeTiers = data?.teacher?.group_lesson_prices?.filter((t) => t.is_active) || [];
+      const selectedTier = activeTiers.find((t) => t.tier_id === selectedGroupTierId) || activeTiers[0];
+      if (!selectedTier) {
+        setBookingError("Lütfen bir grup dersi kademesi seçiniz.");
+        return;
+      }
+      bookMutation.mutate({
+        availability_id: selectedSlotId,
+        lesson_type: lessonFormat,
+        lesson_mode: "group",
+        group_size: selectedTier.max_students,
+        group_tier_id: selectedTier.tier_id,
+        student_notes: studentNotes,
+      });
+    } else {
+      bookMutation.mutate({
+        availability_id: selectedSlotId,
+        lesson_type: lessonFormat,
+        lesson_mode: "individual",
+        student_notes: studentNotes,
+      });
+    }
   };
 
   const handleIntroBooking = () => {
@@ -652,9 +699,32 @@ export default function TeacherProfilePage() {
                     <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase border-b border-slate-50 pb-3">Verdiği Dersler ve Fiyatlar</h3>
                     <div className="space-y-3 text-xs font-bold text-slate-700">
                       {[
-                        { branch: "Matematik Özel Ders / Canlı Canlı", duration: "45 Dakika", price: data.teacher.live_class_price ? `${data.teacher.live_class_price} TL` : "Anlaşmalı" },
-                        { branch: "Sınav Koçluğu / Birebir Görüşme", duration: "45 Dakika", price: data.teacher.live_class_price ? `${Math.round(data.teacher.live_class_price * 0.9)} TL` : "Anlaşmalı" },
-                        { branch: "Hızlı Soru Çözüm Paketi", duration: "30 Soru", price: "Ücretsiz" },
+                        {
+                          branch: `${data.teacher.expertise_tags?.[0] || "Branş"} Birebir Canlı Ders`,
+                          duration: "45 Dakika",
+                          price: data.teacher.live_class_price ? `${data.teacher.live_class_price} TL` : "Anlaşmalı",
+                        },
+                        ...(data.teacher.face_to_face_price
+                          ? [
+                              {
+                                branch: `${data.teacher.expertise_tags?.[0] || "Branş"} Yüz Yüze Görüşme`,
+                                duration: "45 Dakika",
+                                price: `${data.teacher.face_to_face_price} TL`,
+                              },
+                            ]
+                          : []),
+                        ...(data.teacher.group_lesson_prices
+                          ?.filter((t) => t.is_active)
+                          .map((t) => ({
+                            branch: `👥 ${t.title} (${t.min_students}-${t.max_students} Kişi)`,
+                            duration: "45 Dakika (Kişi Başı)",
+                            price: `${t.discount_price || t.price_per_student} TL`,
+                          })) || []),
+                        {
+                          branch: "Sınav Koçluğu / Ön Görüşme",
+                          duration: "15 Dakika",
+                          price: "Ücretsiz",
+                        },
                       ].map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center p-3.5 bg-slate-50/50 border border-slate-100/50 rounded-2xl">
                           <div className="space-y-0.5">
@@ -996,6 +1066,94 @@ export default function TeacherProfilePage() {
                             </span>
                           </div>
 
+                          {/* Mode Selection: Birebir vs Grup */}
+                          {data.teacher.group_lesson_prices && data.teacher.group_lesson_prices.some((t) => t.is_active) && (
+                            <div className="space-y-1.5 pb-2 border-b border-slate-100/60">
+                              <div className="flex items-center justify-between">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                                  Ders Türü
+                                </label>
+                                <span className="text-[10px] font-bold text-amber-600">
+                                  {lessonMode === "group" ? "Grup Dersi (Avantajlı Kişi Başı Ücret)" : "Birebir Özel Ders"}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setLessonMode("individual")}
+                                  className={`p-2.5 rounded-xl border text-center transition-all text-xs ${
+                                    lessonMode === "individual"
+                                      ? "bg-blue-50/80 border-blue-500 font-black text-blue-700 shadow-sm"
+                                      : "bg-slate-50 border-slate-200/80 text-slate-600 font-bold hover:bg-slate-100"
+                                  }`}
+                                >
+                                  🧑 Birebir Ders
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setLessonMode("group")}
+                                  className={`p-2.5 rounded-xl border text-center transition-all text-xs flex items-center justify-center gap-1.5 ${
+                                    lessonMode === "group"
+                                      ? "bg-amber-50/80 border-amber-500 font-black text-amber-800 shadow-sm"
+                                      : "bg-slate-50 border-slate-200/80 text-slate-600 font-bold hover:bg-slate-100"
+                                  }`}
+                                >
+                                  <span>👥 Grup Dersi</span>
+                                  <span className="text-[9px] bg-amber-200/70 text-amber-900 px-1 py-0.5 rounded font-black">Avantajlı</span>
+                                </button>
+                              </div>
+
+                              {/* Group Tier Capsules */}
+                              {lessonMode === "group" && (
+                                <div className="mt-2.5 space-y-2">
+                                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                                    Grup Büyüklüğü Seçiniz (Kişi Sayısı)
+                                  </label>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {data.teacher.group_lesson_prices
+                                      .filter((t) => t.is_active)
+                                      .map((tier) => {
+                                        const isSelected = selectedGroupTierId === tier.tier_id || (!selectedGroupTierId && tier === data.teacher.group_lesson_prices?.find(t => t.is_active));
+                                        const effectivePrice = tier.discount_price || tier.price_per_student;
+                                        const baseHourly = data.teacher.live_class_price || 0;
+                                        const savings = baseHourly > 0 ? Math.round(((baseHourly - effectivePrice) / baseHourly) * 100) : 0;
+
+                                        return (
+                                          <button
+                                            key={tier.tier_id}
+                                            type="button"
+                                            onClick={() => setSelectedGroupTierId(tier.tier_id)}
+                                            className={`p-3 rounded-2xl border text-left transition-all ${
+                                              isSelected
+                                                ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white border-amber-500 shadow-md shadow-amber-500/20"
+                                                : "bg-white border-slate-200 hover:border-amber-300 text-slate-700"
+                                            }`}
+                                          >
+                                            <div className="flex items-center justify-between">
+                                              <span className="text-xs font-black">{tier.title}</span>
+                                              {savings > 0 && (
+                                                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${isSelected ? "bg-white/20 text-white" : "bg-emerald-100 text-emerald-800"}`}>
+                                                  %{savings} Tasarruf
+                                                </span>
+                                              )}
+                                            </div>
+                                            <div className="flex items-baseline justify-between mt-1 text-[11px]">
+                                              <span className={isSelected ? "text-amber-100" : "text-slate-400"}>
+                                                {tier.min_students}-{tier.max_students} Kişi
+                                              </span>
+                                              <span className={`font-black ${isSelected ? "text-white" : "text-amber-600"}`}>
+                                                ₺{effectivePrice} <span className="text-[9px] font-normal">/öğrenci</span>
+                                              </span>
+                                            </div>
+                                          </button>
+                                        );
+                                      })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           {/* Format Selection: Online vs Face-to-Face */}
                           <div className="space-y-1.5 pb-2 border-b border-slate-100/60">
                             <div className="flex items-center justify-between">
@@ -1118,7 +1276,11 @@ export default function TeacherProfilePage() {
                                 <button
                                   onClick={handleBookLiveClass}
                                   disabled={bookMutation.isPending}
-                                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-xl shadow-blue-500/10 hover:shadow-blue-500/20 transform hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2"
+                                  className={`w-full py-3.5 ${
+                                    lessonMode === "group"
+                                      ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-amber-500/20"
+                                      : "bg-blue-600 hover:bg-blue-700 shadow-blue-500/10"
+                                  } text-white rounded-2xl font-bold shadow-xl transform hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2`}
                                 >
                                   {bookMutation.isPending ? (
                                     "Rezervasyon yapılıyor..."
@@ -1126,7 +1288,12 @@ export default function TeacherProfilePage() {
                                     <>
                                       <span>Rezervasyon Yap</span>
                                       <span className="px-2 py-0.5 rounded-lg bg-white/20 text-[10px] font-black">
-                                        {lessonFormat === "online"
+                                        {lessonMode === "group" ? (() => {
+                                          const activeTiers = data.teacher.group_lesson_prices?.filter((t) => t.is_active) || [];
+                                          const t = activeTiers.find((x) => x.tier_id === selectedGroupTierId) || activeTiers[0];
+                                          const p = t ? (t.discount_price || t.price_per_student) : (data.teacher.live_class_price || 0);
+                                          return `${p} ₺ (Grup - ${t?.title || "Grup Dersi"})`;
+                                        })() : lessonFormat === "online"
                                           ? (data.teacher.live_class_price ? `${data.teacher.live_class_price} ₺ (Online)` : "Online")
                                           : (data.teacher.face_to_face_price ? `${data.teacher.face_to_face_price} ₺ (Yüz Yüze)` : "Yüz Yüze")}
                                       </span>
@@ -1532,17 +1699,56 @@ export default function TeacherProfilePage() {
               {/* Pricing & Booking Card */}
               <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 space-y-5">
                 <div className="border-b border-slate-50 pb-4 space-y-3">
+                  {/* Mode switcher pills if teacher offers group lessons */}
+                  {data.teacher.group_lesson_prices && data.teacher.group_lesson_prices.some((t) => t.is_active) && (
+                    <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100/70 rounded-xl mb-3">
+                      <button
+                        type="button"
+                        onClick={() => setLessonMode("individual")}
+                        className={`py-1.5 text-[11px] font-black rounded-lg transition-all text-center ${
+                          lessonMode === "individual"
+                            ? "bg-white text-blue-700 shadow-sm"
+                            : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        🧑 Birebir Ders
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLessonMode("group")}
+                        className={`py-1.5 text-[11px] font-black rounded-lg transition-all text-center flex items-center justify-center gap-1 ${
+                          lessonMode === "group"
+                            ? "bg-white text-amber-700 shadow-sm"
+                            : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        <span>👥 Grup Dersi</span>
+                        <span className="text-[9px] bg-amber-100 text-amber-800 px-1 rounded font-black">Avantajlı</span>
+                      </button>
+                    </div>
+                  )}
+
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">
-                        {lessonFormat === "online" ? "Online Ders Ücreti" : "Yüz Yüze Ders Ücreti"}
+                        {lessonMode === "group"
+                          ? "Grup Dersi Kişi Başı"
+                          : lessonFormat === "online"
+                          ? "Online Ders Ücreti"
+                          : "Yüz Yüze Ders Ücreti"}
                       </span>
                       <span className="text-3xl font-black text-slate-800 leading-none">
-                        {lessonFormat === "online"
+                        {lessonMode === "group" ? (() => {
+                          const active = data.teacher.group_lesson_prices?.filter(t => t.is_active) || [];
+                          const t = active.find(x => x.tier_id === selectedGroupTierId) || active[0];
+                          return t ? `${t.discount_price || t.price_per_student} TL` : "-";
+                        })() : lessonFormat === "online"
                           ? (data.teacher.live_class_price ? `${data.teacher.live_class_price} TL` : "Anlaşmalı")
                           : (data.teacher.face_to_face_price ? `${data.teacher.face_to_face_price} TL` : (data.teacher.face_to_face_price === 0 ? "Ücretsiz" : "Belirtilmedi"))}
                       </span>
-                      <span className="text-[10px] font-bold text-slate-400 block">/ 45 Dakika</span>
+                      <span className="text-[10px] font-bold text-slate-400 block">
+                        {lessonMode === "group" ? "/ Öğrenci Başına" : "/ 45 Dakika"}
+                      </span>
                     </div>
                     <div className="text-right">
                       <span className="text-sm font-bold text-slate-700 flex items-center gap-1 justify-end">⭐ 4.9</span>
@@ -1550,31 +1756,63 @@ export default function TeacherProfilePage() {
                     </div>
                   </div>
 
-                  {/* Format switcher pills */}
-                  <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100/70 rounded-xl">
-                    <button
-                      type="button"
-                      onClick={() => setLessonFormat("online")}
-                      className={`py-1.5 text-[11px] font-black rounded-lg transition-all text-center ${
-                        lessonFormat === "online"
-                          ? "bg-white text-blue-600 shadow-sm"
-                          : "text-slate-500 hover:text-slate-800"
-                      }`}
-                    >
-                      🌐 Online ({data.teacher.live_class_price ? `${data.teacher.live_class_price} ₺` : "-"})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLessonFormat("face_to_face")}
-                      className={`py-1.5 text-[11px] font-black rounded-lg transition-all text-center ${
-                        lessonFormat === "face_to_face"
-                          ? "bg-white text-indigo-600 shadow-sm"
-                          : "text-slate-500 hover:text-slate-800"
-                      }`}
-                    >
-                      📍 Yüz Yüze ({data.teacher.face_to_face_price ? `${data.teacher.face_to_face_price} ₺` : "-"})
-                    </button>
-                  </div>
+                  {lessonMode === "group" ? (
+                    /* Group tier pills in sidebar */
+                    <div className="space-y-1.5 pt-1">
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                        Grup Seçeneği
+                      </label>
+                      <div className="grid grid-cols-1 gap-1.5">
+                        {data.teacher.group_lesson_prices
+                          ?.filter((t) => t.is_active)
+                          .map((tier) => {
+                            const isSelected = selectedGroupTierId === tier.tier_id || (!selectedGroupTierId && tier === data.teacher.group_lesson_prices?.find(t => t.is_active));
+                            const effectivePrice = tier.discount_price || tier.price_per_student;
+                            return (
+                              <button
+                                key={tier.tier_id}
+                                type="button"
+                                onClick={() => setSelectedGroupTierId(tier.tier_id)}
+                                className={`p-2.5 rounded-xl border text-left transition-all flex items-center justify-between text-xs ${
+                                  isSelected
+                                    ? "bg-amber-50 border-amber-500 font-black text-amber-900 shadow-sm"
+                                    : "bg-white border-slate-200/80 hover:bg-slate-50 text-slate-700 font-semibold"
+                                }`}
+                              >
+                                <span>👥 {tier.title} ({tier.min_students}-{tier.max_students} Kişi)</span>
+                                <span className="font-extrabold text-amber-700">₺{effectivePrice}/öğrenci</span>
+                              </button>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  ) : (
+                    /* Format switcher pills */
+                    <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100/70 rounded-xl">
+                      <button
+                        type="button"
+                        onClick={() => setLessonFormat("online")}
+                        className={`py-1.5 text-[11px] font-black rounded-lg transition-all text-center ${
+                          lessonFormat === "online"
+                            ? "bg-white text-blue-600 shadow-sm"
+                            : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        🌐 Online ({data.teacher.live_class_price ? `${data.teacher.live_class_price} ₺` : "-"})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLessonFormat("face_to_face")}
+                        className={`py-1.5 text-[11px] font-black rounded-lg transition-all text-center ${
+                          lessonFormat === "face_to_face"
+                            ? "bg-white text-indigo-600 shadow-sm"
+                            : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        📍 Yüz Yüze ({data.teacher.face_to_face_price ? `${data.teacher.face_to_face_price} ₺` : "-"})
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Package selector inside the sidebar */}
@@ -1641,18 +1879,29 @@ export default function TeacherProfilePage() {
 
                 {/* CTA Action Buttons */}
                 <div className="space-y-2 pt-2">
-                  <button
-                    onClick={handleIntroBooking}
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-2xl shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 transform hover:-translate-y-0.5 transition-all text-center uppercase tracking-wider"
-                  >
-                    BİREBİR TANITIM ALIN
-                  </button>
-                  <button
-                    onClick={handleBuyPackage}
-                    className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-2xl hover:shadow-lg transition-all text-center uppercase tracking-wider"
-                  >
-                    DERS PAKETİ SATIN AL
-                  </button>
+                  {lessonMode === "group" ? (
+                    <button
+                      onClick={handleIntroBooking}
+                      className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold text-xs rounded-2xl shadow-lg shadow-amber-500/20 transform hover:-translate-y-0.5 transition-all text-center uppercase tracking-wider flex items-center justify-center gap-2"
+                    >
+                      <span>👥 GRUP DERSİ SEÇ & REZERVE ET</span>
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleIntroBooking}
+                        className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-2xl shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 transform hover:-translate-y-0.5 transition-all text-center uppercase tracking-wider"
+                      >
+                        BİREBİR TANITIM ALIN
+                      </button>
+                      <button
+                        onClick={handleBuyPackage}
+                        className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-2xl hover:shadow-lg transition-all text-center uppercase tracking-wider"
+                      >
+                        DERS PAKETİ SATIN AL
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 {/* Trust Badges */}

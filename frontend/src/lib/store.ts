@@ -14,6 +14,15 @@ interface User {
   live_class_price?: number | null;
   live_class_discount_price?: number | null;
   face_to_face_price?: number | null;
+  group_lesson_prices?: Array<{
+    tier_id: string;
+    title: string;
+    min_students: number;
+    max_students: number;
+    price_per_student: number;
+    discount_price?: number | null;
+    is_active: boolean;
+  }> | null;
   live_class_link?: string | null;
 }
 

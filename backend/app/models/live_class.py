@@ -1,6 +1,6 @@
 from datetime import datetime
 from uuid import uuid4
-from sqlalchemy import DateTime, String, ForeignKey, Float, Boolean, Text, func
+from sqlalchemy import DateTime, String, ForeignKey, Float, Boolean, Text, Integer, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
@@ -35,6 +35,9 @@ class LiveClassReservation(Base):
     price: Mapped[float] = mapped_column(Float, nullable=False)
     discount_price: Mapped[float | None] = mapped_column(Float, nullable=True)
     lesson_type: Mapped[str] = mapped_column(String(20), default="online", nullable=False) # online, face_to_face
+    lesson_mode: Mapped[str] = mapped_column(String(20), default="individual", nullable=False) # individual, group
+    group_size: Mapped[int | None] = mapped_column(Integer, nullable=True) # 3, 5, 7 vb.
+    group_tier_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)  # pending, approved, completed, cancelled
     meeting_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
     student_notes: Mapped[str | None] = mapped_column(Text, nullable=True)

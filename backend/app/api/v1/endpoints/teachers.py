@@ -77,6 +77,7 @@ async def list_teachers(
                 live_class_price=t.live_class_price,
                 live_class_discount_price=t.live_class_discount_price,
                 face_to_face_price=t.face_to_face_price,
+                group_lesson_prices=t.group_lesson_prices,
                 created_at=t.created_at,
             )
         )
@@ -193,6 +194,7 @@ async def get_teacher_profile(
             live_class_price=teacher.live_class_price,
             live_class_discount_price=teacher.live_class_discount_price,
             face_to_face_price=teacher.face_to_face_price,
+            group_lesson_prices=teacher.group_lesson_prices,
             live_class_link=teacher.live_class_link,
             promo_images=teacher.promo_images,
             promo_video=teacher.promo_video,
@@ -242,6 +244,7 @@ async def get_my_profile(
         live_class_price=current_user.live_class_price,
         live_class_discount_price=current_user.live_class_discount_price,
         face_to_face_price=current_user.face_to_face_price,
+        group_lesson_prices=current_user.group_lesson_prices,
         live_class_link=current_user.live_class_link,
         promo_images=current_user.promo_images,
         promo_video=current_user.promo_video,
@@ -269,7 +272,7 @@ async def update_my_profile(
     
     # Social links'i dict'e çevir
     if "social_links" in update_data and update_data["social_links"]:
-        update_data["social_links"] = update_data["social_links"].model_dump(exclude_unset=True)
+        update_data["social_links"] = update_data["social_links"].model_dump(exclude_unset=True) if hasattr(update_data["social_links"], "model_dump") else update_data["social_links"]
         # None değerleri temizle
         update_data["social_links"] = {k: v for k, v in update_data["social_links"].items() if v is not None}
         if not update_data["social_links"]:
@@ -312,6 +315,7 @@ async def update_my_profile(
         live_class_price=current_user.live_class_price,
         live_class_discount_price=current_user.live_class_discount_price,
         face_to_face_price=current_user.face_to_face_price,
+        group_lesson_prices=current_user.group_lesson_prices,
         live_class_link=current_user.live_class_link,
         promo_images=current_user.promo_images,
         promo_video=current_user.promo_video,
@@ -465,12 +469,34 @@ async def book_live_class(
         raise HTTPException(status_code=404, detail="Öğretmen bulunamadı")
 
     lesson_type = payload.lesson_type or "online"
-    if lesson_type == "face_to_face":
-        price = teacher.face_to_face_price if teacher.face_to_face_price is not None else (teacher.live_class_price or 0.0)
-        discount_price = None
+    lesson_mode = payload.lesson_mode or "individual"
+    group_size = payload.group_size
+    group_tier_id = payload.group_tier_id
+
+    if lesson_mode == "group":
+        matching_tier = None
+        tiers = teacher.group_lesson_prices or []
+        if group_tier_id:
+            matching_tier = next((t for t in tiers if t.get("tier_id") == group_tier_id and t.get("is_active", True)), None)
+        elif group_size:
+            matching_tier = next((t for t in tiers if t.get("min_students", 0) <= group_size <= t.get("max_students", 0) and t.get("is_active", True)), None)
+        
+        if matching_tier:
+            price = float(matching_tier.get("price_per_student", 0.0))
+            discount_price = float(matching_tier.get("discount_price")) if matching_tier.get("discount_price") is not None else None
+            group_tier_id = matching_tier.get("tier_id")
+            if not group_size:
+                group_size = matching_tier.get("max_students")
+        else:
+            price = teacher.live_class_price or 0.0
+            discount_price = teacher.live_class_discount_price
     else:
-        price = teacher.live_class_price or 0.0
-        discount_price = teacher.live_class_discount_price
+        if lesson_type == "face_to_face":
+            price = teacher.face_to_face_price if teacher.face_to_face_price is not None else (teacher.live_class_price or 0.0)
+            discount_price = None
+        else:
+            price = teacher.live_class_price or 0.0
+            discount_price = teacher.live_class_discount_price
     
     slot.is_booked = True
     
@@ -484,6 +510,9 @@ async def book_live_class(
         price=price,
         discount_price=discount_price,
         lesson_type=lesson_type,
+        lesson_mode=lesson_mode,
+        group_size=group_size,
+        group_tier_id=group_tier_id,
         status="pending",
         student_notes=payload.student_notes
     )
@@ -618,6 +647,11 @@ async def get_teacher_profile_admin(
         expertise_tags=teacher.expertise_tags or [],
         social_links=social_links,
         avatar_url=teacher.avatar_url,
+        live_class_price=teacher.live_class_price,
+        live_class_discount_price=teacher.live_class_discount_price,
+        face_to_face_price=teacher.face_to_face_price,
+        group_lesson_prices=teacher.group_lesson_prices,
+        live_class_link=teacher.live_class_link,
         promo_images=teacher.promo_images,
         promo_video=teacher.promo_video,
         is_active=teacher.is_active,
@@ -686,6 +720,11 @@ async def update_teacher_profile_admin(
         expertise_tags=teacher.expertise_tags or [],
         social_links=social_links,
         avatar_url=teacher.avatar_url,
+        live_class_price=teacher.live_class_price,
+        live_class_discount_price=teacher.live_class_discount_price,
+        face_to_face_price=teacher.face_to_face_price,
+        group_lesson_prices=teacher.group_lesson_prices,
+        live_class_link=teacher.live_class_link,
         promo_images=teacher.promo_images,
         promo_video=teacher.promo_video,
         is_active=teacher.is_active,

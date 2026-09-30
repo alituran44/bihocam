@@ -22,6 +22,16 @@ class SocialLinks(BaseModel):
         return v
 
 
+class GroupLessonTier(BaseModel):
+    """Grup dersi fiyat kademesi (3 kişi, 5 kişi, 7 kişi vb.)"""
+    tier_id: str
+    title: str = Field(..., max_length=100) # Örn: "3 Kişilik Grup", "5 Kişilik LGS Kampı"
+    min_students: int = Field(default=2, ge=2, le=50)
+    max_students: int = Field(default=3, ge=2, le=50)
+    price_per_student: float = Field(..., ge=0.0) # Kişi başı saatlik ücret (TL)
+    discount_price: Optional[float] = Field(None, ge=0.0) # Varsa indirimli ücret
+    is_active: bool = True
+
 class TeacherProfileUpdate(BaseModel):
     """Öğretmen profil güncelleme request schema"""
     full_name: Optional[str] = Field(None, min_length=2, max_length=255)
@@ -33,6 +43,7 @@ class TeacherProfileUpdate(BaseModel):
     live_class_price: Optional[float] = Field(None, ge=0.0)
     live_class_discount_price: Optional[float] = Field(None, ge=0.0)
     face_to_face_price: Optional[float] = Field(None, ge=0.0)
+    group_lesson_prices: Optional[list[GroupLessonTier]] = None
     live_class_link: Optional[str] = Field(None, max_length=500)
     promo_images: Optional[list[str]] = None
     promo_video: Optional[str] = Field(None, max_length=500)
@@ -91,6 +102,7 @@ class TeacherProfileResponse(BaseModel):
     live_class_price: Optional[float] = None
     live_class_discount_price: Optional[float] = None
     face_to_face_price: Optional[float] = None
+    group_lesson_prices: Optional[list[GroupLessonTier]] = None
     live_class_link: Optional[str] = None
     promo_images: Optional[list[str]] = None
     promo_video: Optional[str] = None

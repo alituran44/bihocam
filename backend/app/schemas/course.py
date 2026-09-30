@@ -179,6 +179,7 @@ class TeacherInfo(BaseModel):
     live_class_price: Optional[float] = None
     live_class_discount_price: Optional[float] = None
     face_to_face_price: Optional[float] = None
+    group_lesson_prices: Optional[list[dict]] = None
     live_class_link: Optional[str] = None
     promo_images: Optional[list[str]] = None
     promo_video: Optional[str] = None

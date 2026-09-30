@@ -22,6 +22,15 @@ type TeacherListItem = {
   live_class_price?: number | null;
   live_class_discount_price?: number | null;
   face_to_face_price?: number | null;
+  group_lesson_prices?: Array<{
+    tier_id: string;
+    title: string;
+    min_students: number;
+    max_students: number;
+    price_per_student: number;
+    discount_price?: number | null;
+    is_active: boolean;
+  }> | null;
   created_at: string;
 };
 
@@ -335,6 +344,12 @@ function TeachersPageInner() {
                           <div className="flex items-center gap-1.5 text-indigo-600 font-bold">
                             <span>📍</span>
                             <span>{teacher.face_to_face_price ? `${teacher.face_to_face_price.toLocaleString("tr-TR")} TL (Yüz Yüze)` : "Ücretsiz"}</span>
+                          </div>
+                        )}
+                        {teacher.group_lesson_prices && teacher.group_lesson_prices.some((t) => t.is_active) && (
+                          <div className="flex items-center gap-1.5 text-amber-800 bg-amber-50 px-2 py-0.5 rounded-lg font-black text-[11px] border border-amber-200/60">
+                            <span>👥</span>
+                            <span>Grup Dersi</span>
                           </div>
                         )}
                       </div>

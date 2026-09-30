@@ -17,6 +17,7 @@ class TeacherListItem(BaseModel):
     live_class_price: float | None = None
     live_class_discount_price: float | None = None
     face_to_face_price: float | None = None
+    group_lesson_prices: list[dict] | None = None
     created_at: datetime
 
 
