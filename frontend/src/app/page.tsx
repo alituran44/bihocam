@@ -35,7 +35,6 @@ import HowItWorksSection from "@/components/home/HowItWorksSection";
 import HowYouLearnSection from "@/components/home/HowYouLearnSection";
 import InstructorsShowcaseSection from "@/components/home/InstructorsShowcaseSection";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
-import FinalCTASection from "@/components/home/FinalCTASection";
 import { FaqJsonLd } from "@/components/seo/JsonLd";
 
 export const HOME_FAQS = [
@@ -1880,9 +1879,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* ANIQ UI FINAL CTA BANNER */}
-      <FinalCTASection />
       </main>
 
       <Footer />
