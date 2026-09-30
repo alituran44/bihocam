@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { BookOpen, GraduationCap, Sparkles, Star, Users, Video } from "lucide-react";
+import { GraduationCap, Sparkles, Star, Video, Zap } from "lucide-react";
 import React, { useRef } from "react";
 
 export default function Hero3DFloatingVisual() {
@@ -13,8 +13,8 @@ export default function Hero3DFloatingVisual() {
 
   // Smooth springs for natural 3D physics
   const springConfig = { damping: 25, stiffness: 150 };
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [12, -12]), springConfig);
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-14, 14]), springConfig);
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [10, -10]), springConfig);
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-12, 12]), springConfig);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
@@ -35,219 +35,157 @@ export default function Hero3DFloatingVisual() {
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="relative w-full max-w-[480px] sm:max-w-[540px] aspect-square mx-auto flex items-center justify-center select-none"
+      className="relative w-full max-w-[380px] sm:max-w-[460px] lg:max-w-[540px] mx-auto flex items-center justify-center select-none"
       style={{ perspective: 1200 }}
     >
-      {/* ── AMBIENT GLOW BACKDROP ── */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 via-amber-500/10 to-teal-500/10 rounded-full blur-3xl pointer-events-none" />
-
-      {/* ── 1. ROTATING ORBITAL RINGS (Yörünge Halkaları) ── */}
-      {/* Outer Dashed Orbit */}
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
-        className="absolute w-[86%] h-[86%] rounded-full border border-dashed border-emerald-500/25 pointer-events-none"
-      >
-        {/* Orbiting Satellite Particle 1 */}
-        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-gradient-to-br from-amber-400 to-amber-500 shadow-lg shadow-amber-500/50 flex items-center justify-center">
-          <Sparkles className="w-2.5 h-2.5 text-white" />
-        </div>
-        {/* Orbiting Satellite Particle 2 */}
-        <div className="absolute -bottom-2 left-1/3 -translate-x-1/2 w-3 h-3 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/50" />
-      </motion.div>
-
-      {/* Inner Elliptical Orbit */}
-      <motion.div
-        animate={{ rotate: -360 }}
-        transition={{ repeat: Infinity, duration: 32, ease: "linear" }}
-        className="absolute w-[70%] h-[70%] rounded-full border border-teal-500/20 pointer-events-none"
-      >
-        <div className="absolute top-1/4 -right-1.5 w-3.5 h-3.5 rounded-full bg-teal-400 shadow-md shadow-teal-500/40" />
-      </motion.div>
-
-      {/* ── 2. 3D TILT CONTAINER (Fareyle hareket eden katman) ── */}
+      {/* ── 3D TILT CONTAINER ── */}
       <motion.div
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
         className="relative w-full h-full flex items-center justify-center"
       >
-        {/* ── 3. MAIN LEVITATING HERO ILLUSTRATION (3D Kitap & Kep) ── */}
+        {/* ── BACKGROUND ORBITAL SVG ARCS & PARTICLES (Aniq-UI Native Geometry) ── */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 1120 840"
+          fill="none"
+          className="pointer-events-none absolute inset-0 -z-10 h-full w-full overflow-visible opacity-75"
+        >
+          {/* Main Primary Arc */}
+          <path
+            d="M 52.6 183.4 A 560 560 0 0 1 1067.4 183.4"
+            stroke="#059669"
+            strokeOpacity="0.45"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+          />
+          {/* Lower Arc */}
+          <path
+            d="M 1085.6 665.1 A 580 580 0 0 1 227 895"
+            stroke="#0d9488"
+            strokeOpacity="0.35"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+          />
+          {/* Dashed Secondary Arc */}
+          <path
+            d="M 325 13 A 470 470 0 0 0 8.6 322.6"
+            stroke="#94a3b8"
+            strokeOpacity="0.45"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeDasharray="12 16"
+            vectorEffect="non-scaling-stroke"
+          />
+
+          {/* Orbital Satellite Dots */}
+          <circle cx="966.6" cy="13.4" r="6" fill="#059669" fillOpacity="0.6" />
+          <circle cx="8.6" cy="517.2" r="5" fill="#059669" fillOpacity="0.5" />
+          <circle cx="892.7" cy="895" r="7" fill="#059669" fillOpacity="0.45" />
+          <circle cx="135.7" cy="175" r="3.5" fill="#059669" fillOpacity="0.6" />
+
+          {/* Matrix Dot Grid on Bottom Left */}
+          {[-60, -36, -12, 12, 36].map((x) =>
+            [470, 494, 518, 542].map((y) => (
+              <circle key={`${x}-${y}`} cx={x} cy={y} r="2.5" fill="#94a3b8" fillOpacity="0.35" />
+            ))
+          )}
+
+          {/* Floating Ring & Geometric Accents */}
+          <circle cx="1160" cy="250" r="16" stroke="#059669" strokeOpacity="0.4" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+          <path d="M -15 645 L 0 675 L -30 675 Z" stroke="#94a3b8" strokeOpacity="0.45" strokeWidth="1.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          
+          {/* Sparkle 8-point Star */}
+          <path
+            d="M 170 62 L 175.5 72.5 L 186 78 L 175.5 83.5 L 170 94 L 164.5 83.5 L 154 78 L 164.5 72.5 Z"
+            stroke="#059669"
+            strokeOpacity="0.6"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+
+        {/* ── MAIN 3D LOOPING ANIMATION (Aniq-UI Book, Cap & Play Disc 3D Render) ── */}
         <motion.div
           animate={{
-            y: [-12, 10, -12],
-            rotateZ: [-1, 1.5, -1],
+            y: [-8, 8, -8],
           }}
           transition={{
             repeat: Infinity,
             duration: 6,
             ease: "easeInOut",
           }}
-          className="relative z-10 flex items-center justify-center"
-          style={{ transform: "translateZ(40px)" }}
+          className="relative z-10 w-full flex items-center justify-center"
+          style={{ transform: "translateZ(30px)" }}
         >
-          {/* Stylized 3D Open Book Vector Graphic */}
-          <div className="relative w-64 sm:w-80 h-48 sm:h-60 filter drop-shadow-[0_24px_36px_rgba(16,185,129,0.22)]">
-            <svg
-              viewBox="0 0 320 240"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-full h-full"
-            >
-              {/* Book Base Shadow */}
-              <ellipse cx="160" cy="220" rx="130" ry="18" fill="rgba(15, 23, 42, 0.12)" />
-
-              {/* Book Blue Hard Cover (Left Page) */}
-              <path
-                d="M160 195 C110 185 45 190 20 205 L22 85 C48 70 110 65 160 80 Z"
-                fill="url(#blueCoverGradient)"
-                stroke="#1e3a8a"
-                strokeWidth="2"
-              />
-
-              {/* Book Blue Hard Cover (Right Page) */}
-              <path
-                d="M160 195 C210 185 275 190 300 205 L298 85 C272 70 210 65 160 80 Z"
-                fill="url(#blueCoverGradient)"
-                stroke="#1e3a8a"
-                strokeWidth="2"
-              />
-
-              {/* Book Spine Center Glow */}
-              <path d="M160 80 L160 195" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" />
-
-              {/* Left Pages Stack */}
-              <path
-                d="M158 190 C112 178 52 182 30 196 L32 78 C54 64 112 60 158 74 Z"
-                fill="url(#pageLeftGradient)"
-              />
-              {/* Left Page Reading Lines */}
-              <line x1="50" y1="95" x2="135" y2="90" stroke="#93c5fd" strokeWidth="2.5" strokeLinecap="round" opacity="0.6" />
-              <line x1="50" y1="112" x2="140" y2="107" stroke="#93c5fd" strokeWidth="2.5" strokeLinecap="round" opacity="0.6" />
-              <line x1="50" y1="129" x2="130" y2="124" stroke="#93c5fd" strokeWidth="2.5" strokeLinecap="round" opacity="0.6" />
-              <line x1="50" y1="146" x2="120" y2="142" stroke="#93c5fd" strokeWidth="2.5" strokeLinecap="round" opacity="0.6" />
-
-              {/* Right Pages Stack */}
-              <path
-                d="M162 190 C208 178 268 182 290 196 L288 78 C266 64 208 60 162 74 Z"
-                fill="url(#pageRightGradient)"
-              />
-              {/* Right Page Reading Lines */}
-              <line x1="185" y1="90" x2="270" y2="95" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" opacity="0.7" />
-              <line x1="180" y1="107" x2="270" y2="112" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" opacity="0.7" />
-              <line x1="185" y1="124" x2="265" y2="129" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" opacity="0.7" />
-              <line x1="190" y1="142" x2="255" y2="146" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" opacity="0.7" />
-
-              {/* Page Bookmark Ribbon */}
-              <path
-                d="M160 74 C162 110 166 140 170 180 L163 174 L156 180 C158 140 159 110 160 74 Z"
-                fill="#f59e0b"
-              />
-
-              {/* Gradients */}
-              <defs>
-                <linearGradient id="blueCoverGradient" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#2563eb" />
-                  <stop offset="50%" stopColor="#1d4ed8" />
-                  <stop offset="100%" stopColor="#1e3a8a" />
-                </linearGradient>
-                <linearGradient id="pageLeftGradient" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#f8fafc" />
-                  <stop offset="100%" stopColor="#e2e8f0" />
-                </linearGradient>
-                <linearGradient id="pageRightGradient" x1="1" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#ffffff" />
-                  <stop offset="100%" stopColor="#f1f5f9" />
-                </linearGradient>
-              </defs>
-            </svg>
-
-            {/* ── 4. FLOATING 3D GRADUATION CAP (Kep) ── */}
-            <motion.div
-              animate={{
-                y: [-6, 8, -6],
-                rotate: [-3, 4, -3],
-              }}
-              transition={{
-                repeat: Infinity,
-                duration: 4.8,
-                ease: "easeInOut",
-              }}
-              className="absolute -top-8 -right-4 sm:-top-10 sm:-right-6 w-28 sm:w-36 h-28 sm:h-36 filter drop-shadow-[0_16px_20px_rgba(245,158,11,0.35)]"
-            >
-              <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                {/* Cap Top Diamond */}
-                <polygon points="60,20 110,42 60,64 10,42" fill="url(#capGoldGradient)" stroke="#d97706" strokeWidth="2" />
-                {/* Cap Skull Base */}
-                <path d="M35 52 L35 72 C35 84 85 84 85 72 L85 52" fill="#d97706" stroke="#b45309" strokeWidth="2" />
-                {/* Golden Button & Tassel */}
-                <circle cx="60" cy="42" r="4.5" fill="#fef08a" stroke="#d97706" strokeWidth="1.5" />
-                <path d="M60 42 C78 48 88 64 90 85" stroke="#fef08a" strokeWidth="2.5" strokeLinecap="round" />
-                <rect x="86" y="84" width="8" height="14" rx="2" fill="#fbbf24" stroke="#d97706" strokeWidth="1" />
-                <defs>
-                  <linearGradient id="capGoldGradient" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#f59e0b" />
-                    <stop offset="60%" stopColor="#d97706" />
-                    <stop offset="100%" stopColor="#b45309" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </motion.div>
-
-            {/* ── 5. FLOATING 3D PLAY MEDALLION (Turuncu Play Butonu) ── */}
-            <motion.div
-              animate={{
-                y: [8, -8, 8],
-                scale: [0.98, 1.04, 0.98],
-              }}
-              transition={{
-                repeat: Infinity,
-                duration: 5.2,
-                ease: "easeInOut",
-              }}
-              className="absolute -bottom-4 right-6 sm:right-10 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 p-1 shadow-xl shadow-amber-500/40 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
-            >
-              <div className="w-full h-full rounded-full bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center border-2 border-white/40">
-                <div className="w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[16px] border-l-blue-900 ml-1 drop-shadow-md" />
-              </div>
-            </motion.div>
-          </div>
+          <video
+            className="aspect-[4/3] w-full pointer-events-none mix-blend-multiply object-contain drop-shadow-[0_20px_35px_rgba(5,150,105,0.18)]"
+            src="/assets/images/home/hero/illustration-loop-light.mp4"
+            poster="/assets/images/home/hero/illustration-loop-light-poster.webp"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            aria-hidden="true"
+            tabIndex={-1}
+          />
         </motion.div>
 
-        {/* ── 6. FLOATING BIHOCAM LIVE BADGES (Aniq-UI Rozetleri) ── */}
-        {/* Badge 1: 1:1 Canlı Sınıf */}
+        {/* ── FLOATING COMPLEMENTARY BIHOCAM BADGES ── */}
+        {/* Top-Left: 1:1 Canlı Sınıf */}
         <motion.div
           animate={{ y: [-4, 6, -4] }}
-          transition={{ repeat: Infinity, duration: 4.2, ease: "easeInOut" }}
+          transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut" }}
           style={{ transform: "translateZ(60px)" }}
-          className="absolute top-6 left-2 sm:-left-4 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xl shadow-emerald-500/10 rounded-2xl px-3.5 py-2 flex items-center gap-2.5 z-20"
+          className="absolute top-2 -left-2 sm:-left-6 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xl shadow-emerald-500/10 rounded-2xl px-3.5 py-2 flex items-center gap-2.5 z-20 pointer-events-none"
         >
-          <div className="w-7 h-7 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-600">
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-600">
             <Video className="w-4 h-4" />
           </div>
           <div className="text-left">
-            <div className="text-[11px] font-bold text-slate-800 leading-tight">1:1 Canlı Sınıf</div>
-            <div className="text-[9px] text-emerald-600 font-semibold flex items-center gap-1">
+            <div className="text-xs font-bold text-slate-800 leading-tight">1:1 Canlı Sınıf</div>
+            <div className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-              Şu An Aktif
+              WebRTC Canlı Bağlantı
             </div>
           </div>
         </motion.div>
 
-        {/* Badge 2: Onaylı Akademisyenler */}
+        {/* Bottom-Left: Doğrulanmış Eğitmenler */}
         <motion.div
           animate={{ y: [6, -6, 6] }}
-          transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+          transition={{ repeat: Infinity, duration: 5.2, ease: "easeInOut", delay: 0.5 }}
           style={{ transform: "translateZ(70px)" }}
-          className="absolute bottom-8 -left-2 sm:-left-6 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xl shadow-slate-900/10 rounded-2xl px-3.5 py-2.5 flex items-center gap-2.5 z-20"
+          className="absolute -bottom-2 -left-2 sm:-left-4 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xl shadow-slate-900/10 rounded-2xl px-3.5 py-2.5 flex items-center gap-2.5 z-20 pointer-events-none"
         >
           <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-600">
             <GraduationCap className="w-4 h-4" />
           </div>
           <div className="text-left">
             <div className="text-xs font-bold text-slate-800 flex items-center gap-1">
-              <span>850+ Hoca</span>
+              <span>Uzman Eğitmen</span>
               <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
             </div>
-            <div className="text-[10px] text-slate-500 font-medium">Doğrulanmış Kadro</div>
+            <div className="text-[10px] text-slate-500 font-medium">Birebir & Grup Dersi</div>
+          </div>
+        </motion.div>
+
+        {/* Bottom-Right: 7/24 AI Asistan & Başarı */}
+        <motion.div
+          animate={{ y: [-5, 5, -5] }}
+          transition={{ repeat: Infinity, duration: 4.8, ease: "easeInOut", delay: 1 }}
+          style={{ transform: "translateZ(55px)" }}
+          className="absolute -bottom-4 right-2 sm:right-0 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xl shadow-teal-500/10 rounded-2xl px-3 py-2 flex items-center gap-2 z-20 pointer-events-none"
+        >
+          <div className="w-7 h-7 rounded-xl bg-teal-500/15 flex items-center justify-center text-teal-600">
+            <Sparkles className="w-3.5 h-3.5" />
+          </div>
+          <div className="text-left">
+            <div className="text-[11px] font-bold text-slate-800 leading-tight">Yapay Zeka Destekli</div>
+            <div className="text-[9px] text-teal-600 font-semibold">Kişiselleştirilmiş Müfredat</div>
           </div>
         </motion.div>
       </motion.div>
