@@ -864,7 +864,7 @@ export default function CoursesPage() {
                     </Link>
 
                     <Link
-                      href="/egitim-programlari"
+                      href="/teachers"
                       className="group p-5 bg-white rounded-2xl border border-slate-200/90 shadow-xs hover:border-emerald-500 hover:shadow-md transition-all text-left flex flex-col justify-between"
                     >
                       <div className="space-y-2">
@@ -872,14 +872,14 @@ export default function CoursesPage() {
                           <GraduationCap className="w-5 h-5" />
                         </span>
                         <h4 className="font-bold text-slate-900 text-sm group-hover:text-emerald-700 transition-colors">
-                          Eğitim Programları
+                          Canlı & Grup Dersleri
                         </h4>
                         <p className="text-xs text-slate-500 font-normal leading-snug">
-                          LGS ve YKS hazırlık paketleri, deneme kulüpleri ve mentorluk programları.
+                          Uzman öğretmenlerle birebir veya avantajlı mini grup canlı derslerine katılın.
                         </p>
                       </div>
                       <div className="mt-4 flex items-center gap-1 text-xs font-bold text-slate-700 group-hover:text-emerald-700">
-                        <span>Paketler</span>
+                        <span>Dersleri Keşfet</span>
                         <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                       </div>
                     </Link>

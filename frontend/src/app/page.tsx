@@ -11,7 +11,7 @@ import AdBanner from "@/components/ads/AdBanner";
 import FeaturedCourses from "@/components/ads/FeaturedCourses";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import CountUp from "react-countup";
-import { coursesApi, publicApi, educationProgramsApi, EducationProgram, blogPublicApi, BlogPost, popcastsApi, PopcastResponse, type Course } from "@/lib/api";
+import { coursesApi, publicApi, blogPublicApi, BlogPost, popcastsApi, PopcastResponse, type Course } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import { usePopupAnnouncement } from "@/hooks/usePopupAnnouncement";
 import { 
@@ -64,53 +64,6 @@ export const HOME_FAQS = [
     a: "Satın aldığınız ders saatleri eğitim-öğretim yılı sonuna kadar dilediğiniz gün ve saatte kullanılabilir. Saatlerinizde herhangi bir haftalık veya aylık zorunlu yanma süresi bulunmamaktadır, planlamayı öğretmeninizle esnekçe yapabilirsiniz."
   }
 ];
-
-// Visual helpers for education program banners
-const getGradientBySlug = (slug: string) => {
-  if (slug.includes("tyt")) return "from-[#2D211F] via-[#211614] to-[#170E0D]"; // Dark brown/maroon gradient
-  if (slug.includes("yks")) return "from-[#3B0054] via-[#2D0040] to-[#1C0028]"; // Purple gradient
-  if (slug.includes("ayt")) return "from-[#001D75] via-[#001350] to-[#000A30]"; // Blue/navy gradient
-  return "from-teal-950 via-teal-900 to-emerald-950";
-};
-
-const getBannerContent = (slug: string, title: string) => {
-  if (slug === "tyt-tum-dersler") {
-    return (
-      <div className="text-center font-sans">
-        <p className="text-4xl font-extrabold tracking-widest text-white leading-none">TYT</p>
-        <p className="text-sm font-black tracking-widest text-white/95 mt-1.5">TÜM DERSLER</p>
-        <p className="text-sm font-black tracking-widest text-white/90">EĞİTİM PROGRAMI</p>
-      </div>
-    );
-  }
-  if (slug === "yks-tum-dersler") {
-    return (
-      <div className="text-center font-sans">
-        <p className="text-4xl font-extrabold tracking-widest text-white leading-none">YKS</p>
-        <p className="text-[10px] sm:text-xs font-black tracking-widest text-white/95 mt-1.5">TYT + AYT TÜM DERSLER</p>
-        <p className="text-sm font-black tracking-widest text-white/90">EĞİTİM PROGRAMI</p>
-      </div>
-    );
-  }
-  if (slug === "ayt-tum-dersler") {
-    return (
-      <div className="text-center font-sans">
-        <p className="text-4xl font-extrabold tracking-widest text-white leading-none">AYT</p>
-        <p className="text-sm font-black tracking-widest text-white/95 mt-1.5">TÜM DERSLER</p>
-        <p className="text-sm font-black tracking-widest text-white/90">EĞİTİM PROGRAMI</p>
-      </div>
-    );
-  }
-  return (
-    <div className="text-center px-4 font-sans">
-      <p className="text-base font-extrabold tracking-wider text-white uppercase">{title}</p>
-    </div>
-  );
-};
-
-const formatProgramPrice = (p: number) => {
-  return (p / 100).toLocaleString("tr-TR", { minimumFractionDigits: 2 }) + " TL";
-};
 
 
 // Animation variants
@@ -365,14 +318,6 @@ export default function Home() {
     queryKey: ["courses", "fallback"],
     queryFn: () => coursesApi.list(0, 8),
     enabled: (!featuredCourses || featuredCourses.length === 0) && (!maintenanceMode || user?.role === "admin"),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // Get active education programs
-  const { data: educationPrograms } = useQuery<EducationProgram[]>({
-    queryKey: ["education-programs-public"],
-    queryFn: () => educationProgramsApi.list({ include_inactive: false }),
-    enabled: !maintenanceMode || user?.role === "admin",
     staleTime: 5 * 60 * 1000,
   });
 
@@ -754,7 +699,7 @@ export default function Home() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto lg:mx-0">
                   {[
                     { end: publicStats?.total_courses || 36, suffix: '+', label: 'Yayınlanmış Kurs', color: 'text-emerald-700', icon: BookOpen, formattingFn: (v: number) => `${Math.round(v)}+` },
-                    { end: publicStats?.total_programs || 33, suffix: '+', label: 'Eğitim Programı', color: 'text-teal-700', icon: GraduationCap, formattingFn: (v: number) => `${Math.round(v)}+` },
+                    { end: 50, suffix: '+', label: 'Uzman Eğitmen', color: 'text-teal-700', icon: GraduationCap, formattingFn: (v: number) => `${Math.round(v)}+` },
                     { end: publicStats?.total_tenders || 9, suffix: '+', label: 'Canlı Ders Talebi', color: 'text-indigo-700', icon: Clock, formattingFn: (v: number) => `${Math.round(v)}+` },
                     { end: 4.9, suffix: '', label: 'Eğitmen Puanı', color: 'text-amber-600', icon: Star, decimals: 1, formattingFn: (v: number) => v.toFixed(1) },
                   ].map((stat, idx) => {
@@ -958,78 +903,11 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Education Programs Section (Preparation Packages) */}
-          {educationPrograms && educationPrograms.length > 0 && (
-            <div className="mt-20 pt-16 border-t border-slate-100">
-              <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
-                <div className="space-y-2">
-                  <h3 className="text-2xl sm:text-3xl font-black text-slate-900 font-display tracking-tight">
-                    Kapsamlı Hazırlık Programları
-                  </h3>
-                  <p className="text-slate-600 font-normal text-sm">
-                    LGS ve YKS hedeflerinize özel hazırlanmış tüm dersler eğitim paketleri
-                  </p>
-                </div>
-                <Link
-                  href="/egitim-programlari"
-                  className="text-emerald-700 hover:text-emerald-800 font-bold text-sm inline-flex items-center gap-1 group"
-                >
-                  Tüm Programları Keşfet <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-8">
-                {educationPrograms.slice(0, 3).map((rp) => {
-                  const cardGradient = getGradientBySlug(rp.slug);
-                  return (
-                    <Link key={rp.slug} href={`/egitim-programlari/${rp.slug}`} className="group flex flex-col h-full">
-                      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-emerald-500/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full">
-                        <div>
-                          {/* Banner */}
-                          <div className={`h-40 bg-gradient-to-br ${cardGradient} flex items-center justify-center p-4 relative`}>
-                            {getBannerContent(rp.slug, rp.title)}
-                          </div>
-                          
-                          {/* Content */}
-                          <div className="p-6">
-                            <h4 className="font-extrabold text-slate-900 text-lg mb-2 group-hover:text-emerald-700 transition-colors leading-tight line-clamp-1">
-                              {rp.title}
-                            </h4>
-                            <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-4 font-normal">
-                              {rp.short_description || "BiHocam uzman kadrosuyla hazırlanan LGS ve YKS programları; canlı ders, deneme ve rehberlik desteğiyle tek platformda kolaylaşıyor."}
-                            </p>
-                            
-                            <div className="flex items-center gap-1 text-sm font-bold text-slate-700 mb-2">
-                              <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                              <span>{rp.rating || 4.8}</span>
-                              <span className="text-slate-400 font-normal text-xs">({rp.review_count || 84})</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Footer Info */}
-                        <div className="px-6 pb-6 pt-4 flex items-center justify-between border-t border-slate-100 bg-slate-50/50">
-                          <div>
-                            <p className="text-emerald-800 font-black font-mono text-xl">{formatProgramPrice(rp.price)}</p>
-                            <p className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">+ KDV</p>
-                          </div>
-                          <span className="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors">
-                            İncele →
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {/* Quick Branch Explore Cards */}
           <div className="mt-20 pt-16 border-t border-slate-100">
             <div className="text-center mb-10 space-y-2">
               <h3 className="text-2xl font-black text-slate-900 font-display">Branşlara Göre Keşfedin</h3>
-              <p className="text-slate-500 text-sm font-normal">Dilediğiniz alanda hemen eğitmenleri ve programları listeleyin.</p>
+              <p className="text-slate-500 text-sm font-normal">Dilediğiniz alanda hemen eğitmenleri ve dersleri listeleyin.</p>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">

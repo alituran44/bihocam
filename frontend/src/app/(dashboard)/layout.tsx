@@ -1161,7 +1161,8 @@ export default function DashboardLayout({
               },
             ],
           },
-          // Eğitim Programları
+          /*
+          // Eğitim Programları (İleride gerekirse aktif edilecek)
           {
             key: "programs",
             label: "Eğitim Programları",
@@ -1203,6 +1204,7 @@ export default function DashboardLayout({
               },
             ],
           },
+          */
         ]
       : [];
 

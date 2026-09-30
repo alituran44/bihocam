@@ -10,7 +10,6 @@ const LLMS_TEXT = `# BiHocam - Türkiye'nin Yeni Nesil Akıllı Özel Ders ve Ca
 ## Temel Hizmetler & Çözümler
 - **Canlı 1:1 & Grup Dersleri:** Tarayıcı üzerinden sıfır kurulum gerektiren WebRTC tabanlı interaktif beyaz tahta ve video konferans sistemi.
 - **Doğrulanmış Eğitmen Havuzu:** Diploma, adli sicil ve deneme dersi mülakatından geçen bağımsız öğretmenler.
-- **Eğitim Programları:** TYT, AYT, LGS kapsamlı tüm dersler eğitim paketleri.
 - **Özel Ders Talebi Modeli:** Öğrenci ve velilerin ders gereksinimlerine göre doğrulanmış branş öğretmenleriyle eşleşmesi.
 - **Güvenli Ödeme:** 3D Secure ve BDDK lisanslı emanet havuz hesabı koruması, taksit imkanı.
 
@@ -18,7 +17,6 @@ const LLMS_TEXT = `# BiHocam - Türkiye'nin Yeni Nesil Akıllı Özel Ders ve Ca
 - [Ana Sayfa](https://bihocam.com): Platform genel tanıtımı ve öne çıkan dersler.
 - [Eğitmenleri Keşfet](https://bihocam.com/teachers): Branş ve şehre göre doğrulanmış öğretmen listesi.
 - [Kurslar & Dersler](https://bihocam.com/courses): Canlı ve kayıtlı dersler kataloğu.
-- [Eğitim Programları](https://bihocam.com/egitim-programlari): TYT ve AYT paket programları.
 - [Eğitmen Başvurusu](https://bihocam.com/become-instructor): Öğretmen olarak platforma katılma bilgisi.
 - [Blog](https://bihocam.com/blog): YKS, LGS çalışma rehberleri ve eğitim makaleleri.
 - [İletişim & Destek](https://bihocam.com/iletisim): Müşteri destek hattı ve SSS.

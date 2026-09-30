@@ -49,13 +49,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/egitim-programlari" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
-                  Eğitim Programları
-                </Link>
-              </li>
-              <li>
                 <Link href="/teachers" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">
-                  Eğitmenler
+                  Canlı Dersler & Eğitmenler
                 </Link>
               </li>
               <li>

@@ -27,6 +27,20 @@ const nextConfig: NextConfig = {
     "http://13.53.172.136",
     "http://ec2-13-53-172-136.eu-north-1.compute.amazonaws.com",
   ],
+  async redirects() {
+    return [
+      {
+        source: "/egitim-programlari",
+        destination: "/courses",
+        permanent: false,
+      },
+      {
+        source: "/egitim-programlari/:path*",
+        destination: "/courses",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

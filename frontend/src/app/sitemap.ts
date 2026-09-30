@@ -10,7 +10,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/teachers`, lastModified: now, changeFrequency: "daily" as const, priority: 0.9 },
     { url: `${baseUrl}/tenders`, lastModified: now, changeFrequency: "always" as const, priority: 0.9 },
     { url: `${baseUrl}/tenders/new`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.8 },
-    { url: `${baseUrl}/egitim-programlari`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.8 },
     { url: `${baseUrl}/blog`, lastModified: now, changeFrequency: "daily" as const, priority: 0.8 },
     { url: `${baseUrl}/iletisim`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.5 },
     { url: `${baseUrl}/pages/hakkimizda`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.4 },

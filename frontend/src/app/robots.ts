@@ -23,8 +23,6 @@ export default function robots(): MetadataRoute.Robots {
     "/courses/",
     "/teachers",
     "/teachers/",
-    "/egitim-programlari",
-    "/egitim-programlari/",
     "/blog",
     "/blog/",
     "/pages",
