@@ -24,7 +24,7 @@ import {
 const navItems = [
   { label: "Özel Ders Talepleri", href: "/tenders" },
   { label: "Kurslar", href: "/courses" },
-  { label: "Canlı Dersler", href: "/teachers" },
+  { label: "Eğitmenler", href: "/teachers" },
   { label: "Blog", href: "/blog" },
   { label: "İletişim", href: "/iletisim" },
 ];
