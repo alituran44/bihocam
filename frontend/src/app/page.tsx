@@ -12,6 +12,7 @@ import HeroSearchCapsule from "@/components/home/HeroSearchCapsule";
 import Hero3DFloatingVisual from "@/components/home/Hero3DFloatingVisual";
 import LiveDemandTicker from "@/components/home/LiveDemandTicker";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
+import LessonHourFlowSection from "@/components/home/LessonHourFlowSection";
 import WhyBiHocamSection from "@/components/home/WhyBiHocamSection";
 import InstructorsShowcaseSection from "@/components/home/InstructorsShowcaseSection";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
@@ -311,6 +312,11 @@ export default function HomePage() {
         {/* 3. NASIL ÇALIŞIR                                       */}
         {/* ══════════════════════════════════════════════════════ */}
         <HowItWorksSection />
+
+        {/* ══════════════════════════════════════════════════════ */}
+        {/* 3.1 DERS SAATİ AKIŞI & 3D SAAT KADRANI                */}
+        {/* ══════════════════════════════════════════════════════ */}
+        <LessonHourFlowSection />
 
         {/* ══════════════════════════════════════════════════════ */}
         {/* 4. NEDEN BIHOCAM (3 GÜVEN BLOĞU)                       */}

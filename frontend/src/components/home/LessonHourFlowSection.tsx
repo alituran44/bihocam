@@ -2,133 +2,167 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Clock, FileText, Lightbulb, Target, Video } from "lucide-react";
-import AnimatedClockDial from "./AnimatedClockDial";
+import { Play, BookOpen, Code2, Puzzle } from "lucide-react";
+import Pedestal3DClock from "./Pedestal3DClock";
 
 export default function LessonHourFlowSection() {
   const [activeStep, setActiveStep] = useState(0);
 
   const steps = [
     {
+      id: 0,
       step: "01",
-      icon: Target,
-      title: "Keşif & Hedef Tespiti",
-      duration: "İlk 10 Dk",
-      desc: "Önceki dersin kontrolü, öğrencinin takıldığı noktaların belirlenmesi ve günün ders hedefinin netleştirilmesi.",
-      iconBg: "bg-emerald-100/70 border-emerald-200/80 text-emerald-700",
-      activeBorder: "border-emerald-400 bg-emerald-50/40",
+      icon: Play,
+      iconWrapClass: "bg-orange-50/80 border-orange-200/90 text-orange-500",
+      activeRing: "ring-2 ring-orange-500/40 shadow-lg shadow-orange-500/15",
+      dotColor: "bg-orange-300",
+      pillClass: "bg-orange-100 text-orange-600 border border-orange-200",
+      title: "Hazırlık & Keşif",
+      duration: "10 Dk",
+      subtitle: "Eksik tespiti & ders hedefi",
+      actionWord: "İzle & Keşfet",
     },
     {
+      id: 1,
       step: "02",
-      icon: Video,
-      title: "İnteraktif Konu Anlatımı",
+      icon: BookOpen,
+      iconWrapClass: "bg-indigo-50/80 border-indigo-200/90 text-indigo-500",
+      activeRing: "ring-2 ring-indigo-500/40 shadow-lg shadow-indigo-500/15",
+      dotColor: "bg-indigo-300",
+      pillClass: "bg-indigo-100 text-indigo-600 border border-indigo-200",
+      title: "Konu Anlatımı",
       duration: "20 Dk",
-      desc: "Kurulumsuz WebRTC dijital beyaz tahta üzerinde görsel materyallerle kavramsal ve mantıksal derinlemesine anlatım.",
-      iconBg: "bg-teal-50 border-teal-200/70 text-teal-600",
-      activeBorder: "border-teal-400 bg-teal-50/40",
+      subtitle: "Kavram haritası & mantık",
+      actionWord: "Derinlemesine Kavra",
     },
     {
+      id: 2,
       step: "03",
-      icon: Lightbulb,
-      title: "Birlikte Soru Çözümü & Taktik",
+      icon: Code2,
+      iconWrapClass: "bg-emerald-50/80 border-emerald-200/90 text-emerald-500",
+      activeRing: "ring-2 ring-emerald-500/40 shadow-lg shadow-emerald-500/15",
+      dotColor: "bg-emerald-300",
+      pillClass: "bg-emerald-100 text-emerald-600 border border-emerald-200",
+      title: "Yeni Nesil Çözüm",
       duration: "20 Dk",
-      desc: "Hoca eşliğinde yeni nesil sorular, sınav taktikleri ve öğrencinin bizzat ekranda çözdüğü uygulamalı pratik seansı.",
-      iconBg: "bg-amber-50 border-amber-200/70 text-amber-600",
-      activeBorder: "border-amber-400 bg-amber-50/40",
+      subtitle: "Birlikte soru & taktik",
+      actionWord: "Uygulamalı Pratik",
     },
     {
+      id: 3,
       step: "04",
-      icon: FileText,
-      title: "Ödev, Kayıt & Veli Raporu",
-      duration: "Son 10 Dk",
-      desc: "Bireysel çalışma ödevinin tanımlanması, ders video kaydının arşive alınması ve veliye anlık gelişim notunun iletilmesi.",
-      iconBg: "bg-indigo-50 border-indigo-200/70 text-indigo-600",
-      activeBorder: "border-indigo-400 bg-indigo-50/40",
+      icon: Puzzle,
+      iconWrapClass: "bg-amber-50/80 border-amber-200/90 text-amber-500",
+      activeRing: "ring-2 ring-amber-500/40 shadow-lg shadow-amber-500/15",
+      dotColor: "bg-amber-300",
+      pillClass: "bg-amber-100 text-amber-600 border border-amber-200",
+      title: "Pekiştirme & Rapor",
+      duration: "10 Dk",
+      subtitle: "Ödev & veli gelişim notu",
+      actionWord: "Gelişimi Sağlamlaştır",
     },
   ];
 
   return (
-    <section className="py-20 sm:py-28 bg-slate-50/60 border-b border-slate-200/80 relative overflow-hidden">
+    <section className="py-20 sm:py-28 bg-white border-b border-slate-100 relative overflow-hidden">
+      {/* Subtle Warm Ambient Background Accents */}
+      <div className="absolute top-1/3 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[450px] bg-orange-100/30 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-[500px] h-[400px] bg-amber-100/25 rounded-full blur-[160px] pointer-events-none" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Section Header */}
-        <div className="max-w-3xl mb-12 sm:mb-16 space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold uppercase tracking-wider">
-            <Clock className="w-3.5 h-3.5 text-emerald-600" />
-            <span>BİR SEANSIN İÇİNDE</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 font-display tracking-tight leading-[1.12]">
-            BiHocam&apos;da Bir Saatin <br className="hidden sm:inline" />
-            <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-              Gerçekte Nasıl Göründüğü
-            </span>
-          </h2>
-          <p className="text-slate-600 font-normal text-base sm:text-lg leading-relaxed">
-            Her modül aynı yapıyı izler: hedefi belirleyin, derinlemesine kavrayın, soru çözün ve gelişimi veliyle anında paylaşın.
-          </p>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          {/* ── LEFT COLUMN: TITLE, INTRO & 4-STEP TIMELINE (7 COLS) ── */}
+          <div className="lg:col-span-7 space-y-10 text-center lg:text-left">
+            {/* Top Category Badge */}
+            <div className="space-y-3.5">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-[#EA580C] uppercase tracking-wider">
+                <span>CANLI DERSİN İÇİNDE</span>
+                <span className="text-orange-400">✦</span>
+              </div>
 
-        {/* 2-Column Grid: Left 4 Standalone Cards / Right Clock Dial Card */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
-          {/* Left: 4 Interactive Step Cards (7 Cols) */}
-          <div className="lg:col-span-7 flex flex-col justify-between space-y-3.5 sm:space-y-4">
-            {steps.map((s, idx) => {
-              const IconComp = s.icon;
-              const isActive = activeStep === idx;
+              {/* Main Headline */}
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 font-display tracking-tight leading-[1.12]">
+                BiHocam&apos;da{" "}
+                <span className="text-[#EA580C]">
+                  Bir Saatlik Ders
+                </span>{" "}
+                <br className="hidden sm:inline" />
+                Gerçekte Nasıl Geçer?
+              </h2>
 
-              return (
-                <motion.div
-                  key={s.step}
-                  onClick={() => setActiveStep(idx)}
-                  whileHover={{ x: 4 }}
-                  transition={{ duration: 0.15 }}
-                  className={`flex items-start gap-4 p-5 rounded-2xl border transition-all duration-200 cursor-pointer ${
-                    isActive
-                      ? `${s.activeBorder} shadow-sm border-2`
-                      : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50 shadow-xs"
-                  }`}
-                >
-                  {/* Step Icon Badge */}
-                  <div
-                    className={`w-11 h-11 rounded-xl flex items-center justify-center border font-display font-black text-base shrink-0 ${s.iconBg}`}
-                  >
-                    <IconComp className="w-5 h-5" />
-                  </div>
-
-                  {/* Step Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold font-mono text-slate-400 tracking-wider">
-                        ADIM {s.step}
-                      </span>
-                      <span className="text-xs font-bold px-3 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                        {s.duration}
-                      </span>
-                    </div>
-
-                    <h3 className="text-base font-bold tracking-tight text-slate-900 font-display">
-                      {s.title}
-                    </h3>
-
-                    <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal mt-1">
-                      {s.desc}
-                    </p>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          {/* Right: Clock Dial White Card (5 Cols) */}
-          <div className="lg:col-span-5 flex flex-col">
-            <div className="w-full h-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm flex flex-col items-center justify-between">
-              <AnimatedClockDial
-                activeStep={activeStep}
-                onStepSelect={(step) => setActiveStep(step)}
-              />
-              <p className="text-xs text-slate-400 mt-6 text-center leading-relaxed">
-                💡 Sol taraftaki adımlara tıklayarak saat kadranındaki seans dilimlerini görebilirsiniz.
+              {/* Subtitle */}
+              <p className="text-slate-600 font-normal text-base sm:text-lg max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                Her canlı seans kanıtlanmış aynı pedagojik akışı takip eder: hazırlıkla başla, konuyu derinlemesine kavra, yeni nesil soru çözerek pekiştir ve veli raporu al.
               </p>
             </div>
+
+            {/* ── 4-STEP HORIZONTAL FLOW WITH DOTTED CONNECTORS ── */}
+            <div className="pt-2">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6 sm:gap-2">
+                {steps.map((s, idx) => {
+                  const IconComp = s.icon;
+                  const isCurrent = activeStep === idx;
+
+                  return (
+                    <div
+                      key={s.id}
+                      onClick={() => setActiveStep(idx)}
+                      className="group flex-1 flex flex-col items-center text-center cursor-pointer transition-transform duration-200 hover:-translate-y-1"
+                    >
+                      {/* Icon Circle & Horizontal Connector Row */}
+                      <div className="w-full flex items-center justify-center relative mb-4">
+                        {/* Circle Badge */}
+                        <div
+                          className={`w-16 h-16 sm:w-18 sm:h-18 rounded-full border-2 flex items-center justify-center transition-all duration-300 z-10 ${s.iconWrapClass} ${
+                            isCurrent ? s.activeRing : "shadow-xs group-hover:shadow-md"
+                          }`}
+                        >
+                          <IconComp className="w-7 h-7" />
+                        </div>
+
+                        {/* Dotted Connector Line (Only between consecutive items on desktop) */}
+                        {idx < steps.length - 1 && (
+                          <div className="hidden sm:flex items-center justify-center gap-1 absolute left-[calc(50%+36px)] right-[calc(-50%+36px)] top-1/2 -translate-y-1/2 z-0 pointer-events-none">
+                            {[0, 1, 2, 3, 4].map((dot) => (
+                              <span
+                                key={dot}
+                                className={`w-1 h-1 rounded-full transition-colors duration-300 ${
+                                  activeStep > idx ? "bg-orange-400" : "bg-slate-300"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Number Badge Pill */}
+                      <div className="mb-2">
+                        <span
+                          className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-mono font-bold transition-all ${s.pillClass}`}
+                        >
+                          {s.step}
+                        </span>
+                      </div>
+
+                      {/* Step Title & Duration */}
+                      <h3 className="text-base font-bold text-slate-900 group-hover:text-orange-600 transition-colors">
+                        {s.title}
+                      </h3>
+
+                      {/* Subtitle */}
+                      <p className="text-xs text-slate-500 leading-snug mt-1 max-w-[130px] font-normal">
+                        {s.subtitle}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* ── RIGHT COLUMN: 3D CLOCK ON PEDESTAL (5 COLS) ── */}
+          <div className="lg:col-span-5 w-full flex items-center justify-center">
+            <Pedestal3DClock activeStep={activeStep} onStepSelect={(step) => setActiveStep(step)} />
           </div>
         </div>
       </div>

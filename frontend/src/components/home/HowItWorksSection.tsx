@@ -164,34 +164,6 @@ export default function HowItWorksSection() {
           ))}
         </div>
 
-        {/* Canlı Sınıf Metodolojisi & Haftalık Süreç Tek Satır Entegrasyonu */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="mt-12 rounded-2xl bg-white border border-slate-200/90 p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 shrink-0">
-              <Clock className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-900 sm:text-sm">
-                Canlı Ders Akışı & Seans Metodolojisi
-              </p>
-              <p className="text-xs text-slate-600 mt-0.5">
-                10 dk ön hazırlık, 20 dk konu anlatımı, 20 dk yeni nesil soru çözümü ve 10 dk pekiştirme ile her 60 dakikalık seans tam odakla tamamlanır.
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/tenders/new"
-            className="shrink-0 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-xs"
-          >
-            Ders Talebi Aç
-          </Link>
-        </motion.div>
       </div>
     </section>
   );
