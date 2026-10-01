@@ -4,32 +4,21 @@ import React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { tenderApi, Tender } from "@/lib/api";
-import { Clock, MapPin, Tag, ArrowRight, ShieldAlert, Sparkles } from "lucide-react";
+import { MapPin, ArrowRight, Sparkles, PlusCircle } from "lucide-react";
 
 export default function LiveDemandTicker() {
-  const { data: tenders, isLoading } = useQuery<Tender[]>({
+  const { data: tenders } = useQuery<Tender[]>({
     queryKey: ["public-tenders-ticker"],
-    queryFn: () => tenderApi.getPublicTenders({ limit: 4 }),
+    queryFn: () => tenderApi.getPublicTenders({ limit: 6 }),
     staleTime: 60 * 1000,
   });
 
   const fallbackTenders = [
     {
       id: "f1",
-      title: "YKS 2026 Matematik Geometri İleri Düzey",
-      subject: "Matematik",
-      mode: "ONLINE",
-      city: "İstanbul",
-      min_budget: 1400,
-      max_budget: 1800,
-      bids_count: 3,
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: "f2",
       title: "LGS 8. Sınıf Yeni Nesil Paragraf ve Dil Bilgisi",
       subject: "Türkçe",
-      mode: "HYBRID",
+      mode: "ONLINE",
       city: "Ankara",
       min_budget: 1200,
       max_budget: 1600,
@@ -37,7 +26,7 @@ export default function LiveDemandTicker() {
       created_at: new Date().toISOString(),
     },
     {
-      id: "f3",
+      id: "f2",
       title: "IELTS 7.5 Hedefli Akademik Speaking & Writing",
       subject: "İngilizce",
       mode: "ONLINE",
@@ -47,18 +36,34 @@ export default function LiveDemandTicker() {
       bids_count: 4,
       created_at: new Date().toISOString(),
     },
+    {
+      id: "f3",
+      title: "11. Sınıf Fizik - Vektörler, Dinamik ve Enerji",
+      subject: "Fizik",
+      mode: "ONLINE",
+      city: "İstanbul",
+      min_budget: 1350,
+      max_budget: 1750,
+      bids_count: 3,
+      created_at: new Date().toISOString(),
+    },
   ];
 
-  const validTenders = (tenders || []).filter(
-    (t) => (t.min_budget == null || t.min_budget > 0) && !t.title?.includes("Denetim")
-  );
+  // Denetim kuralı: Süresi geçmiş veya eski sınav yılı ("2026") içeren talepleri filtrele
+  const validTenders = (tenders || []).filter((t) => {
+    if (t.min_budget != null && t.min_budget <= 0) return false;
+    if (t.title?.includes("Denetim") || t.title?.includes("Test")) return false;
+    if (t.title?.includes("2026")) return false; // Eski sınav yılı filtresi
+    return true;
+  });
+
   const displayList = validTenders.length > 0 ? validTenders.slice(0, 3) : fallbackTenders;
 
   return (
     <div className="w-full rounded-3xl border border-slate-200/90 bg-white p-6 md:p-8 shadow-xl shadow-slate-200/50 relative overflow-hidden">
       {/* Background ambient gradient */}
       <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none" />
-      
+
       {/* Header bar */}
       <div className="flex items-center justify-between pb-5 border-b border-slate-100">
         <div className="flex items-center gap-3">
@@ -84,7 +89,7 @@ export default function LiveDemandTicker() {
         {displayList.map((item) => (
           <Link
             key={item.id}
-            href={`/tenders`}
+            href={`/tenders/${item.id}`}
             className="block py-4 group/item hover:bg-slate-50 -mx-4 px-4 rounded-xl transition-all"
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -106,12 +111,15 @@ export default function LiveDemandTicker() {
               <div className="flex items-center justify-between sm:justify-end gap-4 flex-shrink-0">
                 <div className="text-left sm:text-right">
                   <div className="text-sm font-mono font-bold text-emerald-700">
-                    {item.min_budget && item.max_budget 
-                      ? `₺${Math.abs(item.min_budget)} - ₺${Math.abs(item.max_budget)}` 
-                      : (item.max_budget ? `₺${Math.abs(item.max_budget)}` : "Görüşülecek")}
+                    {item.min_budget && item.max_budget
+                      ? `₺${Math.abs(item.min_budget).toLocaleString("tr-TR")} - ₺${Math.abs(item.max_budget).toLocaleString("tr-TR")}`
+                      : item.max_budget
+                      ? `₺${Math.abs(item.max_budget).toLocaleString("tr-TR")}`
+                      : "Görüşülecek"}{" "}
+                    <span className="text-[11px] font-sans font-semibold text-slate-500">/ saatlik</span>
                   </div>
                   <div className="text-xs text-slate-500 font-medium">
-                    {item.bids_count ? `${item.bids_count} Teklif Alındı` : "Yeni İlan"}
+                    {item.bids_count ? `${item.bids_count} Teklif Alındı` : "Yeni Talep"}
                   </div>
                 </div>
 
@@ -133,8 +141,8 @@ export default function LiveDemandTicker() {
           href="/tenders/new"
           className="w-full sm:w-auto px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
         >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Ücretsiz Talep Aç</span>
+          <PlusCircle className="w-3.5 h-3.5" />
+          <span>Ders Talebi Aç</span>
         </Link>
       </div>
     </div>

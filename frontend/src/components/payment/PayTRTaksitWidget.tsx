@@ -75,12 +75,12 @@ export default function PayTRTaksitWidget({ amount, className = "" }: PayTRTaksi
 
   // Installment plans for fallback
   const plans = [
-    { installments: 1, label: "Tek Çekim", isNoInterest: true, monthly: roundedAmount, total: roundedAmount },
-    { installments: 2, label: "2 Taksit", isNoInterest: true, monthly: Math.round(roundedAmount / 2), total: roundedAmount },
-    { installments: 3, label: "3 Taksit", isNoInterest: true, monthly: Math.round(roundedAmount / 3), total: roundedAmount },
+    { installments: 1, label: "Tek Çekim", isNoInterest: true, monthly: roundedAmount, total: roundedAmount, badge: "Peşin" },
+    { installments: 2, label: "2 Taksit", isNoInterest: true, monthly: Math.round(roundedAmount / 2), total: roundedAmount, badge: "Vade Farksız" },
+    { installments: 3, label: "3 Taksit", isNoInterest: true, monthly: Math.round(roundedAmount / 3), total: roundedAmount, badge: "Vade Farksız" },
     { installments: 6, label: "6 Taksit", isNoInterest: true, monthly: Math.round(roundedAmount / 6), total: roundedAmount, badge: "Vade Farksız" },
-    { installments: 9, label: "9 Taksit", isNoInterest: false, monthly: Math.round((roundedAmount * 1.06) / 9), total: Math.round(roundedAmount * 1.06) },
-    { installments: 12, label: "12 Taksit", isNoInterest: false, monthly: Math.round((roundedAmount * 1.09) / 12), total: Math.round(roundedAmount * 1.09) },
+    { installments: 9, label: "9 Taksit", isNoInterest: false, monthly: Math.round((roundedAmount * 1.06) / 9), total: Math.round(roundedAmount * 1.06), badge: "+%6 Fark" },
+    { installments: 12, label: "12 Taksit", isNoInterest: false, monthly: Math.round((roundedAmount * 1.09) / 12), total: Math.round(roundedAmount * 1.09), badge: "+%9 Fark" },
   ];
 
   return (
@@ -161,7 +161,7 @@ export default function PayTRTaksitWidget({ amount, className = "" }: PayTRTaksi
           <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium px-1">
             <span className="flex items-center gap-1 text-slate-700 font-semibold">
               <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
-              Tüm Kartlara 6 Aya Varan Taksit
+              Tüm Kartlara 6 Aya Varan Vade Farksız Taksit
             </span>
             <span className="flex items-center gap-1 text-emerald-700 font-bold">
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -187,7 +187,7 @@ export default function PayTRTaksitWidget({ amount, className = "" }: PayTRTaksi
               <div
                 key={p.installments}
                 className={`p-2.5 rounded-xl border transition-all text-left ${
-                  p.badge
+                  p.isNoInterest
                     ? "bg-emerald-50/70 border-emerald-300 shadow-2xs"
                     : "bg-white border-slate-200 hover:border-slate-300"
                 }`}
@@ -195,13 +195,22 @@ export default function PayTRTaksitWidget({ amount, className = "" }: PayTRTaksi
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px] font-bold text-slate-900">{p.label}</span>
                   {p.badge && (
-                    <span className="text-[9px] font-black uppercase text-emerald-800 bg-emerald-100/90 px-1.5 py-0.5 rounded border border-emerald-200">
+                    <span
+                      className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded border ${
+                        p.isNoInterest
+                          ? "text-emerald-800 bg-emerald-100/90 border-emerald-200"
+                          : "text-amber-800 bg-amber-100/90 border-amber-200"
+                      }`}
+                    >
                       {p.badge}
                     </span>
                   )}
                 </div>
                 <div className="text-sm font-black text-slate-900 font-mono">
-                  {p.monthly.toLocaleString("tr-TR")} <span className="text-[10px] font-bold text-slate-500">TL/ay</span>
+                  {p.monthly.toLocaleString("tr-TR")}{" "}
+                  <span className="text-[10px] font-bold text-slate-500">
+                    {p.installments === 1 ? "TL" : "TL/ay"}
+                  </span>
                 </div>
                 <div className="text-[10px] text-slate-500 font-medium mt-0.5">
                   Toplam: {p.total.toLocaleString("tr-TR")} TL

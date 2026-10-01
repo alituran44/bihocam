@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, ChartBar, School, ShieldCheck } from "lucide-react";
+import { ArrowRight, School, ShieldCheck, CheckCircle2, Clock, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 interface StepItem {
@@ -10,46 +10,43 @@ interface StepItem {
   badgeBorder: string;
   title: string;
   description: string;
-  image: string;
   link: string;
+  buttonText: string;
   buttonAria: string;
 }
 
 const STEPS: StepItem[] = [
   {
     number: "01",
-    numberColor: "text-[#5B37F5] dark:text-[#A78BFA]",
-    badgeBorder: "border-[#5D3BFF]/30",
-    title: "Talebinizi Açın veya Eğitmen Seçin",
+    numberColor: "text-emerald-600",
+    badgeBorder: "border-emerald-500/30",
+    title: "Ders Talebini Aç veya Eğitmen Seç",
     description:
-      "İhtiyaç duyduğunuz branşı, sınıf düzeyini veya sınav hedefinizi belirtin. İster yüzlerce doğrulanmış eğitmeni filtreleyip hemen seçin, ister ücretsiz özel ders talebi açın.",
-    image:
-      "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=700&q=80",
+      "İhtiyaç duyduğun branşı, sınıf düzeyini ve bütçe aralığını belirterek ders talebi aç veya doğrulanmış eğitmenleri listeleyerek profillerini incele.",
     link: "/tenders/new",
+    buttonText: "Ders Talebi Aç",
     buttonAria: "Ders Talebi Aç Adımına Git",
   },
   {
     number: "02",
-    numberColor: "text-[#C2410C] dark:text-[#FF8A3D]",
-    badgeBorder: "border-[#FF6A3D]/30",
-    title: "Teklifleri Değerlendirin & Tanışın",
+    numberColor: "text-teal-600",
+    badgeBorder: "border-teal-500/30",
+    title: "Teklifleri Karşılaştır & Eğitmenini Seç",
     description:
-      "Alanında uzman eğitimcilerden gelen bütçenize uygun saatlik ders tekliflerini inceleyin. Dilerseniz ilk 15 dakikalık ücretsiz tanışma seansıyla öğretmeninizle karşılıklı uyumunuzu test edin.",
-    image:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=700&q=80",
+      "Talebine gelen saatlik ders tekliflerini incele. Eğitmenin tecrübesi, uzmanlık alanları ve fiyatlarına göre sana en uygun olanı seçerek iletişime geç.",
     link: "/teachers",
+    buttonText: "Eğitmenleri Keşfet",
     buttonAria: "Eğitmenleri Keşfet Adımına Git",
   },
   {
     number: "03",
-    numberColor: "text-[#127A3B] dark:text-[#4ADE80]",
-    badgeBorder: "border-[#149447]/30",
-    title: "Güvenli Ödeme ile Canlı Derse Başlayın",
+    numberColor: "text-indigo-600",
+    badgeBorder: "border-indigo-500/30",
+    title: "Güvenli Ödeme ile Canlı Derse Başla",
     description:
-      "BDDK lisanslı güvenli ödeme ve emanet havuz korumasıyla dersinizi başlatın. Ders başarıyla tamamlanıp onay vermediğiniz sürece ücret eğitmeninize aktarılmaz.",
-    image:
-      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=700&q=80",
+      "{{ODEME_KURULUSU_ADI}} güvencesindeki emanet havuz ile ödemeni yap. Sen dersini tamamlayıp onay vermeden ücret eğitmene aktarılmaz.",
     link: "/tanisma-dersi",
+    buttonText: "Canlı Derse Başla",
     buttonAria: "Canlı Derse Başla Adımına Git",
   },
 ];
@@ -115,12 +112,12 @@ export default function HowItWorksSection() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed"
           >
-            Hedeflerinize ulaşmanız için tasarlanmış en yalın, şeffaf ve güvenli online özel ders deneyimi.
+            Hedeflerine ulaşman için tasarlanmış şeffaf, güvenli ve esnek online özel ders süreci.
           </motion.p>
         </div>
 
         {/* 3 Step Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {STEPS.map((step, idx) => (
             <motion.div
               key={step.number}
@@ -128,51 +125,38 @@ export default function HowItWorksSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: idx * 0.15 }}
-              whileHover={{ y: -6, transition: { duration: 0.2 } }}
               className="group relative h-full flex flex-col"
             >
-              <div className="relative bg-white transition-all duration-300 hover:shadow-xl hover:border-emerald-500/40 overflow-hidden rounded-3xl p-6 sm:p-8 flex h-full flex-col border border-slate-200/90 shadow-sm">
-                {/* Accent Top Border Bar on Hover */}
-                <div className="absolute -top-px inset-x-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative bg-white transition-all duration-300 hover:shadow-xl hover:border-emerald-500/40 overflow-hidden rounded-3xl p-6 sm:p-8 flex h-full flex-col justify-between border border-slate-200/90 shadow-sm">
+                <div>
+                  {/* Step Number & Header */}
+                  <div className="flex items-center justify-between mb-6">
+                    <span className={`text-4xl sm:text-5xl font-black font-mono tracking-tighter ${step.numberColor}`}>
+                      {step.number}
+                    </span>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                      Adım {idx + 1}
+                    </span>
+                  </div>
 
-                {/* Aspect 4:3 Image Container */}
-                <div className="relative -mx-2 -mt-2 aspect-[4/3] mb-6 sm:-mx-3 sm:-mt-3 rounded-2xl overflow-hidden bg-slate-100 border border-slate-100">
-                  <img
-                    alt={step.title}
-                    loading="lazy"
-                    width="600"
-                    height="450"
-                    decoding="async"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    src={step.image}
-                  />
-                  <div className="absolute inset-0 bg-slate-900/10 group-hover:bg-slate-900/0 transition-colors" />
+                  {/* Title & Description */}
+                  <h3 className="text-xl font-bold text-slate-900 mb-3 leading-snug tracking-tight font-display group-hover:text-emerald-700 transition-colors">
+                    {step.title}
+                  </h3>
+                  <p className="text-sm text-slate-600 leading-relaxed font-normal">
+                    {step.description}
+                  </p>
                 </div>
 
-                {/* Step Header with Number Circle */}
-                <h3 className="flex items-center gap-3 text-lg sm:text-xl font-bold text-slate-900 font-display">
-                  <span
-                    className={`inline-flex shrink-0 items-center justify-center w-10 h-10 rounded-full border text-sm font-black font-mono tabular-nums ${step.badgeBorder} ${step.numberColor} bg-slate-50`}
-                  >
-                    {step.number}
-                  </span>
-                  <span>{step.title}</span>
-                </h3>
-
-                {/* Step Description */}
-                <p className="mt-4 flex-1 text-sm leading-relaxed text-slate-600 font-normal">
-                  {step.description}
-                </p>
-
-                {/* Step Action Button */}
-                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-400">Adımı İncele</span>
+                {/* Bottom Action Link */}
+                <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between">
                   <Link
                     href={step.link}
                     aria-label={step.buttonAria}
-                    className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all shadow-xs group-hover:scale-110"
+                    className="inline-flex items-center gap-2 text-xs font-bold text-emerald-700 hover:text-emerald-800 transition-colors"
                   >
-                    <ArrowRight className="h-4 w-4" />
+                    <span>{step.buttonText}</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
               </div>
@@ -180,33 +164,34 @@ export default function HowItWorksSection() {
           ))}
         </div>
 
-        {/* Aniq-UI Inspired Trust Bar Underneath */}
-        <motion.ul
+        {/* Canlı Sınıf Metodolojisi & Haftalık Süreç Tek Satır Entegrasyonu */}
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-12 sm:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-3xl bg-white border border-slate-200/90 px-6 py-5 shadow-sm divide-y sm:divide-y-0 sm:divide-x divide-slate-100"
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="mt-12 rounded-2xl bg-white border border-slate-200/90 p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left"
         >
-          <li className="flex items-center justify-center gap-3 text-center py-2 sm:py-0">
-            <ShieldCheck className="w-5 h-5 flex-shrink-0 text-emerald-600" />
-            <span className="text-sm font-semibold text-slate-700">
-              BDDK Lisanslı Emanet Havuz Güvencesi
-            </span>
-          </li>
-          <li className="flex items-center justify-center gap-3 text-center py-2 sm:py-0">
-            <School className="w-5 h-5 flex-shrink-0 text-emerald-600" />
-            <span className="text-sm font-semibold text-slate-700">
-              4 Aşamalı Doğrulanmış Uzman Eğitmenler
-            </span>
-          </li>
-          <li className="flex items-center justify-center gap-3 text-center py-2 sm:py-0">
-            <ChartBar className="w-5 h-5 flex-shrink-0 text-emerald-600" />
-            <span className="text-sm font-semibold text-slate-700">
-              Kendi Hızınızda ve Esnek Saatlerde
-            </span>
-          </li>
-        </motion.ul>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 shrink-0">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-900 sm:text-sm">
+                Canlı Ders Akışı & Seans Metodolojisi
+              </p>
+              <p className="text-xs text-slate-600 mt-0.5">
+                10 dk ön hazırlık, 20 dk konu anlatımı, 20 dk yeni nesil soru çözümü ve 10 dk pekiştirme ile her 60 dakikalık seans tam odakla tamamlanır.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/tenders/new"
+            className="shrink-0 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-xs"
+          >
+            Ders Talebi Aç
+          </Link>
+        </motion.div>
       </div>
     </section>
   );

@@ -27,20 +27,7 @@ export const metadata: Metadata = {
     default: "BiHocam | Türkiye'nin Yeni Nesil Özel Ders Platformu",
     template: "%s | BiHocam"
   },
-  description: "YKS, LGS ve okul derslerinde doğrulanmış uzman eğitmenlerle çalış. Canlı dersler, özel ders talepleri ve kişiselleştirilmiş öğrenme.",
-  keywords: [
-    "Özel Ders",
-    "Yapay Zeka",
-    "Yeni Nesil",
-    "Ders Talebi",
-    "Fazla Öğren",
-    "YKS hazırlık",
-    "LGS hazırlık",
-    "online eğitim",
-    "canlı özel ders",
-    "birebir ders",
-    "online öğretmen"
-  ],
+  description: "YKS, LGS ve tüm okul derslerinde doğrulanmış uzman eğitmenlerle canlı özel ders yap. İster öğretmen seç, ister ders talebi aç.",
   authors: [{ name: "BiHocam", url: "https://bihocam.com" }],
   creator: "BiHocam",
   publisher: "BiHocam Eğitim Teknolojileri",
@@ -49,25 +36,25 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "BiHocam | Türkiye'nin Yeni Nesil Özel Ders Platformu",
-    description: "YKS, LGS ve okul derslerinde doğrulanmış uzman eğitmenlerle çalış. Canlı dersler, özel ders talepleri ve kişiselleştirilmiş öğrenme.",
+    description: "YKS, LGS ve tüm okul derslerinde doğrulanmış uzman eğitmenlerle canlı özel ders yap. İster öğretmen seç, ister ders talebi aç.",
     url: "https://bihocam.com",
     siteName: "BiHocam",
     locale: "tr_TR",
     type: "website",
     images: [
       {
-        url: "/logo.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "BiHocam Akıllı Özel Ders Ağı",
+        alt: "BiHocam | Türkiye'nin Yeni Nesil Özel Ders Platformu",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
     title: "BiHocam | Türkiye'nin Yeni Nesil Özel Ders Platformu",
-    description: "YKS, LGS ve okul derslerinde doğrulanmış uzman eğitmenlerle çalış. Canlı dersler ve özel ders talepleri.",
-    images: ["/logo.png"],
+    description: "YKS, LGS ve tüm okul derslerinde doğrulanmış uzman eğitmenlerle canlı özel ders yap. İster öğretmen seç, ister ders talebi aç.",
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
