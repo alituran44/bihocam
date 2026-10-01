@@ -96,7 +96,7 @@ export default function Hero3DFloatingVisual() {
           <path d="M -15 645 L 0 675 L -30 675 Z" stroke="#94a3b8" strokeOpacity="0.45" strokeWidth="1.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
         </svg>
 
-        {/* ── MAIN 3D VISUAL (Poster on mobile / Lazy video on desktop) ── */}
+        {/* ── MAIN 3D VISUAL (Smooth Framer Motion Float & Parallax) ── */}
         <motion.div
           animate={{
             y: [-6, 6, -6],
@@ -109,29 +109,14 @@ export default function Hero3DFloatingVisual() {
           className="relative z-10 w-full flex items-center justify-center"
           style={{ transform: "translateZ(30px)" }}
         >
-          {/* Mobile Fallback: static poster image (zero video battery drain on mobile) */}
-          <div className="block sm:hidden w-full aspect-[4/3] relative">
+          <div className="w-full aspect-[4/3] relative flex items-center justify-center">
             <img
-              src="/assets/images/home/hero/illustration-loop-light-poster.webp"
-              alt="BiHocam Canlı Ders Deneyimi"
-              className="w-full h-full object-contain mix-blend-multiply"
-              loading="lazy"
+              src="/assets/images/home/hero/illustration-3d-transparent.webp"
+              alt="BiHocam Canlı Özel Ders Deneyimi"
+              className="w-full h-full object-contain drop-shadow-[0_25px_40px_rgba(5,150,105,0.16)]"
+              loading="eager"
             />
           </div>
-
-          {/* Desktop & Tablet: Video with poster and lazy load */}
-          <video
-            className="hidden sm:block aspect-[4/3] w-full pointer-events-none mix-blend-multiply object-contain drop-shadow-[0_20px_35px_rgba(5,150,105,0.18)]"
-            src="/assets/images/home/hero/illustration-loop-light.mp4"
-            poster="/assets/images/home/hero/illustration-loop-light-poster.webp"
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="none"
-            aria-hidden="true"
-            tabIndex={-1}
-          />
         </motion.div>
       </motion.div>
     </div>

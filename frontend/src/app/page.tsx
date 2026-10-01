@@ -16,6 +16,7 @@ import LessonHourFlowSection from "@/components/home/LessonHourFlowSection";
 import WhyBiHocamSection from "@/components/home/WhyBiHocamSection";
 import InstructorsShowcaseSection from "@/components/home/InstructorsShowcaseSection";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
+import BecomeInstructorSection from "@/components/home/BecomeInstructorSection";
 import {
   Sparkles,
   ArrowRight,
@@ -590,34 +591,9 @@ export default function HomePage() {
         </section>
 
         {/* ══════════════════════════════════════════════════════ */}
-        {/* 11. EĞİTMEN ŞERİDİ (TEK ŞERİT BANNER)                   */}
+        {/* 11. EĞİTMEN KADROMUZA KATILIN (MODERN BENTO SHOWCASE)  */}
         {/* ══════════════════════════════════════════════════════ */}
-        <section className="py-10 bg-slate-900 text-white border-t border-slate-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="space-y-1 text-center md:text-left">
-                <div className="inline-flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                  <GraduationCap className="w-4 h-4" />
-                  <span>Eğitmen Kadromuza Katılın</span>
-                </div>
-                <h3 className="text-xl sm:text-2xl font-bold font-display">
-                  Bilgini Değere ve Kazanca Dönüştür
-                </h3>
-                <p className="text-slate-400 text-xs sm:text-sm max-w-xl">
-                  Kendi saatlik ders ücretini belirle, ders taleplerine teklif ver, GİB & VUK uyumlu altyapıyla güvenle ders ver.
-                </p>
-              </div>
-
-              <Link
-                href="/become-instructor"
-                className="shrink-0 px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-emerald-600/25 transition-all flex items-center gap-2"
-              >
-                <span>Eğitmen Başvurusu Yap</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-        </section>
+        <BecomeInstructorSection />
       </main>
 
       {/* ══════════════════════════════════════════════════════ */}
