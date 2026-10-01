@@ -6,6 +6,7 @@ import { Shield, CheckCircle2, XCircle, AlertTriangle, Calendar, Award, User, Bo
 import { certificatesApi } from "@/lib/api";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Logo from "@/components/ui/Logo";
 
 /**
  * AESTHETIC DIRECTION: Premium Shareable Certificate / Social Media Ready
@@ -110,20 +111,13 @@ export default function VerifyCertificatePage() {
           >
             <div className="flex items-center gap-4">
               {/* BiHocam Logo */}
-              <Link href="/" className="flex items-center gap-3 group">
-                <div className="relative">
-                  <div className="w-14 h-14 bg-gradient-to-br from-teal-500 via-teal-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-xl shadow-teal-500/30 group-hover:shadow-2xl group-hover:shadow-teal-500/40 transition-all duration-300 group-hover:scale-105">
-                    <span className="text-white font-bold text-2xl">B</span>
-                  </div>
-                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-white shadow-lg"></div>
-                </div>
-                <div>
-                  <span className="text-2xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 bg-clip-text text-transparent">
-                    Bi<span className="text-teal-600">Hocam</span>
-                  </span>
-                  <p className="text-xs text-gray-500 font-medium -mt-1">Sertifika Doğrulama</p>
-                </div>
-              </Link>
+              <div className="flex items-center gap-3">
+                <Logo size="lg" variant="light" href="/" />
+                <span className="hidden sm:inline-block h-6 w-px bg-slate-200" />
+                <span className="hidden sm:inline-block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Sertifika Doğrulama
+                </span>
+              </div>
             </div>
             
             {/* Share Button */}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Logo from "@/components/ui/Logo";
 import { PlusCircle, ArrowRight, ShieldCheck } from "lucide-react";
 
 export default function Footer({ hideCta = false }: { hideCta?: boolean }) {
@@ -10,8 +11,8 @@ export default function Footer({ hideCta = false }: { hideCta?: boolean }) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand & Mini CTA */}
           <div className="col-span-2 md:col-span-1 space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-black text-white font-display tracking-tight">BiHocam</span>
+            <div className="flex items-center">
+              <Logo size="md" variant="dark" href="/" />
             </div>
             <p className="text-xs text-slate-400 leading-relaxed font-normal">
               Türkiye&apos;nin Yeni Nesil Özel Ders Platformu. Doğrulanmış eğitmenlerle birebir canlı dersler ve emanet havuz güvencesi.
