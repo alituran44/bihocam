@@ -10,6 +10,7 @@ import Avatar from "@/components/Avatar";
 import { teachersApi, blogPublicApi, homeworksApi, quizzesApi, courseReviewsApi, popcastsApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import { toast } from "sonner";
+import { Camera, Play, Video } from "lucide-react";
 
 type TeacherInfo = {
   id: string;
@@ -133,6 +134,8 @@ export default function TeacherProfilePage() {
   const [studentNotes, setStudentNotes] = useState<string>("");
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState("");
+  const [heroMediaMode, setHeroMediaMode] = useState<"photo" | "video">("photo");
+  const [avatarError, setAvatarError] = useState(false);
 
   const getDaysInMonth = (y: number, m: number) => new Date(y, m, 0).getDate();
 
@@ -464,18 +467,115 @@ export default function TeacherProfilePage() {
                   <span aria-hidden="true" className="pointer-events-none absolute top-[43%] start-6 h-[5.75rem] w-2 text-orange-500 [background-image:radial-gradient(circle,currentColor_3.5px,transparent_3.5px)] [background-size:8px_22px]" />
                   <span aria-hidden="true" className="pointer-events-none absolute -bottom-40 -start-24 h-80 w-80 rounded-full border border-white/10" />
 
-                  {/* Instructor Portrait Image Frame */}
-                  <div className="relative mx-auto w-full max-w-[16.5rem]">
+                  {/* Instructor Portrait & Promo Video Media Frame */}
+                  <div className="relative mx-auto w-full max-w-[17rem]">
+                    {/* Media Mode Switcher (Photo / Promo Video) */}
+                    <div className="mb-3 flex items-center justify-center gap-1.5 rounded-2xl bg-white/[0.08] p-1 backdrop-blur-md border border-white/10 shadow-sm">
+                      <button
+                        type="button"
+                        onClick={() => setHeroMediaMode("photo")}
+                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-1.5 px-3 text-xs font-bold transition-all ${
+                          heroMediaMode === "photo"
+                            ? "bg-white text-slate-950 shadow-sm"
+                            : "text-slate-300 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                        <span>Fotoğraf</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setHeroMediaMode("video")}
+                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-1.5 px-3 text-xs font-bold transition-all ${
+                          heroMediaMode === "video"
+                            ? "bg-orange-600 text-white shadow-md shadow-orange-600/30"
+                            : "text-slate-300 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        <Play className="w-3.5 h-3.5 fill-current" />
+                        <span>Tanıtım Videosu</span>
+                      </button>
+                    </div>
+
                     <div className="relative aspect-square w-full overflow-hidden rounded-3xl bg-slate-900 ring-4 ring-white/10 shadow-2xl">
-                      {data.teacher.avatar_url ? (
-                        <img
-                          src={data.teacher.avatar_url}
-                          alt={data.teacher.full_name}
-                          className="h-full w-full object-cover object-top"
-                        />
+                      {heroMediaMode === "photo" ? (
+                        <div className="relative w-full h-full group">
+                          {data.teacher.avatar_url && !avatarError ? (
+                            <img
+                              src={data.teacher.avatar_url}
+                              alt={data.teacher.full_name}
+                              className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                              onError={() => setAvatarError(true)}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 text-white font-black text-6xl">
+                              {data.teacher.full_name?.charAt(0) || "E"}
+                            </div>
+                          )}
+
+                          {/* Hover Play Button Overlay */}
+                          <div
+                            onClick={() => setHeroMediaMode("video")}
+                            className="absolute inset-0 bg-slate-950/45 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-2 cursor-pointer backdrop-blur-[2px]"
+                          >
+                            <span className="w-13 h-13 rounded-full bg-orange-600 text-white flex items-center justify-center shadow-xl shadow-orange-600/50 hover:scale-110 transition-transform">
+                              <Play className="w-6 h-6 fill-white ml-0.5" />
+                            </span>
+                            <span className="px-3 py-1 rounded-full bg-slate-900/90 text-white text-[11px] font-bold border border-white/10 shadow">
+                              Tanıtım Videosunu Başlat
+                            </span>
+                          </div>
+
+                          {/* Subtle persistent indicator on photo */}
+                          <div className="absolute top-2.5 left-2.5 pointer-events-none">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-950/80 backdrop-blur-md text-orange-300 border border-white/10 shadow-sm">
+                              <Play className="w-2.5 h-2.5 fill-current" />
+                              <span>Tanıtım Videosu</span>
+                            </span>
+                          </div>
+                        </div>
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 text-white font-black text-6xl">
-                          {data.teacher.full_name?.charAt(0) || "E"}
+                        <div className="relative w-full h-full bg-black flex flex-col items-center justify-center">
+                          {data.teacher.promo_video ? (
+                            data.teacher.promo_video.includes("youtube.com") || data.teacher.promo_video.includes("youtu.be") ? (
+                              <iframe
+                                src={`${getYoutubeEmbedUrl(data.teacher.promo_video)}?autoplay=1`}
+                                title={`${data.teacher.full_name} Tanıtım Videosu`}
+                                className="w-full h-full border-0"
+                                allowFullScreen
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              />
+                            ) : (
+                              <video
+                                src={
+                                  data.teacher.promo_video.startsWith("http")
+                                    ? data.teacher.promo_video
+                                    : `${process.env.NEXT_PUBLIC_API_URL?.replace("/api/v1", "") || "http://localhost:8000"}/media/${data.teacher.promo_video}`
+                                }
+                                controls
+                                autoPlay
+                                className="w-full h-full object-cover"
+                              />
+                            )
+                          ) : (
+                            <div className="p-4 text-center text-white space-y-2.5">
+                              <div className="w-12 h-12 rounded-full bg-orange-600/20 text-orange-400 border border-orange-500/30 flex items-center justify-center mx-auto">
+                                <Play className="w-6 h-6 fill-orange-400 ml-0.5" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-white">Tanıtım Videosu Yakında</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5">Eğitmen henüz özel bir tanıtım videosu yüklememiştir.</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setHeroMediaMode("photo")}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors"
+                              >
+                                <Camera className="w-3.5 h-3.5" />
+                                <span>Fotoğrafa Dön</span>
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -483,7 +583,7 @@ export default function TeacherProfilePage() {
                     {/* Verified Award Rosette Badge pinned at bottom-right of avatar */}
                     <span
                       aria-hidden="true"
-                      className="absolute -bottom-4 -right-3 grid h-14 w-14 place-items-center rounded-full bg-white shadow-[0_10px_26px_-10px_rgba(17,24,39,0.5)] border border-slate-100"
+                      className="absolute -bottom-4 -right-3 grid h-14 w-14 place-items-center rounded-full bg-white shadow-[0_10px_26px_-10px_rgba(17,24,39,0.5)] border border-slate-100 z-10"
                       title="Doğrulanmış Uzman Eğitmen"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 text-orange-600">
