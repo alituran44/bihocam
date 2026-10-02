@@ -13,10 +13,10 @@ export default function LessonHourFlowSection() {
       id: 0,
       step: "01",
       icon: Play,
-      iconWrapClass: "bg-orange-50/80 border-orange-200/90 text-orange-500",
-      activeRing: "ring-2 ring-orange-500/40 shadow-lg shadow-orange-500/15",
-      dotColor: "bg-orange-300",
-      pillClass: "bg-orange-100 text-orange-600 border border-orange-200",
+      iconWrapClass: "bg-emerald-50/80 border-emerald-200/90 text-emerald-600",
+      activeRing: "ring-2 ring-emerald-500/40 shadow-lg shadow-emerald-500/15",
+      dotColor: "bg-emerald-300",
+      pillClass: "bg-emerald-100 text-emerald-700 border border-emerald-200",
       title: "Hazırlık & Keşif",
       duration: "10 Dk",
       subtitle: "Eksik tespiti & ders hedefi",
@@ -26,10 +26,10 @@ export default function LessonHourFlowSection() {
       id: 1,
       step: "02",
       icon: BookOpen,
-      iconWrapClass: "bg-indigo-50/80 border-indigo-200/90 text-indigo-500",
-      activeRing: "ring-2 ring-indigo-500/40 shadow-lg shadow-indigo-500/15",
-      dotColor: "bg-indigo-300",
-      pillClass: "bg-indigo-100 text-indigo-600 border border-indigo-200",
+      iconWrapClass: "bg-teal-50/80 border-teal-200/90 text-teal-600",
+      activeRing: "ring-2 ring-teal-500/40 shadow-lg shadow-teal-500/15",
+      dotColor: "bg-teal-300",
+      pillClass: "bg-teal-100 text-teal-700 border border-teal-200",
       title: "Konu Anlatımı",
       duration: "20 Dk",
       subtitle: "Kavram haritası & mantık",
@@ -39,10 +39,10 @@ export default function LessonHourFlowSection() {
       id: 2,
       step: "03",
       icon: Code2,
-      iconWrapClass: "bg-emerald-50/80 border-emerald-200/90 text-emerald-500",
-      activeRing: "ring-2 ring-emerald-500/40 shadow-lg shadow-emerald-500/15",
-      dotColor: "bg-emerald-300",
-      pillClass: "bg-emerald-100 text-emerald-600 border border-emerald-200",
+      iconWrapClass: "bg-sky-50/80 border-sky-200/90 text-sky-600",
+      activeRing: "ring-2 ring-sky-500/40 shadow-lg shadow-sky-500/15",
+      dotColor: "bg-sky-300",
+      pillClass: "bg-sky-100 text-sky-700 border border-sky-200",
       title: "Yeni Nesil Çözüm",
       duration: "20 Dk",
       subtitle: "Birlikte soru & taktik",
@@ -52,10 +52,10 @@ export default function LessonHourFlowSection() {
       id: 3,
       step: "04",
       icon: Puzzle,
-      iconWrapClass: "bg-amber-50/80 border-amber-200/90 text-amber-500",
-      activeRing: "ring-2 ring-amber-500/40 shadow-lg shadow-amber-500/15",
-      dotColor: "bg-amber-300",
-      pillClass: "bg-amber-100 text-amber-600 border border-amber-200",
+      iconWrapClass: "bg-emerald-50/80 border-emerald-200/90 text-emerald-700",
+      activeRing: "ring-2 ring-emerald-600/40 shadow-lg shadow-emerald-600/15",
+      dotColor: "bg-emerald-300",
+      pillClass: "bg-emerald-100 text-emerald-800 border border-emerald-200",
       title: "Pekiştirme & Rapor",
       duration: "10 Dk",
       subtitle: "Ödev & veli gelişim notu",
@@ -65,9 +65,9 @@ export default function LessonHourFlowSection() {
 
   return (
     <section className="py-20 sm:py-28 bg-white border-b border-slate-100 relative overflow-hidden">
-      {/* Subtle Warm Ambient Background Accents */}
-      <div className="absolute top-1/3 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[450px] bg-orange-100/30 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-[500px] h-[400px] bg-amber-100/25 rounded-full blur-[160px] pointer-events-none" />
+      {/* Subtle Ambient Background Accents */}
+      <div className="absolute top-1/3 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[450px] bg-emerald-100/25 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-[500px] h-[400px] bg-teal-100/20 rounded-full blur-[160px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
@@ -75,15 +75,15 @@ export default function LessonHourFlowSection() {
           <div className="lg:col-span-7 space-y-10 text-center lg:text-left">
             {/* Top Category Badge */}
             <div className="space-y-3.5">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-[#EA580C] uppercase tracking-wider">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 uppercase tracking-wider">
                 <span>CANLI DERSİN İÇİNDE</span>
-                <span className="text-orange-400">✦</span>
+                <span className="text-emerald-500">✦</span>
               </div>
 
               {/* Main Headline */}
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 font-display tracking-tight leading-[1.12]">
                 BiHocam&apos;da{" "}
-                <span className="text-[#EA580C]">
+                <span className="text-emerald-700">
                   Bir Saatlik Ders
                 </span>{" "}
                 <br className="hidden sm:inline" />
@@ -127,7 +127,7 @@ export default function LessonHourFlowSection() {
                               <span
                                 key={dot}
                                 className={`w-1 h-1 rounded-full transition-colors duration-300 ${
-                                  activeStep > idx ? "bg-orange-400" : "bg-slate-300"
+                                  activeStep > idx ? "bg-emerald-500" : "bg-slate-300"
                                 }`}
                               />
                             ))}
@@ -145,7 +145,7 @@ export default function LessonHourFlowSection() {
                       </div>
 
                       {/* Step Title & Duration */}
-                      <h3 className="text-base font-bold text-slate-900 group-hover:text-orange-600 transition-colors">
+                      <h3 className="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
                         {s.title}
                       </h3>
 

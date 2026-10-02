@@ -285,9 +285,9 @@ export default function FiyatlarPage() {
             </div>
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
               <CreditCard className="w-6 h-6 text-emerald-600" />
-              <h3 className="font-bold text-slate-900 text-base">Vade Farksız 6 Taksit</h3>
+              <h3 className="font-bold text-slate-900 text-base">6 Aya Varan Taksit İmkanı</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Anlaşmalı kredi kartlarına peşin fiyatına 6 aya varan taksit avantajıyla bütçenizi sarsmadan eğitim alın.
+                Anlaşmalı kredi kartlarına 6 aya varan taksit seçenekleriyle bütçenizi zorlamadan eğitim alın.
               </p>
             </div>
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-2">

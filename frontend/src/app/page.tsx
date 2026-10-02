@@ -10,13 +10,14 @@ import { usePopupAnnouncement } from "@/hooks/usePopupAnnouncement";
 import { FaqJsonLd } from "@/components/seo/JsonLd";
 import HeroSearchCapsule from "@/components/home/HeroSearchCapsule";
 import Hero3DFloatingVisual from "@/components/home/Hero3DFloatingVisual";
-import LiveDemandTicker from "@/components/home/LiveDemandTicker";
+import LiveClassVideoSection from "@/components/home/LiveClassVideoSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
 import LessonHourFlowSection from "@/components/home/LessonHourFlowSection";
 import WhyBiHocamSection from "@/components/home/WhyBiHocamSection";
 import InstructorsShowcaseSection from "@/components/home/InstructorsShowcaseSection";
-import TestimonialsSection from "@/components/home/TestimonialsSection";
 import BecomeInstructorSection from "@/components/home/BecomeInstructorSection";
+import CoursesShowcaseSection from "@/components/home/CoursesShowcaseSection";
+import TestimonialsSection from "@/components/home/TestimonialsSection";
 import {
   Sparkles,
   ArrowRight,
@@ -54,7 +55,7 @@ export const HOME_FAQS = [
   },
   {
     q: "Ödemeler nasıl yapılıyor ve taksit seçeneği var mı?",
-    a: "Ödemeler {{ODEME_KURULUSU_ADI}} altyapısı üzerinden 3D Secure ve emanet havuz güvencesiyle gerçekleştirilir. Anlaşmalı kredi kartlarına 6 aya varan vade farksız taksit seçeneklerinden yararlanabilirsin. Sen dersini tamamlayıp onaylamadan ücret eğitmene aktarılmaz.",
+    a: "Ödemeler {{ODEME_KURULUSU_ADI}} altyapısı üzerinden 3D Secure ve emanet havuz güvencesiyle gerçekleştirilir. Anlaşmalı kredi kartlarına 6 aya varan taksit imkanından yararlanabilirsin. Sen dersini tamamlayıp onaylamadan ücret eğitmene aktarılmaz.",
   },
   {
     q: "Satın aldığım ders saatlerini ne kadar süre içinde kullanmalıyım?",
@@ -301,13 +302,9 @@ export default function HomePage() {
         </section>
 
         {/* ══════════════════════════════════════════════════════ */}
-        {/* 2. CANLI TALEPLER                                      */}
+        {/* 2. CANLI DERS VİDEO VİTRİNİ                             */}
         {/* ══════════════════════════════════════════════════════ */}
-        <section className="py-14 bg-slate-50 border-b border-slate-200/70">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <LiveDemandTicker />
-          </div>
-        </section>
+        <LiveClassVideoSection />
 
         {/* ══════════════════════════════════════════════════════ */}
         {/* 3. NASIL ÇALIŞIR                                       */}
@@ -330,6 +327,16 @@ export default function HomePage() {
         <InstructorsShowcaseSection />
 
         {/* ══════════════════════════════════════════════════════ */}
+        {/* 5.1 EĞİTMEN KADROMUZA KATILIN (3D SHOWCASE)           */}
+        {/* ══════════════════════════════════════════════════════ */}
+        <BecomeInstructorSection />
+
+        {/* ══════════════════════════════════════════════════════ */}
+        {/* 5.2 CANLI VE KAPSAMLI KURSLAR VİTRİNİ                 */}
+        {/* ══════════════════════════════════════════════════════ */}
+        <CoursesShowcaseSection />
+
+        {/* ══════════════════════════════════════════════════════ */}
         {/* 6. FİYAT ÖZETİ (2-3 SATIRLIK ÖZET & /fiyatlar LİNKİ)   */}
         {/* ══════════════════════════════════════════════════════ */}
         <section className="py-20 bg-slate-50 border-b border-slate-200/80 relative overflow-hidden">
@@ -343,7 +350,7 @@ export default function HomePage() {
             </h2>
             <p className="text-slate-600 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
               Fiyatlar eğitmene göre değişir; ihtiyacına uygun ders saatini belirleyip gelen teklifleri karşılaştırarak seçersin.
-              Paket sürelerinde avantajlı indirimler ve anlaşmalı kartlara 6 aya varan vade farksız taksit seçenekleri mevcuttur.
+              Paket sürelerinde avantajlı indirimler ve anlaşmalı kartlara 6 aya varan taksit seçenekleri mevcuttur.
             </p>
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
@@ -589,11 +596,6 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
-        {/* ══════════════════════════════════════════════════════ */}
-        {/* 11. EĞİTMEN KADROMUZA KATILIN (MODERN BENTO SHOWCASE)  */}
-        {/* ══════════════════════════════════════════════════════ */}
-        <BecomeInstructorSection />
       </main>
 
       {/* ══════════════════════════════════════════════════════ */}

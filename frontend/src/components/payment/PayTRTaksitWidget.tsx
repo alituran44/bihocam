@@ -76,9 +76,9 @@ export default function PayTRTaksitWidget({ amount, className = "" }: PayTRTaksi
   // Installment plans for fallback
   const plans = [
     { installments: 1, label: "Tek Çekim", isNoInterest: true, monthly: roundedAmount, total: roundedAmount, badge: "Peşin" },
-    { installments: 2, label: "2 Taksit", isNoInterest: true, monthly: Math.round(roundedAmount / 2), total: roundedAmount, badge: "Vade Farksız" },
-    { installments: 3, label: "3 Taksit", isNoInterest: true, monthly: Math.round(roundedAmount / 3), total: roundedAmount, badge: "Vade Farksız" },
-    { installments: 6, label: "6 Taksit", isNoInterest: true, monthly: Math.round(roundedAmount / 6), total: roundedAmount, badge: "Vade Farksız" },
+    { installments: 2, label: "2 Taksit", isNoInterest: true, monthly: Math.round(roundedAmount / 2), total: roundedAmount, badge: "Taksit İmkanı" },
+    { installments: 3, label: "3 Taksit", isNoInterest: true, monthly: Math.round(roundedAmount / 3), total: roundedAmount, badge: "Taksit İmkanı" },
+    { installments: 6, label: "6 Taksit", isNoInterest: true, monthly: Math.round(roundedAmount / 6), total: roundedAmount, badge: "Taksit İmkanı" },
     { installments: 9, label: "9 Taksit", isNoInterest: false, monthly: Math.round((roundedAmount * 1.06) / 9), total: Math.round(roundedAmount * 1.06), badge: "+%6 Fark" },
     { installments: 12, label: "12 Taksit", isNoInterest: false, monthly: Math.round((roundedAmount * 1.09) / 12), total: Math.round(roundedAmount * 1.09), badge: "+%9 Fark" },
   ];
@@ -161,7 +161,7 @@ export default function PayTRTaksitWidget({ amount, className = "" }: PayTRTaksi
           <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium px-1">
             <span className="flex items-center gap-1 text-slate-700 font-semibold">
               <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
-              Tüm Kartlara 6 Aya Varan Vade Farksız Taksit
+              Tüm Kartlara 6 Aya Varan Taksit İmkanı
             </span>
             <span className="flex items-center gap-1 text-emerald-700 font-bold">
               <ShieldCheck className="w-3.5 h-3.5" />

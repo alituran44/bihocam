@@ -30,8 +30,8 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
       >
         <defs>
           <radialGradient id="clockAmbientGlow" cx="50%" cy="45%" r="50%">
-            <stop offset="0%" stopColor="#FB923C" stopOpacity="0.25" />
-            <stop offset="60%" stopColor="#FED7AA" stopOpacity="0.1" />
+            <stop offset="0%" stopColor="#10B981" stopOpacity="0.22" />
+            <stop offset="60%" stopColor="#A7F3D0" stopOpacity="0.10" />
             <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
           </radialGradient>
         </defs>
@@ -42,7 +42,7 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
         {/* Faint Concentric Orbital Arcs */}
         <path
           d="M 80 220 A 170 170 0 0 1 420 220"
-          stroke="#FDBA74"
+          stroke="#6EE7B7"
           strokeWidth="1.2"
           strokeDasharray="4 6"
           strokeOpacity="0.55"
@@ -50,7 +50,7 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
         />
         <path
           d="M 50 220 A 200 200 0 0 1 450 220"
-          stroke="#FDBA74"
+          stroke="#6EE7B7"
           strokeWidth="1"
           strokeOpacity="0.35"
           fill="none"
@@ -60,7 +60,7 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
         <g transform="translate(410, 80) scale(0.9)">
           <path
             d="M 0 -14 Q 0 0 14 0 Q 0 0 0 14 Q 0 0 -14 0 Q 0 0 0 -14 Z"
-            fill="#FB923C"
+            fill="#10B981"
             opacity="0.8"
           />
         </g>
@@ -69,7 +69,7 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
         <g transform="translate(260, 45) scale(0.65)">
           <path
             d="M 0 -14 Q 0 0 14 0 Q 0 0 0 14 Q 0 0 -14 0 Q 0 0 0 -14 Z"
-            fill="#F97316"
+            fill="#059669"
             opacity="0.7"
           />
         </g>
@@ -78,7 +78,7 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
         <g transform="translate(90, 110) scale(0.7)">
           <path
             d="M 0 -14 Q 0 0 14 0 Q 0 0 0 14 Q 0 0 -14 0 Q 0 0 0 -14 Z"
-            fill="#FB923C"
+            fill="#10B981"
             opacity="0.65"
           />
         </g>
@@ -87,7 +87,7 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
         <g transform="translate(435, 340) scale(0.75)">
           <path
             d="M 0 -14 Q 0 0 14 0 Q 0 0 0 14 Q 0 0 -14 0 Q 0 0 0 -14 Z"
-            fill="#FB923C"
+            fill="#10B981"
             opacity="0.75"
           />
         </g>
@@ -96,7 +96,7 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
         <g transform="translate(70, 360) scale(0.6)">
           <path
             d="M 0 -14 Q 0 0 14 0 Q 0 0 0 14 Q 0 0 -14 0 Q 0 0 0 -14 Z"
-            fill="#F97316"
+            fill="#059669"
             opacity="0.6"
           />
         </g>
@@ -107,47 +107,47 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
         {/* SVG Render for Pedestal & Clock Dial */}
         <svg
           viewBox="0 0 400 400"
-          className="w-full h-full drop-shadow-[0_25px_35px_rgba(249,115,22,0.18)] overflow-visible"
+          className="w-full h-full drop-shadow-[0_25px_35px_rgba(5,150,105,0.18)] overflow-visible"
         >
           <defs>
             {/* Pedestal Bottom Base Gradient */}
             <linearGradient id="pedestalLowerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#FFF1E6" />
-              <stop offset="40%" stopColor="#FED7AA" />
-              <stop offset="100%" stopColor="#FDBA74" />
+              <stop offset="0%" stopColor="#F0FDF4" />
+              <stop offset="40%" stopColor="#DCFCE7" />
+              <stop offset="100%" stopColor="#A7F3D0" />
             </linearGradient>
 
             {/* Pedestal Upper Tier Gradient */}
             <linearGradient id="pedestalUpperGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#FFF8F3" />
-              <stop offset="50%" stopColor="#FED7AA" />
-              <stop offset="100%" stopColor="#FB923C" />
+              <stop offset="0%" stopColor="#F0FDF4" />
+              <stop offset="50%" stopColor="#BBF7D0" />
+              <stop offset="100%" stopColor="#34D399" />
             </linearGradient>
 
             {/* Clock Outer Rim 3D Bevel Gradient */}
             <linearGradient id="clockBevelGrad" x1="20%" y1="0%" x2="80%" y2="100%">
-              <stop offset="0%" stopColor="#FDBA74" />
-              <stop offset="25%" stopColor="#FB923C" />
-              <stop offset="70%" stopColor="#EA580C" />
-              <stop offset="100%" stopColor="#C2410C" />
+              <stop offset="0%" stopColor="#6EE7B7" />
+              <stop offset="25%" stopColor="#10B981" />
+              <stop offset="70%" stopColor="#059669" />
+              <stop offset="100%" stopColor="#047857" />
             </linearGradient>
 
             {/* Clock Inner Face Gradient */}
             <radialGradient id="clockFaceGrad" cx="45%" cy="40%" r="60%">
               <stop offset="0%" stopColor="#FFFFFF" />
-              <stop offset="80%" stopColor="#FFFBF7" />
-              <stop offset="100%" stopColor="#FED7AA" />
+              <stop offset="80%" stopColor="#F8FAFC" />
+              <stop offset="100%" stopColor="#DCFCE7" />
             </radialGradient>
 
             {/* Inner Rim Shadow */}
             <filter id="innerRimShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="2" dy="4" stdDeviation="4" floodColor="#C2410C" floodOpacity="0.35" />
+              <feDropShadow dx="2" dy="4" stdDeviation="4" floodColor="#047857" floodOpacity="0.35" />
             </filter>
 
             {/* Soft Ambient Pedestal Shadow */}
             <radialGradient id="groundShadow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#EA580C" stopOpacity="0.25" />
-              <stop offset="70%" stopColor="#EA580C" stopOpacity="0.08" />
+              <stop offset="0%" stopColor="#059669" stopOpacity="0.22" />
+              <stop offset="70%" stopColor="#059669" stopOpacity="0.06" />
               <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
             </radialGradient>
           </defs>
@@ -162,7 +162,7 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
             fill="url(#pedestalLowerGrad)"
           />
           {/* Lower Tier Top Surface */}
-          <ellipse cx="200" cy="330" rx="150" ry="22" fill="#FFF7EE" stroke="#FED7AA" strokeWidth="1" />
+          <ellipse cx="200" cy="330" rx="150" ry="22" fill="#F0FDF4" stroke="#BBF7D0" strokeWidth="1" />
 
           {/* ── UPPER PEDESTAL TIER (3D Cylinder) ── */}
           {/* Upper Tier Body */}
@@ -171,10 +171,10 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
             fill="url(#pedestalUpperGrad)"
           />
           {/* Upper Tier Top Surface */}
-          <ellipse cx="200" cy="295" rx="115" ry="18" fill="#FFFBF7" stroke="#FED7AA" strokeWidth="1" />
+          <ellipse cx="200" cy="295" rx="115" ry="18" fill="#F8FAFC" stroke="#A7F3D0" strokeWidth="1" />
 
           {/* ── CLOCK SHADOW ON PEDESTAL ── */}
-          <ellipse cx="200" cy="296" rx="90" ry="10" fill="#EA580C" opacity="0.35" />
+          <ellipse cx="200" cy="296" rx="90" ry="10" fill="#047857" opacity="0.30" />
 
           {/* ── CLOCK BODY (Diameter: ~210px, Center: 200, 180) ── */}
           {/* Clock Outer Rim */}
@@ -183,7 +183,7 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
             cy="180"
             r="105"
             fill="url(#clockBevelGrad)"
-            filter="drop-shadow(0px 10px 18px rgba(194, 65, 12, 0.35))"
+            filter="drop-shadow(0px 10px 18px rgba(4, 120, 87, 0.35))"
           />
 
           {/* Clock Inner Bevel Ring */}
@@ -191,8 +191,8 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
             cx="200"
             cy="180"
             r="92"
-            fill="#C2410C"
-            opacity="0.3"
+            fill="#064E3B"
+            opacity="0.25"
           />
 
           {/* Clock Dial Face */}
@@ -201,7 +201,7 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
             cy="180"
             r="86"
             fill="url(#clockFaceGrad)"
-            stroke="#FED7AA"
+            stroke="#A7F3D0"
             strokeWidth="1.5"
           />
 
@@ -211,9 +211,9 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
             cy="180"
             r="86"
             fill="none"
-            stroke="#FB923C"
+            stroke="#10B981"
             strokeWidth="4"
-            opacity="0.25"
+            opacity="0.20"
           />
 
           {/* ── 12 CLOCK TICK MARKS & NUMERAL ACCENTS ── */}
@@ -222,7 +222,7 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
             const isQuarter = i % 3 === 0;
             const tickLength = isQuarter ? 8 : 4.5;
             const strokeWidth = isQuarter ? 2.5 : 1.2;
-            const strokeColor = isQuarter ? "#EA580C" : "#FDBA74";
+            const strokeColor = isQuarter ? "#059669" : "#6EE7B7";
 
             return (
               <line
@@ -249,7 +249,7 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
                 cx="200"
                 cy={180 - 79}
                 r="0.8"
-                fill="#FED7AA"
+                fill="#A7F3D0"
                 transform={`rotate(${angle} 200 180)`}
               />
             );
@@ -269,8 +269,8 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
             style={{
               bottom: "50%",
               left: "calc(50% - 5px)",
-              background: "linear-gradient(to top, #EA580C, #F97316)",
-              boxShadow: "0 4px 8px rgba(194,65,12,0.4)",
+              background: "linear-gradient(to top, #047857, #10B981)",
+              boxShadow: "0 4px 8px rgba(4,120,87,0.35)",
             }}
           />
 
@@ -282,13 +282,13 @@ export default function Pedestal3DClock({ activeStep }: Pedestal3DClockProps) {
             style={{
               bottom: "50%",
               left: "calc(50% - 4px)",
-              background: "linear-gradient(to top, #C2410C, #EA580C)",
-              boxShadow: "0 6px 12px rgba(194,65,12,0.45)",
+              background: "linear-gradient(to top, #064E3B, #059669)",
+              boxShadow: "0 6px 12px rgba(4,120,87,0.40)",
             }}
           />
 
           {/* 3D Center Hub / Pin */}
-          <div className="relative w-6 h-6 rounded-full bg-gradient-to-tr from-amber-600 via-orange-500 to-amber-200 border-2 border-white shadow-md flex items-center justify-center z-20">
+          <div className="relative w-6 h-6 rounded-full bg-gradient-to-tr from-emerald-600 via-teal-500 to-emerald-300 border-2 border-white shadow-md flex items-center justify-center z-20">
             <div className="w-2 h-2 rounded-full bg-white shadow-xs" />
           </div>
         </div>
