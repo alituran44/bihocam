@@ -1,6 +1,5 @@
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 
 interface LogoProps {
   className?: string;
@@ -19,28 +18,30 @@ export default function Logo({
   href = "/",
   priority = true,
 }: LogoProps) {
-  // Main logo aspect ratio: 969 x 284 (~3.41:1)
+  // BiHocam SVG Aspect Ratio: 436 x 114 (~3.82:1)
+  // Icon Aspect Ratio: 92 x 102 (~0.90:1)
   const dimensions = {
-    sm: { height: 28, width: iconOnly ? 28 : 96 },
-    md: { height: 38, width: iconOnly ? 38 : 130 },
-    lg: { height: 48, width: iconOnly ? 48 : 164 },
-    xl: { height: 60, width: iconOnly ? 60 : 205 },
-  }[size] || { height: 38, width: iconOnly ? 38 : 130 };
+    sm: { height: 32, width: iconOnly ? 29 : 122 },
+    md: { height: 44, width: iconOnly ? 40 : 168 },
+    lg: { height: 54, width: iconOnly ? 49 : 206 },
+    xl: { height: 68, width: iconOnly ? 61 : 260 },
+  }[size] || { height: 44, width: iconOnly ? 40 : 168 };
 
   const src = iconOnly
-    ? "/logo-icon.png"
+    ? "/logo-icon.svg"
     : variant === "dark"
-    ? "/logo-dark.png"
-    : "/logo.png";
+    ? "/logo-dark.svg"
+    : "/logo.svg";
 
   const content = (
-    <Image
+    <img
       src={src}
       alt="BiHocam - Online Eğitim Platformu"
       width={dimensions.width}
       height={dimensions.height}
-      priority={priority}
-      unoptimized
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
+      decoding="async"
       className={`shrink-0 object-contain transition-transform duration-200 group-hover:scale-[1.02] ${className}`}
       style={{ height: `${dimensions.height}px`, width: "auto" }}
     />
@@ -60,3 +61,4 @@ export default function Logo({
 
   return content;
 }
+

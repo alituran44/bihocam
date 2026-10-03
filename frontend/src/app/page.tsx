@@ -191,10 +191,10 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.7, delay: 0.1 }}
-                  className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.08] font-display"
+                  className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#1b2559] tracking-tight leading-[1.08] font-display"
                 >
                   Geleceğini Şekillendirecek{" "}
-                  <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 bg-clip-text text-transparent">
+                  <span className="text-[#5a8a10]">
                     Uzman Eğitmenler
                   </span>{" "}
                   Burada!
@@ -232,7 +232,7 @@ export default function HomePage() {
                 >
                   <Link
                     href="/tenders/new"
-                    className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-[#1b2559] hover:bg-[#252f6e] text-white font-bold text-sm shadow-lg shadow-[#1b2559]/25 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
                   >
                     <PlusCircle className="w-4 h-4" />
                     <span>Ders Talebi Aç</span>

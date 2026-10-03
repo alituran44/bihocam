@@ -83,7 +83,7 @@ export default function Header() {
                   href={item.href}
                   className={`px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${
                     active 
-                      ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/20" 
+                      ? "bg-[#1b2559] text-white shadow-sm shadow-[#1b2559]/25" 
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
                   }`}
                 >
@@ -98,9 +98,9 @@ export default function Header() {
             {/* Quick Action: New Request Button */}
             <Link
               href="/tenders/new"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-emerald-300 bg-emerald-50 text-emerald-800 text-xs font-semibold hover:bg-emerald-100 transition-all"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#1b2559]/25 bg-[#1b2559]/5 text-[#1b2559] text-xs font-semibold hover:bg-[#1b2559]/10 transition-all"
             >
-              <PlusCircle className="w-3.5 h-3.5 text-emerald-600" />
+              <PlusCircle className="w-3.5 h-3.5 text-[#6a9a1a]" />
               <span>Ders Talebi Aç</span>
             </Link>
 
